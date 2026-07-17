@@ -1,0 +1,11 @@
+{
+  "name": "POS Toko HP",
+  "short_name": "POS",
+  "description": "POS Enterprise — Toko HP, stok IMEI/SN, kasir scanner, laporan multi-period.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0a0b",
+  "theme_color": "#10b981",
+  "icons": []
+}

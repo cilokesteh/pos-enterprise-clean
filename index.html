@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#10b981">
+<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="pragma" content="no-cache">
+<title>POS Toko HP</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Firebase SDK di HEAD — must load before inline script -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- SheetJS for Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- html2pdf + jspdf for receipt PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="pwa.js"></script>
+<style>
+  body { background:#0a0a0b; }
+  .view { display:none; }
+  .view.active { display:block; }
+  /* Theme override */
+  #theme-overrides { display:none; }
+</style>
+</head>
+<body class="text-zinc-100 overflow-hidden">
+
+<!-- ==================== APP SHELL ==================== -->
+<div id="app" class="flex h-screen">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-60 bg-zinc-950 border-r border-zinc-900 flex flex-col shrink-0">
+    <div class="p-4 border-b border-zinc-900">
+      <h1 class="text-lg font-bold" id="sb-store">Toko HP</h1>
+      <p class="text-xs text-zinc-500">POS Enterprise</p>
+    </div>
+    <nav class="flex-1 py-2" id="nav-menu">
+      <button data-view="pos" class="nav-btn active w-full text-left px-4 py-3 text-sm hover:bg-zinc-900 flex items-center gap-3 transition">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        Kasir
+      </button>
+      <button data-view="products" class="nav-btn w-full text-left px-4 py-3 text-sm hover:bg-zinc-900 flex items-center gap-3 transition text-zinc-400">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        Produk
+      </button>
+      <button data-view="stock" class="nav-btn w-full text-left px-4 py-3 text-sm hover:bg-zinc-900 flex items-center gap-3 transition text-zinc-400">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        Stok
+      </button>
+      <button data-view="reports" class="nav-btn w-full text-left px-4 py-3 text-sm hover:bg-zinc-900 flex items-center gap-3 transition text-zinc-400">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Laporan
+      </button>
+      <button data-view="history" class="nav-btn w-full text-left px-4 py-3 text-sm hover:bg-zinc-900 flex items-center gap-3 transition text-zinc-400">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        History
+      </button>
+    </nav>
+    <div class="p-4 border-t border-zinc-900">
+      <div class="text-xs text-zinc-500 mb-2" id="sb-user">—</div>
+      <button onclick="logout()" class="w-full text-left text-sm text-red-400 hover:text-red-300 flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        Keluar
+      </button>
+      <div class="text-[10px] text-zinc-700 mt-2">v1</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 flex flex-col min-w-0">
+    <header class="px-6 py-3 border-b border-zinc-900 flex items-center justify-between bg-zinc-950">
+      <h2 id="page-title" class="text-lg font-semibold">Kasir</h2>
+      <button onclick="hardRefresh()" class="text-zinc-400 hover:text-emerald-400" title="Refresh">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      </button>
+    </header>
+    <div id="content" class="flex-1 overflow-auto p-6">
+
+      <!-- ==================== KASIR VIEW ==================== -->
+      <section id="view-pos" class="view active">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
+          <!-- Scanner -->
+          <div>
+            <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800">
+              <label class="block text-sm text-zinc-400 mb-2">Scan / Input IMEI atau SN</label>
+              <div class="flex gap-2">
+                <input id="imei-scan" type="text" placeholder="Scan barcode atau ketik IMEI/SN..."
+                       class="flex-1 px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg focus:border-emerald-500 focus:outline-none text-zinc-100"
+                       onkeydown="if(event.key==='Enter')scanImei()">
+                <button onclick="scanImei()" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-medium text-white">
+                  Cari
+                </button>
+              </div>
+              <p class="text-xs text-zinc-600 mt-2">Scan IMEI/SN barang → muncul deskripsi → input harga jual → bayar</p>
+            </div>
+
+            <!-- Scan result -->
+            <div id="scan-result" class="mt-4"></div>
+          </div>
+
+          <!-- Cart -->
+          <div>
+            <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold">Keranjang</h3>
+                <button onclick="clearCart()" class="text-xs text-zinc-500 hover:text-red-400">Kosongkan</button>
+              </div>
+              <div id="cart-list" class="space-y-2 min-h-[100px]">
+                <p class="text-sm text-zinc-600 text-center py-8">Belum ada item</p>
+              </div>
+              <div class="border-t border-zinc-800 mt-4 pt-4">
+                <div class="flex justify-between text-lg font-bold">
+                  <span>Total</span>
+                  <span id="cart-total" class="text-emerald-400">Rp 0</span>
+                </div>
+                <button id="checkout-btn" onclick="showPaymentModal()" disabled
+                        class="w-full mt-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-lg font-semibold text-white transition">
+                  Bayar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== PRODUK VIEW ==================== -->
+      <section id="view-products" class="view">
+        <div class="max-w-4xl mx-auto">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Manajemen Produk</h3>
+            <p class="text-xs text-zinc-500">Produk dibuat dari Restock. Edit hanya Harga Jual.</p>
+          </div>
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-zinc-950 text-zinc-400">
+                <tr>
+                  <th class="text-left px-4 py-3">Nama</th>
+                  <th class="text-left px-4 py-3">Kategori</th>
+                  <th class="text-left px-4 py-3">Brand</th>
+                  <th class="text-right px-4 py-3">Modal</th>
+                  <th class="text-right px-4 py-3">Harga Jual</th>
+                  <th class="text-center px-4 py-3">Stok</th>
+                  <th class="text-center px-4 py-3">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="product-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== STOK VIEW ==================== -->
+      <section id="view-stock" class="view">
+        <div class="max-w-4xl mx-auto">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Manajemen Stok</h3>
+            <div class="flex gap-2">
+              <button onclick="showStockModal('restock')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white">
+                + Restock (Masuk)
+              </button>
+              <button onclick="showStockModal('retur')" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg text-sm font-medium text-white">
+                ↗ Retur ke Cabang
+              </button>
+            </div>
+          </div>
+
+          <!-- Stock summary -->
+          <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500">Total Produk</div>
+              <div class="text-xl font-bold" id="stk-total-products">0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500">Total Stok</div>
+              <div class="text-xl font-bold" id="stk-total-stock">0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500">IMEI/SN Terdaftar</div>
+              <div class="text-xl font-bold" id="stk-imei-count">0</div>
+            </div>
+          </div>
+
+          <!-- Stock move history -->
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+            <div class="px-4 py-3 border-b border-zinc-800 font-semibold text-sm">Riwayat Pergerakan Stok</div>
+            <table class="w-full text-sm">
+              <thead class="bg-zinc-950 text-zinc-400">
+                <tr>
+                  <th class="text-left px-4 py-2">Tanggal</th>
+                  <th class="text-left px-4 py-2">Tipe</th>
+                  <th class="text-left px-4 py-2">Produk</th>
+                  <th class="text-right px-4 py-2">Qty</th>
+                  <th class="text-right px-4 py-2">Modal</th>
+                  <th class="text-left px-4 py-2">IMEI/SN</th>
+                </tr>
+              </thead>
+              <tbody id="stock-move-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== LAPORAN VIEW ==================== -->
+      <section id="view-reports" class="view">
+        <div class="max-w-5xl mx-auto">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h3 class="text-lg font-semibold">Laporan</h3>
+            <div class="flex items-center gap-2">
+              <select id="report-period" onchange="onReportPeriodChange()" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm">
+                <option value="harian">Harian</option>
+                <option value="mingguan">Mingguan</option>
+                <option value="bulanan">Bulanan</option>
+                <option value="tahunan">Tahunan</option>
+                <option value="custom">Custom</option>
+              </select>
+              <div id="report-nav" class="flex items-center gap-1">
+                <button onclick="shiftReport(-1)" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm hover:bg-zinc-800">‹</button>
+                <span id="report-range-label" class="px-3 py-2 text-sm text-zinc-300 min-w-[120px] text-center">—</span>
+                <button onclick="shiftReport(1)" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm hover:bg-zinc-800">›</button>
+              </div>
+              <div id="report-custom-dates" class="hidden flex items-center gap-2">
+                <input type="date" id="report-start-date" class="px-2 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100">
+                <span class="text-zinc-500">→</span>
+                <input type="date" id="report-end-date" class="px-2 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100">
+                <button onclick="loadCustomReport()" class="px-3 py-2 bg-emerald-600 rounded-lg text-sm text-white">Go</button>
+              </div>
+              <button onclick="exportReportExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Excel
+              </button>
+            </div>
+          </div>
+
+          <!-- Summary cards -->
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500">Transaksi</div>
+              <div class="text-xl font-bold" id="r-tx">0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500">Omzet</div>
+              <div class="text-xl font-bold text-emerald-400" id="r-omzet">Rp 0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500">Modal</div>
+              <div class="text-xl font-bold text-orange-400" id="r-modal">Rp 0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500">Profit</div>
+              <div class="text-xl font-bold text-emerald-400" id="r-profit">Rp 0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500">Rata-rata</div>
+              <div class="text-xl font-bold" id="r-avg">Rp 0</div>
+            </div>
+          </div>
+
+          <!-- Report table -->
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+            <table class="w-full text-sm">
+              <thead id="report-thead" class="bg-zinc-950 text-zinc-400"></thead>
+              <tbody id="report-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== HISTORY VIEW ==================== -->
+      <section id="view-history" class="view">
+        <div class="max-w-5xl mx-auto">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">History Transaksi</h3>
+            <button onclick="exportHistoryExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Excel
+            </button>
+          </div>
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-zinc-950 text-zinc-400">
+                <tr>
+                  <th class="text-left px-4 py-3">No Struk</th>
+                  <th class="text-left px-4 py-3">Tanggal</th>
+                  <th class="text-left px-4 py-3">Customer</th>
+                  <th class="text-left px-4 py-3">Metode</th>
+                  <th class="text-right px-4 py-3">Total</th>
+                  <th class="text-center px-4 py-3">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="history-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Receipt content (hidden, for print/PDF capture) -->
+<div id="receipt-content" class="hidden"></div>
+
+<!-- ==================== MAIN SCRIPT ==================== -->
+<script>
+// ============ STATE ============
+var db = null, auth = null;
+var products = [];
+var stockMoves = [];
+var cart = [];
+var _historyTx = [];
+var currentUser = null;
+var _lastReceiptNo = null;
+var _lastReceiptData = null;
+
+// Report state on window (for console eval access)
+window.reportPeriod = 'harian';
+window.reportAnchor = new Date();
+
+// ============ UTILS ============
+function formatRp(n) {
+  n = parseInt(n) || 0;
+  return 'Rp ' + n.toLocaleString('id-ID');
+}
+function formatDate(ts) {
+  if (!ts) return '-';
+  var d = new Date(ts);
+  var dd = String(d.getDate()).padStart(2, '0');
+  var MM = String(d.getMonth() + 1).padStart(2, '0');
+  var yy = d.getFullYear();
+  var hh = String(d.getHours()).padStart(2, '0');
+  var mm = String(d.getMinutes()).padStart(2, '0');
+  return dd + '/' + MM + '/' + yy + ' ' + hh + ':' + mm;
+}
+function formatDateShort(ts) {
+  if (!ts) return '-';
+  var d = new Date(ts);
+  var dd = String(d.getDate()).padStart(2, '0');
+  var MM = String(d.getMonth() + 1).padStart(2, '0');
+  var yy = String(d.getFullYear()).slice(2);
+  return dd + '/' + MM + '/' + yy;
+}
+function col(name) {
+  return COLLECTIONS[name];
+}
+function isAdmin() {
+  if (!currentUser || !currentUser.email) return false;
+  return currentUser.email === (typeof ADMIN_EMAIL !== 'undefined' ? ADMIN_EMAIL : '');
+}
+function showToast(msg) {
+  var t = document.createElement('div');
+  t.className = 'fixed bottom-6 right-6 bg-zinc-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { t.remove(); }, 2500);
+}
+function hardRefresh() {
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      regs.forEach(function(r) { r.unregister(); });
+    });
+  }
+  window.location.href = window.location.pathname + '?_r=' + Date.now();
+}
+function normalizeImei(s) {
+  return String(s || '').replace(/\s+/g, '').toLowerCase();
+}
+
+// ============ FIREBASE INIT ============
+function initFirebase() {
+  if (db && auth) return true;
+  if (typeof firebase === 'undefined') return false;
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    auth = firebase.auth();
+    return true;
+  } catch (e) {
+    console.error('Firebase init failed', e);
+    return false;
+  }
+}
+
+// Strip cache-buster param on load
+(function() {
+  var url = new URL(window.location.href);
+  if (url.searchParams.get('_r')) {
+    url.searchParams.delete('_r');
+    window.history.replaceState({}, '', url.pathname);
+  }
+})();
+
+if (!initFirebase()) {
+  document.addEventListener('DOMContentLoaded', function() {
+    if (!initFirebase()) {
+      document.body.innerHTML = '<div class="min-h-screen flex items-center justify-center text-red-400 p-6 text-center">⚠ Gagal menghubungkan Firebase. Periksa config.js dan koneksi internet.</div>';
+    }
+  });
+}
+
+// ============ AUTH ============
+if (auth) {
+  auth.onAuthStateChanged(function(user) {
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
+    }
+    currentUser = user;
+    var userEl = document.getElementById('sb-user');
+    if (userEl) userEl.textContent = user.email;
+    // Load data
+    loadProducts();
+    loadStockMoves();
+  });
+}
+
+function logout() {
+  if (auth) auth.signOut().then(function() { window.location.href = 'login.html'; });
+}
+
+// ============ DATA LOADING ============
+function loadProducts() {
+  if (!db) return;
+  db.collection(col('products')).onSnapshot(function(snap) {
+    products = [];
+    snap.docs.forEach(function(doc) {
+      var p = doc.data();
+      p.id = doc.id;
+      products.push(p);
+    });
+    renderProductTable();
+    renderStockPanel();
+    updateStats();
+  }, function(err) {
+    alert('Gagal memuat produk: ' + err.message);
+  });
+}
+
+function loadStockMoves() {
+  if (!db) return;
+  db.collection(col('stockMoves')).orderBy('createdAt', 'desc').onSnapshot(function(snap) {
+    stockMoves = [];
+    snap.docs.forEach(function(doc) {
+      var m = doc.data();
+      m.id = doc.id;
+      stockMoves.push(m);
+    });
+    renderStockPanel();
+  }, function(err) {
+    console.error('Stock moves load error:', err);
+  });
+}
+
+// ============ VIEW SWITCHING ============
+var VIEWS = ['pos', 'products', 'stock', 'reports', 'history'];
+var VIEW_TITLES = {
+  pos: 'Kasir',
+  products: 'Produk',
+  stock: 'Stok',
+  reports: 'Laporan',
+  history: 'History'
+};
+
+function switchView(name) {
+  VIEWS.forEach(function(v) {
+    var el = document.getElementById('view-' + v);
+    if (el) {
+      if (v === name) { el.classList.add('active'); }
+      else { el.classList.remove('active'); }
+    }
+  });
+  // Nav buttons
+  document.querySelectorAll('.nav-btn').forEach(function(btn) {
+    if (btn.dataset.view === name) {
+      btn.classList.add('active');
+      btn.classList.remove('text-zinc-400');
+      btn.classList.add('text-emerald-400');
+    } else {
+      btn.classList.remove('active');
+      btn.classList.add('text-zinc-400');
+      btn.classList.remove('text-emerald-400');
+    }
+  });
+  // Title
+  var titleEl = document.getElementById('page-title');
+  if (titleEl) titleEl.textContent = VIEW_TITLES[name] || name;
+  // Render hooks
+  if (name === 'history') loadHistory();
+  if (name === 'reports') onReportPeriodChange();
+  if (name === 'products') renderProductTable();
+  if (name === 'stock') renderStockPanel();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Nav clicks
+  document.querySelectorAll('.nav-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { switchView(btn.dataset.view); });
+  });
+  // Store name
+  if (typeof STORE !== 'undefined') {
+    var sb = document.getElementById('sb-store');
+    if (sb) sb.textContent = STORE.name;
+  }
+  // Strip _r param
+  var url = new URL(window.location.href);
+  if (url.searchParams.get('_r')) {
+    url.searchParams.delete('_r');
+    window.history.replaceState({}, '', url.pathname);
+  }
+});
+
+// ============ KASIR — IMEI SCANNER ============
+function scanImei() {
+  var input = document.getElementById('imei-scan');
+  var raw = input.value.trim();
+  if (!raw) { alert('Masukkan IMEI atau SN terlebih dahulu'); return; }
+  var normalized = normalizeImei(raw);
+  var found = null;
+  var foundImei = null;
+  for (var i = 0; i < products.length; i++) {
+    var pool = products[i].imeiPool || [];
+    for (var j = 0; j < pool.length; j++) {
+      if (normalizeImei(pool[j]) === normalized) {
+        found = products[i];
+        foundImei = pool[j];
+        break;
+      }
+    }
+    if (found) break;
+  }
+  var resultEl = document.getElementById('scan-result');
+  if (!resultEl) return;
+  if (!found) {
+    resultEl.innerHTML = '<div class="bg-red-950/50 border border-red-800 rounded-xl p-4 text-red-400 text-sm">IMEI/SN tidak ditemukan di stok. Cek kembali atau lakukan Restock dulu.</div>';
+    input.value = '';
+    return;
+  }
+  if (found.stock <= 0) {
+    resultEl.innerHTML = '<div class="bg-orange-950/50 border border-orange-800 rounded-xl p-4 text-orange-400 text-sm">Stok habis untuk: ' + found.name + '</div>';
+    input.value = '';
+    return;
+  }
+  resultEl.innerHTML =
+    '<div class="bg-zinc-900 rounded-xl p-4 border border-emerald-800">' +
+      '<div class="flex items-start justify-between">' +
+        '<div>' +
+          '<div class="font-semibold text-lg">' + found.name + '</div>' +
+          '<div class="text-sm text-zinc-400 mt-1">' + (found.category || '') + ' · ' + (found.brand || '') + '</div>' +
+          '<div class="text-xs text-emerald-400 mt-1">IMEI/SN: ' + foundImei + '</div>' +
+          '<div class="text-xs text-zinc-500">Stok: ' + found.stock + '</div>' +
+        '</div>' +
+        '<div class="text-right">' +
+          '<div class="text-xs text-zinc-500">Harga Jual</div>' +
+          '<input id="scan-price" type="number" value="' + (found.price || 0) + '" class="w-32 px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100 mt-1">' +
+        '</div>' +
+      '</div>' +
+      '<button onclick="addScannedToCart(\'' + found.id + '\',\'' + foundImei.replace(/'/g, "\\'") + '\')" class="w-full mt-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-medium text-white">+ Tambah ke Keranjang</button>' +
+    '</div>';
+  input.value = '';
+  setTimeout(function() { var p = document.getElementById('scan-price'); if (p) p.focus(); }, 100);
+}
+
+function addScannedToCart(productId, imei) {
+  var p = products.find(function(x) { return x.id === productId; });
+  if (!p) { alert('Produk tidak ditemukan'); return; }
+  var priceInput = document.getElementById('scan-price');
+  var price = parseInt(priceInput ? priceInput.value : 0) || 0;
+  if (price <= 0) { alert('Harga jual harus > 0'); return; }
+  // Check if IMEI already in cart
+  for (var i = 0; i < cart.length; i++) {
+    if (cart[i].imei && cart[i].imei.indexOf(imei) >= 0) {
+      alert('IMEI/SN ini sudah ada di keranjang');
+      return;
+    }
+  }
+  cart.push({
+    productId: productId,
+    name: p.name,
+    category: p.category || '',
+    brand: p.brand || '',
+    price: price,
+    qty: 1,
+    subtotal: price,
+    costPrice: p.costPrice || 0,
+    imei: [imei]
+  });
+  renderCart();
+  // Clear scan result
+  var resultEl = document.getElementById('scan-result');
+  if (resultEl) resultEl.innerHTML = '';
+  showToast('Ditambahkan ke keranjang');
+}
+
+function renderCart() {
+  var el = document.getElementById('cart-list');
+  if (!el) return;
+  if (cart.length === 0) {
+    el.innerHTML = '<p class="text-sm text-zinc-600 text-center py-8">Belum ada item</p>';
+  } else {
+    el.innerHTML = cart.map(function(item, idx) {
+      var imeiBadge = item.imei && item.imei.length > 0
+        ? '<span class="text-xs text-emerald-400">✓ IMEI: ' + item.imei.join(', ') + '</span>'
+        : '<span class="text-xs text-orange-400">⚠ Input IMEI</span>';
+      return '<div class="flex items-center justify-between bg-zinc-950 rounded-lg p-3">' +
+        '<div>' +
+          '<div class="text-sm font-medium">' + item.name + '</div>' +
+          '<div class="text-xs text-zinc-500">' + formatRp(item.price) + ' × ' + item.qty + '</div>' +
+          '<div class="mt-1">' + imeiBadge + '</div>' +
+        '</div>' +
+        '<div class="flex items-center gap-3">' +
+          '<span class="text-sm font-semibold text-emerald-400">' + formatRp(item.subtotal) + '</span>' +
+          '<button onclick="removeCartItem(' + idx + ')" class="text-red-400 hover:text-red-300 text-xs">✕</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+  // Total
+  var total = cart.reduce(function(s, i) { return s + i.subtotal; }, 0);
+  var totalEl = document.getElementById('cart-total');
+  if (totalEl) totalEl.textContent = formatRp(total);
+  // Checkout button
+  var btn = document.getElementById('checkout-btn');
+  if (btn) btn.disabled = cart.length === 0;
+}
+
+function removeCartItem(idx) {
+  cart.splice(idx, 1);
+  renderCart();
+}
+
+function clearCart() {
+  if (cart.length === 0) return;
+  if (!confirm('Kosongkan keranjang?')) return;
+  cart = [];
+  renderCart();
+}
+
+// ============ PAYMENT ============
+function showPaymentModal() {
+  if (cart.length === 0) { alert('Keranjang masih kosong'); return; }
+  // Validate IMEI for HP/Tablet/Laptop
+  for (var i = 0; i < cart.length; i++) {
+    var cat = (cart[i].category || '').toLowerCase();
+    var needsImei = cat === 'hp' || cat === 'tablet' || cat === 'laptop';
+    if (needsImei && (!cart[i].imei || cart[i].imei.length === 0)) {
+      alert('Item "' + cart[i].name + '" belum punya IMEI. Scan ulang dari Kasir.');
+      return;
+    }
+  }
+  var total = cart.reduce(function(s, i) { return s + i.subtotal; }, 0);
+  var html =
+    '<div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center z-50" id="payment-modal" onclick="event.target.id===\'payment-modal\'&&hideModal(\'payment-modal\')">' +
+      '<div class="modal-box bg-zinc-900 rounded-xl p-6 w-full max-w-md border border-zinc-800" onclick="event.stopPropagation()">' +
+        '<h3 class="text-lg font-semibold mb-4">Pembayaran</h3>' +
+        '<div class="flex justify-between text-sm mb-2"><span class="text-zinc-400">Total</span><span class="font-bold text-emerald-400">' + formatRp(total) + '</span></div>' +
+        '<label class="block text-sm text-zinc-400 mt-4 mb-2">Metode Pembayaran</label>' +
+        '<select id="pay-method" onchange="onPayMethodChange()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
+          '<option value="cash">Tunai</option>' +
+          '<option value="qris">QRIS</option>' +
+          '<option value="transfer">Transfer</option>' +
+        '</select>' +
+        '<div id="pay-cash-fields" class="mt-4">' +
+          '<label class="block text-sm text-zinc-400 mb-2">Uang Diterima</label>' +
+          '<input id="pay-cash" type="number" value="' + total + '" oninput="updateChange()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
+          '<div class="flex justify-between text-sm mt-2"><span class="text-zinc-400">Kembalian</span><span id="pay-change" class="font-bold">Rp 0</span></div>' +
+        '</div>' +
+        '<div id="pay-customer" class="mt-4">' +
+          '<label class="block text-sm text-zinc-400 mb-2">Nama Customer (opsional)</label>' +
+          '<input id="pay-cust-name" type="text" placeholder="Walk-in" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
+        '</div>' +
+        '<button onclick="processPayment()" class="w-full mt-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold text-white">Konfirmasi & Selesai</button>' +
+      '</div>' +
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function onPayMethodChange() {
+  var method = document.getElementById('pay-method').value;
+  var cashFields = document.getElementById('pay-cash-fields');
+  if (cashFields) cashFields.style.display = (method === 'cash') ? 'block' : 'none';
+}
+
+function updateChange() {
+  var total = cart.reduce(function(s, i) { return s + i.subtotal; }, 0);
+  var cash = parseInt(document.getElementById('pay-cash').value) || 0;
+  var change = cash - total;
+  var el = document.getElementById('pay-change');
+  if (el) el.textContent = formatRp(Math.max(0, change));
+}
+
+async function processPayment() {
+  var method = document.getElementById('pay-method').value;
+  var total = cart.reduce(function(s, i) { return s + i.subtotal; }, 0);
+  var custName = (document.getElementById('pay-cust-name').value || '').trim() || 'Walk-in';
+  var cash = 0, change = 0;
+  if (method === 'cash') {
+    cash = parseInt(document.getElementById('pay-cash').value) || 0;
+    if (cash < total) { alert('Uang diterima kurang dari total'); return; }
+    change = cash - total;
+  } else {
+    // Non-cash: exact match
+    if (total <= 0) { alert('Total tidak valid'); return; }
+  }
+  // Build transaction
+  var now = Date.now();
+  var d = new Date(now);
+  var dd = String(d.getDate()).padStart(2, '0');
+  var MM = String(d.getMonth() + 1).padStart(2, '0');
+  var yy = String(d.getFullYear()).slice(2);
+  var receiptSeq = await getNextReceiptSeq();
+  var receiptNo = 'POS-' + dd + MM + yy + '-' + String(receiptSeq).padStart(6, '0');
+  var txData = {
+    receiptNo: receiptNo,
+    receiptSeq: receiptSeq,
+    items: cart.map(function(item) {
+      return {
+        name: item.name,
+        price: item.price,
+        qty: item.qty,
+        subtotal: item.subtotal,
+        costPrice: item.costPrice || 0,
+        imei: item.imei || [],
+        category: item.category || '',
+        productId: item.productId
+      };
+    }),
+    total: total,
+    method: method,
+    cash: cash,
+    change: change,
+    customerName: custName,
+    kasirName: currentUser ? currentUser.email : 'Unknown',
+    createdAt: now
+  };
+  try {
+    if (!db) throw new Error('Database tidak siap');
+    // Save transaction
+    await db.collection(col('transactions')).add(txData);
+    // Decrement stock + remove IMEI from pool + write stock moves
+    var batch = db.batch();
+    cart.forEach(function(item) {
+      var p = products.find(function(x) { return x.id === item.productId; });
+      if (!p) return;
+      var newStock = (p.stock || 0) - item.qty;
+      var newPool = (p.imeiPool || []).filter(function(im) {
+        return !(item.imei || []).some(function(x) { return normalizeImei(x) === normalizeImei(im); });
+      });
+      batch.update(db.collection(col('products')).doc(p.id), {
+        stock: newStock,
+        imeiPool: newPool,
+        hasImei: newPool.length > 0,
+        updatedAt: now
+      });
+      // Update local
+      p.stock = newStock;
+      p.imeiPool = newPool;
+      // Stock move
+      batch.set(db.collection(col('stockMoves')).doc(), {
+        type: 'sale',
+        productId: p.id,
+        productName: p.name,
+        qty: item.qty,
+        costPrice: item.costPrice || 0,
+        imeiList: item.imei || [],
+        createdAt: now,
+        receiptNo: receiptNo
+      });
+    });
+    await batch.commit();
+    // Success
+    hideModal('payment-modal');
+    _lastReceiptNo = receiptNo;
+    _lastReceiptData = txData;
+    cart = [];
+    renderCart();
+    showReceipt(txData);
+  } catch (e) {
+    alert('Gagal menyimpan transaksi: ' + e.message);
+  }
+}
+
+// Receipt sequence — query latest transaction today
+async function getNextReceiptSeq() {
+  if (!db) return 1;
+  try {
+    var now = new Date();
+    var startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    var snap = await db.collection(col('transactions'))
+      .where('createdAt', '>=', startOfDay)
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get();
+    if (snap.empty) return 1;
+    var last = snap.docs[0].data();
+    return (last.receiptSeq || 0) + 1;
+  } catch (e) {
+    return Math.floor(Math.random() * 100000) + 1;
+  }
+}
+
+// ============ RECEIPT ============
+function showReceipt(tx) {
+  var html = buildReceiptHtml(tx);
+  var el = document.getElementById('receipt-content');
+  if (el) el.innerHTML = html;
+  // Modal with receipt + action buttons
+  var modalHtml =
+    '<div class="modal-backdrop fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" id="receipt-modal" onclick="event.target.id===\'receipt-modal\'&&hideModal(\'receipt-modal\')">' +
+      '<div class="modal-box bg-white rounded-xl p-6 w-full max-w-sm max-h-[90vh] overflow-auto" onclick="event.stopPropagation()">' +
+        '<div id="receipt-display" class="text-black text-sm font-mono">' + html + '</div>' +
+        '<div class="flex gap-2 mt-4">' +
+          '<button onclick="printReceipt()" class="flex-1 py-2.5 bg-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-zinc-900">Print</button>' +
+          '<button onclick="downloadPdf()" class="flex-1 py-2.5 bg-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-zinc-900">PDF</button>' +
+          '<button onclick="sendReceiptToWA()" class="flex-1 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700">WA</button>' +
+        '</div>' +
+        '<button onclick="hideModal(\'receipt-modal\')" class="w-full mt-2 py-2.5 bg-zinc-200 text-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-300">Tutup</button>' +
+      '</div>' +
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function buildReceiptHtml(tx) {
+  var d = new Date(tx.createdAt);
+  var dd = String(d.getDate()).padStart(2, '0');
+  var MM = String(d.getMonth() + 1).padStart(2, '0');
+  var yy = d.getFullYear();
+  var hh = String(d.getHours()).padStart(2, '0');
+  var mm = String(d.getMinutes()).padStart(2, '0');
+  var storeName = (typeof STORE !== 'undefined' && STORE.name) ? STORE.name : 'Toko';
+  var storeAddr = (typeof STORE !== 'undefined' && STORE.address) ? STORE.address : '';
+  var storePhone = (typeof STORE !== 'undefined' && STORE.phone) ? STORE.phone : '';
+  var footer = (typeof STORE !== 'undefined' && STORE.footer) ? STORE.footer : 'Terima kasih';
+  var methodLabel = tx.method === 'cash' ? 'Tunai' : (tx.method === 'qris' ? 'QRIS' : 'Transfer');
+  var itemsHtml = (tx.items || []).map(function(item) {
+    var imeiLine = (item.imei && item.imei.length > 0) ? '<div style="font-size:10px;color:#555;">IMEI: ' + item.imei.join(', ') + '</div>' : '';
+    return '<div style="margin-bottom:4px;">' +
+      '<div>' + item.name + '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;">' +
+        '<span>' + item.qty + 'x @ ' + formatRp(item.price) + '</span>' +
+        '<span>' + formatRp(item.subtotal) + '</span>' +
+      '</div>' + imeiLine +
+    '</div>';
+  }).join('');
+  var cashLine = tx.method === 'cash'
+    ? '<div style="display:flex;justify-content:space-between;"><span>Tunai</span><span>' + formatRp(tx.cash) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;"><span>Kembali</span><span>' + formatRp(tx.change) + '</span></div>'
+    : '<div style="display:flex;justify-content:space-between;"><span>Metode</span><span>' + methodLabel + '</span></div>';
+  return '<div style="text-align:center;">' +
+    '<div style="font-size:16px;font-weight:bold;">' + storeName + '</div>' +
+    (storeAddr ? '<div style="font-size:11px;">' + storeAddr + '</div>' : '') +
+    (storePhone ? '<div style="font-size:11px;">Telp: ' + storePhone + '</div>' : '') +
+  '</div>' +
+  '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
+  '<div style="font-size:11px;">No: ' + tx.receiptNo + '</div>' +
+  '<div style="font-size:11px;">Tgl: ' + dd + '/' + MM + '/' + yy + ' ' + hh + ':' + mm + '</div>' +
+  '<div style="font-size:11px;">Customer: ' + (tx.customerName || 'Walk-in') + '</div>' +
+  '<div style="font-size:11px;">Kasir: ' + (tx.kasirName || '') + '</div>' +
+  '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
+  itemsHtml +
+  '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
+  '<div style="display:flex;justify-content:space-between;font-weight:bold;font-size:14px;"><span>TOTAL</span><span>' + formatRp(tx.total) + '</span></div>' +
+  '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
+  cashLine +
+  '<div style="text-align:center;margin-top:8px;font-size:12px;">' + footer + '</div>';
+}
+
+function printReceipt() {
+  var html = document.getElementById('receipt-display');
+  if (!html) return;
+  var w = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
+  try {
+    var popup = window.open('', '_blank', 'width=400,height=600');
+    if (!popup) { alert('Popup diblokir. Izinkan popup untuk print.'); return; }
+    popup.document.write('<html><head><title>Struk ' + (_lastReceiptNo || '') + '</title>' +
+      '<style>@page{margin:0;size:' + w + 'mm auto;}body{margin:0;padding:0;display:flex;justify-content:center;font-family:monospace;}' +
+      '#pwrap{width:' + w + 'mm;padding:4mm 2mm;box-sizing:border-box;}</style></head>' +
+      '<body><div id="pwrap">' + html.innerHTML + '</div>' +
+      '<div style="text-align:center;margin-top:10px;"><button onclick="window.print()" style="padding:8px 20px;font-size:14px;">Print</button>' +
+      '<button onclick="window.close()" style="padding:8px 20px;font-size:14px;margin-left:10px;">Tutup</button></div>' +
+      '</body></html>');
+    popup.document.close();
+  } catch (e) {
+    alert('Gagal print: ' + e.message);
+  }
+}
+
+function downloadPdf() {
+  var element = document.getElementById('receipt-display');
+  if (!element) return;
+  var w = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
+  if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+    alert('Library PDF belum siap. Coba lagi.');
+    return;
+  }
+  try {
+    html2canvas(element, {
+      scale: 2, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0,
+      windowWidth: Math.max(400, element.scrollWidth || window.innerWidth)
+    }).then(function(canvas) {
+      var imgData = canvas.toDataURL('image/jpeg', 0.98);
+      var pdfHeight = (canvas.height / canvas.width) * w;
+      var jsPDF = window.jspdf.jsPDF;
+      var pdf = new jsPDF({ unit: 'mm', format: [w, pdfHeight], orientation: 'portrait' });
+      pdf.addImage(imgData, 'JPEG', 0, 0, w, pdfHeight);
+      pdf.save((_lastReceiptNo || 'receipt') + '.pdf');
+    }).catch(function(e) { alert('Gagal PDF: ' + e.message); });
+  } catch (e) {
+    alert('Gagal PDF: ' + e.message);
+  }
+}
+
+async function sendReceiptToWA() {
+  var t = _lastReceiptData;
+  if (!t) { alert('Data struk tidak tersedia'); return; }
+  // Build text fallback
+  var d = new Date(t.createdAt);
+  var dd = String(d.getDate()).padStart(2, '0');
+  var MM = String(d.getMonth() + 1).padStart(2, '0');
+  var yy = d.getFullYear();
+  var hh = String(d.getHours()).padStart(2, '0');
+  var mm = String(d.getMinutes()).padStart(2, '0');
+  var storeName = (typeof STORE !== 'undefined' && STORE.name) ? STORE.name : 'Toko';
+  var textMsg = '*' + storeName + '*\n' +
+    'No: ' + t.receiptNo + '\n' +
+    'Tgl: ' + dd + '/' + MM + '/' + yy + ' ' + hh + ':' + mm + '\n' +
+    'Customer: ' + (t.customerName || 'Walk-in') + '\n' +
+    '---\n' +
+    (t.items || []).map(function(i) {
+      return i.qty + 'x ' + i.name + ' = ' + formatRp(i.subtotal);
+    }).join('\n') +
+    '\n---\n*TOTAL: ' + formatRp(t.total) + '*\n' +
+    (t.method === 'cash' ? 'Tunai: ' + formatRp(t.cash) + '\nKembali: ' + formatRp(t.change) : 'Metode: ' + (t.method === 'qris' ? 'QRIS' : 'Transfer')) +
+    '\n\nTerima kasih';
+  // Try PDF via Web Share
+  try {
+    var element = document.getElementById('receipt-display');
+    if (element && typeof html2pdf !== 'undefined') {
+      var w = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
+      var blob = await html2pdf().set({
+        margin: 0, filename: (_lastReceiptNo || 'receipt') + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true },
+        jsPDF: { unit: 'mm', format: [w, 200] }
+      }).from(element).outputPdf('blob');
+      var file = new File([blob], 'struk.pdf', { type: 'application/pdf' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Struk ' + t.receiptNo });
+        return;
+      }
+    }
+  } catch (e) { /* fall through to text */ }
+  // Fallback: text via wa.me
+  window.open('https://wa.me/?text=' + encodeURIComponent(textMsg), '_blank');
+}
+
+// ============ MODAL UTIL ============
+function hideModal(id) {
+  var el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// ============ PRODUK — EDIT HARGA ONLY ============
+function renderProductTable() {
+  var el = document.getElementById('product-table-body');
+  if (!el) return;
+  if (products.length === 0) {
+    el.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-zinc-600">Belum ada produk. Tambah produk via Restock.</td></tr>';
+    return;
+  }
+  el.innerHTML = products.map(function(p) {
+    return '<tr class="border-t border-zinc-800 hover:bg-zinc-950">' +
+      '<td class="px-4 py-3">' + (p.name || '-') + '</td>' +
+      '<td class="px-4 py-3">' + (p.category || '-') + '</td>' +
+      '<td class="px-4 py-3">' + (p.brand || '-') + '</td>' +
+      '<td class="px-4 py-3 text-right text-orange-400">' + formatRp(p.costPrice || 0) + '</td>' +
+      '<td class="px-4 py-3 text-right text-emerald-400">' + formatRp(p.price || 0) + '</td>' +
+      '<td class="px-4 py-3 text-center">' + (p.stock || 0) + '</td>' +
+      '<td class="px-4 py-3 text-center">' +
+        '<button onclick="showEditPriceModal(\'' + p.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300">Edit Harga</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function showEditPriceModal(id) {
+  var p = products.find(function(x) { return x.id === id; });
+  if (!p) { alert('Produk tidak ditemukan'); return; }
+  var html =
+    '<div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center z-50" id="edit-price-modal" onclick="event.target.id===\'edit-price-modal\'&&hideModal(\'edit-price-modal\')">' +
+      '<div class="modal-box bg-zinc-900 rounded-xl p-6 w-full max-w-sm border border-zinc-800" onclick="event.stopPropagation()">' +
+        '<h3 class="text-lg font-semibold mb-1">Edit Harga Jual</h3>' +
+        '<p class="text-sm text-zinc-400 mb-4">' + p.name + ' (' + (p.category || '') + ' · ' + (p.brand || '') + ')</p>' +
+        '<label class="block text-sm text-zinc-400 mb-2">Harga Jual (Rp)</label>' +
+        '<input id="edit-price-input" type="number" value="' + (p.price || 0) + '" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
+        '<div class="flex gap-2 mt-6">' +
+          '<button onclick="hideModal(\'edit-price-modal\')" class="flex-1 py-2.5 bg-zinc-800 text-zinc-300 rounded-lg text-sm">Batal</button>' +
+          '<button onclick="saveProductPrice(\'' + p.id + '\')" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium">Simpan</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  setTimeout(function() { var i = document.getElementById('edit-price-input'); if (i) i.focus(); }, 100);
+}
+
+async function saveProductPrice(id) {
+  var p = products.find(function(x) { return x.id === id; });
+  if (!p) { alert('Produk tidak ditemukan'); return; }
+  var price = parseInt(document.getElementById('edit-price-input').value) || 0;
+  if (price <= 0) { alert('Harga jual harus > 0'); return; }
+  try {
+    if (!db) throw new Error('Database tidak siap');
+    await db.collection(col('products')).doc(id).update({
+      price: price,
+      updatedAt: Date.now()
+    });
+    p.price = price;
+    renderProductTable();
+    hideModal('edit-price-modal');
+    showToast('Harga jual diperbarui');
+  } catch (e) {
+    alert('Gagal simpan: ' + e.message);
+  }
+}
+
+// ============ STOK — RESTOCK & RETUR ============
+function showStockModal(type) {
+  var isRestock = type === 'restock';
+  var title = isRestock ? 'Restock (Barang Masuk)' : 'Retur ke Cabang (Barang Keluar)';
+  var btnLabel = isRestock ? 'Simpan Restock' : 'Simpan Retur';
+  var btnColor = isRestock ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-orange-600 hover:bg-orange-700';
+  // Category options
+  var catOpts = ['HP', 'Tablet', 'Laptop', 'Aksesoris'];
+  // Product dropdown
+  var prodOpts = '<option value="">— Pilih produk existing —</option>' +
+    products.map(function(p) { return '<option value="' + p.id + '">' + p.name + ' (Stok: ' + (p.stock || 0) + ')</option>'; }).join('');
+  var html =
+    '<div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" id="stock-modal" onclick="event.target.id===\'stock-modal\'&&hideModal(\'stock-modal\')">' +
+      '<div class="modal-box bg-zinc-900 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-auto border border-zinc-800" onclick="event.stopPropagation()">' +
+        '<h3 class="text-lg font-semibold mb-4" id="stock-modal-title">' + title + '</h3>' +
+        // Existing product
+        '<label class="block text-sm text-zinc-400 mb-1">Produk Existing</label>' +
+        '<select id="sm-product" onchange="updateStockHint()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 mb-3">' + prodOpts + '</select>' +
+        '<div class="divider-text text-[10px] text-zinc-600 my-2 text-center">— Atau isi manual (produk baru) —</div>' +
+        // Manual fields (always visible)
+        '<div id="sm-new-fields" class="space-y-3">' +
+          '<div>' +
+            '<label class="block text-sm text-zinc-400 mb-1">Nama Produk</label>' +
+            '<input id="sm-new-name" type="text" placeholder="cth: iPhone 15 Pro 256GB" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-3">' +
+            '<div>' +
+              '<label class="block text-sm text-zinc-400 mb-1">Kategori</label>' +
+              '<select id="sm-new-category" onchange="onNewCategoryChange()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
+                catOpts.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('') +
+              '</select>' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-sm text-zinc-400 mb-1">Brand</label>' +
+              '<input id="sm-new-brand" type="text" placeholder="cth: Apple" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        // Qty + harga modal (restock only)
+        '<div class="grid grid-cols-2 gap-3 mt-3">' +
+          '<div>' +
+            '<label class="block text-sm text-zinc-400 mb-1">Qty</label>' +
+            '<input id="sm-qty" type="number" value="1" min="1" oninput="updateImeiRows()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
+          '</div>' +
+          (isRestock ? '<div><label class="block text-sm text-zinc-400 mb-1">Harga Modal (Rp)</label><input id="sm-cost" type="number" placeholder="0" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100"></div>' : '') +
+        '</div>' +
+        // IMEI/SN
+        '<div class="mt-3">' +
+          '<label class="block text-sm text-zinc-400 mb-1" id="sm-imei-label">IMEI/SN (wajib, 1 per barang)</label>' +
+          '<div id="sm-imei-rows" class="space-y-2"></div>' +
+          '<p class="text-xs text-zinc-600 mt-1" id="sm-imei-hint"></p>' +
+        '</div>' +
+        // Stock hint
+        '<div id="sm-stock-hint" class="mt-3 text-sm text-zinc-400"></div>' +
+        // Buttons
+        '<div class="flex gap-2 mt-6">' +
+          '<button onclick="hideModal(\'stock-modal\')" class="flex-1 py-2.5 bg-zinc-800 text-zinc-300 rounded-lg text-sm">Batal</button>' +
+          '<button onclick="saveStockMove(\'' + type + '\')" class="flex-1 py-2.5 ' + btnColor + ' text-white rounded-lg text-sm font-medium">' + btnLabel + '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  // Init
+  onNewCategoryChange();
+  updateImeiRows();
+  updateStockHint();
+}
+
+function onNewCategoryChange() {
+  var cat = document.getElementById('sm-new-category');
+  if (!cat) return;
+  var catVal = cat.value;
+  var label = document.getElementById('sm-imei-label');
+  var hint = document.getElementById('sm-imei-hint');
+  var isDevice = (catVal === 'HP' || catVal === 'Tablet' || catVal === 'Laptop');
+  if (label) label.textContent = isDevice ? 'IMEI (wajib, 1 per barang)' : 'SN (wajib, 1 per barang)';
+  if (hint) hint.textContent = isDevice ? 'IMEI wajib untuk ' + catVal + '. Format angka 15 digit.' : 'SN wajib untuk aksesoris. Format bebas.';
+}
+
+function updateImeiRows() {
+  var qty = parseInt(document.getElementById('sm-qty').value) || 1;
+  var container = document.getElementById('sm-imei-rows');
+  if (!container) return;
+  var cat = document.getElementById('sm-new-category');
+  var catVal = cat ? cat.value : 'HP';
+  var isDevice = (catVal === 'HP' || catVal === 'Tablet' || catVal === 'Laptop');
+  var placeholder = isDevice ? 'IMEI...' : 'SN...';
+  var existing = [];
+  container.querySelectorAll('input').forEach(function(inp) { existing.push(inp.value); });
+  var html = '';
+  for (var i = 0; i < qty; i++) {
+    var val = existing[i] || '';
+    html += '<input type="text" placeholder="' + placeholder + ' #' + (i + 1) + '" value="' + val + '" class="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-sm sm-imei-input">';
+  }
+  container.innerHTML = html;
+}
+
+function updateStockHint() {
+  var sel = document.getElementById('sm-product');
+  var hint = document.getElementById('sm-stock-hint');
+  if (!sel || !hint) return;
+  if (!sel.value) { hint.textContent = ''; return; }
+  var p = products.find(function(x) { return x.id === sel.value; });
+  if (p) {
+    hint.innerHTML = 'Stok saat ini: <span class="font-semibold">' + (p.stock || 0) + '</span> · ' + (p.category || '') + ' ' + (p.brand || '');
+    // Sync category for IMEI label
+    var cat = document.getElementById('sm-new-category');
+    if (cat && p.category) { cat.value = p.category; onNewCategoryChange(); }
+  }
+}
+
+async function saveStockMove(type) {
+  var isRestock = type === 'restock';
+  var isRetur = type === 'retur';
+  var productId = document.getElementById('sm-product').value;
+  var manualName = document.getElementById('sm-new-name').value.trim();
+  var qty = parseInt(document.getElementById('sm-qty').value) || 0;
+  if (qty <= 0) { alert('Qty harus > 0'); return; }
+  // Collect IMEI/SN
+  var imeiInputs = document.querySelectorAll('.sm-imei-input');
+  var imeiList = [];
+  imeiInputs.forEach(function(inp) {
+    var v = inp.value.trim();
+    if (v) imeiList.push(v);
+  });
+  // Validate IMEI/SN — wajib for both restock and retur
+  if (imeiList.length !== qty) {
+    alert('Jumlah IMEI/SN harus sama dengan qty (' + qty + '). Sekarang: ' + imeiList.length);
+    return;
+  }
+  // Check duplicates within imeiList
+  var normalized = imeiList.map(normalizeImei);
+  var seen = {};
+  for (var i = 0; i < normalized.length; i++) {
+    if (seen[normalized[i]]) { alert('Ada IMEI/SN duplikat: ' + imeiList[i]); return; }
+    seen[normalized[i]] = true;
+  }
+  // Cost price (restock only)
+  var cost = null;
+  if (isRestock) {
+    var costInput = document.getElementById('sm-cost');
+    cost = parseInt(costInput ? costInput.value : 0) || 0;
+    if (cost <= 0) { alert('Harga modal wajib diisi untuk restock'); return; }
+  }
+  var now = Date.now();
+  try {
+    if (!db) throw new Error('Database tidak siap');
+    if (manualName) {
+      // Create new product from manual fields
+      var cat = document.getElementById('sm-new-category').value;
+      var brand = document.getElementById('sm-new-brand').value.trim();
+      var fresh = {
+        name: manualName,
+        category: cat,
+        brand: brand,
+        price: 0, // harga jual default 0, di-set saat kasir or edit
+        costPrice: isRestock ? cost : 0,
+        stock: isRestock ? qty : 0,
+        imeiPool: isRestock ? imeiList.slice() : [],
+        hasImei: imeiList.length > 0,
+        createdAt: now,
+        updatedAt: now
+      };
+      if (isRetur) {
+        alert('Retur tidak bisa membuat produk baru. Pilih produk existing.');
+        return;
+      }
+      // For retur, must select existing
+      var docRef = await db.collection(col('products')).add(fresh);
+      fresh.id = docRef.id;
+      products.push(fresh);
+      // Stock move
+      await db.collection(col('stockMoves')).add({
+        type: 'restock',
+        productId: fresh.id,
+        productName: fresh.name,
+        qty: qty,
+        costPrice: cost,
+        imeiList: imeiList,
+        createdAt: now
+      });
+      renderProductTable();
+      renderStockPanel();
+      updateStats();
+      hideModal('stock-modal');
+      showToast('Restock berhasil: ' + fresh.name + ' → +' + qty);
+      return;
+    }
+    // Existing product
+    if (!productId) { alert('Pilih produk existing atau isi manual untuk produk baru'); return; }
+    var p = products.find(function(x) { return x.id === productId; });
+    if (!p) { alert('Produk tidak ditemukan'); return; }
+    if (isRetur) {
+      // Validate IMEI exists in pool
+      var poolNorm = (p.imeiPool || []).map(normalizeImei);
+      for (var j = 0; j < normalized.length; j++) {
+        if (poolNorm.indexOf(normalized[j]) < 0) {
+          alert('IMEI/SN tidak ada di stok: ' + imeiList[j] + '. Tidak bisa retur.');
+          return;
+        }
+      }
+      if (qty > (p.stock || 0)) { alert('Qty retur melebihi stok (' + p.stock + ')'); return; }
+    }
+    // Calculate new stock + pool
+    var newStock = isRestock ? (p.stock || 0) + qty : (p.stock || 0) - qty;
+    var newPool;
+    if (isRestock) {
+      newPool = (p.imeiPool || []).concat(imeiList);
+    } else {
+      newPool = (p.imeiPool || []).filter(function(im) {
+        return !normalized.some(function(n) { return normalizeImei(im) === n; });
+      });
+    }
+    // Update local FIRST
+    p.stock = newStock;
+    p.imeiPool = newPool;
+    p.hasImei = newPool.length > 0;
+    if (isRestock && cost !== null) p.costPrice = cost;
+    // Build Firestore update
+    var upd = { stock: newStock, imeiPool: newPool, hasImei: newPool.length > 0, updatedAt: now };
+    if (isRestock && cost !== null) upd.costPrice = cost;
+    await db.collection(col('products')).doc(p.id).update(upd);
+    // Stock move
+    await db.collection(col('stockMoves')).add({
+      type: type,
+      productId: p.id,
+      productName: p.name,
+      qty: qty,
+      costPrice: isRestock ? cost : (p.costPrice || 0),
+      imeiList: imeiList,
+      createdAt: now
+    });
+    renderProductTable();
+    renderStockPanel();
+    updateStats();
+    hideModal('stock-modal');
+    var verb = isRestock ? 'ditambah' : 'diretur';
+    showToast('Stok ' + verb + ': ' + p.name + ' → ' + newStock);
+  } catch (e) {
+    alert('Gagal simpan: ' + e.message);
+  }
+}
+
+function renderStockPanel() {
+  var el = document.getElementById('stock-move-body');
+  if (!el) return;
+  if (stockMoves.length === 0) {
+    el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-zinc-600">Belum ada pergerakan stok</td></tr>';
+  } else {
+    el.innerHTML = stockMoves.slice(0, 50).map(function(m) {
+      var badge = '';
+      if (m.type === 'restock') badge = '<span class="text-xs px-2 py-0.5 bg-emerald-950 text-emerald-400 rounded">RESTOCK</span>';
+      else if (m.type === 'retur') badge = '<span class="text-xs px-2 py-0.5 bg-orange-950 text-orange-400 rounded">RETUR</span>';
+      else if (m.type === 'sale') badge = '<span class="text-xs px-2 py-0.5 bg-blue-950 text-blue-400 rounded">JUAL</span>';
+      var imei = (m.imeiList || []).join(', ');
+      if (imei.length > 30) imei = imei.substring(0, 30) + '...';
+      return '<tr class="border-t border-zinc-800">' +
+        '<td class="px-4 py-2 text-xs">' + formatDate(m.createdAt) + '</td>' +
+        '<td class="px-4 py-2">' + badge + '</td>' +
+        '<td class="px-4 py-2">' + (m.productName || '-') + '</td>' +
+        '<td class="px-4 py-2 text-right">' + (m.qty || 0) + '</td>' +
+        '<td class="px-4 py-2 text-right text-orange-400">' + formatRp(m.costPrice || 0) + '</td>' +
+        '<td class="px-4 py-2 text-xs text-zinc-400">' + imei + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+  updateStats();
+}
+
+function updateStats() {
+  var tp = document.getElementById('stk-total-products');
+  var ts = document.getElementById('stk-total-stock');
+  var ic = document.getElementById('stk-imei-count');
+  if (tp) tp.textContent = products.length;
+  if (ts) ts.textContent = products.reduce(function(s, p) { return s + (p.stock || 0); }, 0);
+  if (ic) ic.textContent = products.reduce(function(s, p) { return s + (p.imeiPool || []).length; }, 0);
+}
+
+// ============ HISTORY ============
+async function loadHistory() {
+  var el = document.getElementById('history-table-body');
+  if (!el) return;
+  el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-zinc-600">Memuat...</td></tr>';
+  if (!db) return;
+  try {
+    var snap = await db.collection(col('transactions')).orderBy('createdAt', 'desc').limit(100).get();
+    _historyTx = [];
+    snap.docs.forEach(function(doc) {
+      var t = doc.data();
+      t.id = doc.id;
+      _historyTx.push(t);
+    });
+    renderHistoryTable();
+  } catch (e) {
+    el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-red-400">Gagal: ' + e.message + '</td></tr>';
+  }
+}
+
+function renderHistoryTable() {
+  var el = document.getElementById('history-table-body');
+  if (!el) return;
+  if (_historyTx.length === 0) {
+    el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-zinc-600">Belum ada transaksi</td></tr>';
+    return;
+  }
+  el.innerHTML = _historyTx.map(function(t) {
+    var methodLabel = t.method === 'cash' ? 'Tunai' : (t.method === 'qris' ? 'QRIS' : 'Transfer');
+    return '<tr class="border-t border-zinc-800 hover:bg-zinc-950">' +
+      '<td class="px-4 py-3 text-xs">' + (t.receiptNo || '-') + '</td>' +
+      '<td class="px-4 py-3 text-xs">' + formatDate(t.createdAt) + '</td>' +
+      '<td class="px-4 py-3">' + (t.customerName || 'Walk-in') + '</td>' +
+      '<td class="px-4 py-3">' + methodLabel + '</td>' +
+      '<td class="px-4 py-3 text-right font-semibold text-emerald-400">' + formatRp(t.total) + '</td>' +
+      '<td class="px-4 py-3 text-center">' +
+        '<button onclick="reprintReceipt(\'' + t.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300">Reprint</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function reprintReceipt(txId) {
+  var t = _historyTx.find(function(x) { return x.id === txId; });
+  if (!t) { alert('Transaksi tidak ditemukan'); return; }
+  _lastReceiptNo = t.receiptNo;
+  _lastReceiptData = t;
+  showReceipt(t);
+}
+
+function exportHistoryExcel() {
+  if (_historyTx.length === 0) { alert('Tidak ada data untuk diexport'); return; }
+  if (typeof XLSX === 'undefined') { alert('Library Excel belum siap'); return; }
+  var data = _historyTx.map(function(t, i) {
+    var methodLabel = t.method === 'cash' ? 'Tunai' : (t.method === 'qris' ? 'QRIS' : 'Transfer');
+    var itemsStr = (t.items || []).map(function(it) {
+      return it.qty + 'x ' + it.name + ' @ ' + formatRp(it.price);
+    }).join('; ');
+    var modal = (t.items || []).reduce(function(s, it) { return s + ((it.costPrice || 0) * (it.qty || 0)); }, 0);
+    return {
+      'No': i + 1,
+      'No Struk': t.receiptNo || '-',
+      'Tanggal': formatDate(t.createdAt),
+      'Customer': t.customerName || 'Walk-in',
+      'Kasir': t.kasirName || '-',
+      'Metode': methodLabel,
+      'Total': t.total || 0,
+      'Modal': modal,
+      'Profit': (t.total || 0) - modal,
+      'Item': (t.items || []).length,
+      'Detail Item': itemsStr
+    };
+  });
+  var ws = XLSX.utils.json_to_sheet(data);
+  // Auto width
+  var colWidths = Object.keys(data[0]).map(function(k) {
+    return { wch: Math.max(k.length, ...data.map(function(r) { return String(r[k] || '').length; })) + 2 };
+  });
+  ws['!cols'] = colWidths;
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'History');
+  var storeName = (typeof STORE !== 'undefined' && STORE.name) ? STORE.name : 'POS';
+  XLSX.writeFile(wb, 'HISTORY-' + storeName + '-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+}
+
+// ============ LAPORAN ============
+function periodRange(period, anchor) {
+  var start, end, label;
+  var a = new Date(anchor);
+  if (period === 'harian') {
+    start = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+    end = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 1);
+    label = start.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+  } else if (period === 'mingguan') {
+    var day = a.getDay() || 7; // 0=Sun → 7
+    start = new Date(a.getFullYear(), a.getMonth(), a.getDate() - day + 1);
+    end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+    label = start.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) + ' - ' + new Date(end.getTime() - 1).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+  } else if (period === 'bulanan') {
+    start = new Date(a.getFullYear(), a.getMonth(), 1);
+    end = new Date(a.getFullYear(), a.getMonth() + 1, 1);
+    label = start.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  } else if (period === 'tahunan') {
+    start = new Date(a.getFullYear(), 0, 1);
+    end = new Date(a.getFullYear() + 1, 0, 1);
+    label = String(a.getFullYear());
+  }
+  return { start: start, end: end, label: label };
+}
+
+function shiftReport(dir) {
+  var p = window.reportPeriod;
+  var a = new Date(window.reportAnchor);
+  if (p === 'harian') a.setDate(a.getDate() + dir);
+  else if (p === 'mingguan') a.setDate(a.getDate() + dir * 7);
+  else if (p === 'bulanan') a.setMonth(a.getMonth() + dir);
+  else if (p === 'tahunan') a.setFullYear(a.getFullYear() + dir);
+  window.reportAnchor = a;
+  onReportPeriodChange();
+}
+
+function onReportPeriodChange() {
+  var sel = document.getElementById('report-period');
+  if (!sel) return;
+  window.reportPeriod = sel.value;
+  var navEl = document.getElementById('report-nav');
+  var customEl = document.getElementById('report-custom-dates');
+  if (window.reportPeriod === 'custom') {
+    if (navEl) navEl.classList.add('hidden');
+    if (customEl) customEl.classList.remove('hidden');
+    return;
+  }
+  if (navEl) navEl.classList.remove('hidden');
+  if (customEl) customEl.classList.add('hidden');
+  var r = periodRange(window.reportPeriod, window.reportAnchor);
+  var labelEl = document.getElementById('report-range-label');
+  if (labelEl) labelEl.textContent = r.label;
+  loadTransactionsInRange(r.start.getTime(), r.end.getTime());
+}
+
+function loadCustomReport() {
+  var startStr = document.getElementById('report-start-date').value;
+  var endStr = document.getElementById('report-end-date').value;
+  if (!startStr || !endStr) { alert('Pilih tanggal awal dan akhir'); return; }
+  var start = new Date(startStr + 'T00:00:00').getTime();
+  var end = new Date(endStr + 'T23:59:59').getTime() + 1000;
+  if (start >= end) { alert('Tanggal awal harus sebelum tanggal akhir'); return; }
+  var labelEl = document.getElementById('report-range-label');
+  if (labelEl) labelEl.textContent = startStr + ' → ' + endStr;
+  loadTransactionsInRange(start, end);
+}
+
+async function loadTransactionsInRange(start, end) {
+  if (!db) return;
+  var thead = document.getElementById('report-thead');
+  var tbody = document.getElementById('report-table-body');
+  if (!thead || !tbody) return;
+  tbody.innerHTML = '<tr><td class="text-center py-6 text-zinc-600">Memuat...</td></tr>';
+  try {
+    // Build product cost map
+    var prodCost = {};
+    products.forEach(function(p) { if (p.name) prodCost[p.name] = p.costPrice || 0; });
+    window._currentProductCost = prodCost;
+    var snap = await db.collection(col('transactions'))
+      .where('createdAt', '>=', start)
+      .where('createdAt', '<', end)
+      .orderBy('createdAt', 'desc')
+      .get();
+    var rows = [];
+    var txCount = 0, omzet = 0, modalTotal = 0, profitTotal = 0;
+    snap.docs.forEach(function(doc) {
+      var d = doc.data();
+      var modal = (d.items || []).reduce(function(s, it) {
+        var currentCost = prodCost[it.name] != null ? prodCost[it.name] : (it.costPrice || 0);
+        return s + (currentCost * (it.qty || 0));
+      }, 0);
+      var total = d.total || 0;
+      var profit = total - modal;
+      txCount++; omzet += total; modalTotal += modal; profitTotal += profit;
+      rows.push({
+        receiptNo: d.receiptNo || '-',
+        date: formatDate(d.createdAt),
+        customer: d.customerName || 'Walk-in',
+        method: d.method === 'cash' ? 'Tunai' : (d.method === 'qris' ? 'QRIS' : 'Transfer'),
+        total: total,
+        modal: modal,
+        profit: profit,
+        items: (d.items || []).length
+      });
+    });
+    // Render header
+    thead.innerHTML = '<tr>' +
+      '<th class="text-left px-4 py-3">No Struk</th>' +
+      '<th class="text-left px-4 py-3">Tanggal</th>' +
+      '<th class="text-left px-4 py-3">Customer</th>' +
+      '<th class="text-left px-4 py-3">Metode</th>' +
+      '<th class="text-right px-4 py-3">Total</th>' +
+      '<th class="text-right px-4 py-3">Modal</th>' +
+      '<th class="text-right px-4 py-3">Profit</th>' +
+      '<th class="text-center px-4 py-3">Item</th>' +
+    '</tr>';
+    // Render rows
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center py-6 text-zinc-600">Tidak ada transaksi di periode ini</td></tr>';
+    } else {
+      tbody.innerHTML = rows.map(function(r) {
+        return '<tr class="border-t border-zinc-800">' +
+          '<td class="px-4 py-2 text-xs">' + r.receiptNo + '</td>' +
+          '<td class="px-4 py-2 text-xs">' + r.date + '</td>' +
+          '<td class="px-4 py-2">' + r.customer + '</td>' +
+          '<td class="px-4 py-2">' + r.method + '</td>' +
+          '<td class="px-4 py-2 text-right text-emerald-400">' + formatRp(r.total) + '</td>' +
+          '<td class="px-4 py-2 text-right text-orange-400">' + formatRp(r.modal) + '</td>' +
+          '<td class="px-4 py-2 text-right font-semibold">' + formatRp(r.profit) + '</td>' +
+          '<td class="px-4 py-2 text-center">' + r.items + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+    // Summary
+    var elTx = document.getElementById('r-tx');
+    var elOm = document.getElementById('r-omzet');
+    var elMo = document.getElementById('r-modal');
+    var elPr = document.getElementById('r-profit');
+    var elAv = document.getElementById('r-avg');
+    if (elTx) elTx.textContent = txCount;
+    if (elOm) elOm.textContent = formatRp(omzet);
+    if (elMo) elMo.textContent = formatRp(modalTotal);
+    if (elPr) elPr.textContent = formatRp(profitTotal);
+    if (elAv) elAv.textContent = formatRp(txCount > 0 ? Math.round(omzet / txCount) : 0);
+    // Store rows for export
+    window._currentReportRows = rows;
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-6 text-red-400">Gagal: ' + e.message + '</td></tr>';
+  }
+}
+
+function exportReportExcel() {
+  var rows = window._currentReportRows || [];
+  if (rows.length === 0) { alert('Tidak ada data untuk diexport'); return; }
+  if (typeof XLSX === 'undefined') { alert('Library Excel belum siap'); return; }
+  var data = rows.map(function(r, i) {
+    return {
+      'No': i + 1,
+      'No Struk': r.receiptNo,
+      'Tanggal': r.date,
+      'Customer': r.customer,
+      'Metode': r.method,
+      'Total': r.total,
+      'Modal': r.modal,
+      'Profit': r.profit,
+      'Item': r.items
+    };
+  });
+  // Add TOTAL row
+  var totalOmzet = rows.reduce(function(s, r) { return s + r.total; }, 0);
+  var totalModal = rows.reduce(function(s, r) { return s + r.modal; }, 0);
+  var totalProfit = rows.reduce(function(s, r) { return s + r.profit; }, 0);
+  data.push({ 'No': '', 'No Struk': '', 'Tanggal': '', 'Customer': '', 'Metode': 'TOTAL', 'Total': totalOmzet, 'Modal': totalModal, 'Profit': totalProfit, 'Item': '' });
+  var ws = XLSX.utils.json_to_sheet(data);
+  var colWidths = Object.keys(data[0]).map(function(k) {
+    return { wch: Math.max(k.length, ...data.map(function(r) { return String(r[k] || '').length; })) + 2 };
+  });
+  ws['!cols'] = colWidths;
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Laporan');
+  var storeName = (typeof STORE !== 'undefined' && STORE.name) ? STORE.name : 'POS';
+  var periodLabel = window.reportPeriod || 'laporan';
+  XLSX.writeFile(wb, 'LAPORAN-' + storeName + '_' + periodLabel + '_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // v3-* collections (clean rebuild)
+    function isAuth() { return request.auth != null; }
+
+    match /v3-products/{doc} {
+      allow read, write: if isAuth();
+    }
+    match /v3-stock-moves/{doc} {
+      allow read, write: if isAuth();
+    }
+    match /v3-transactions/{doc} {
+      allow read, write: if isAuth();
+    }
+    match /v3-users/{doc} {
+      allow read, write: if isAuth();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

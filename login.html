@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#10b981">
+<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="pragma" content="no-cache">
+<title>Login — POS Toko HP</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="config.js"></script>
+<style>
+  body { background:#0a0a0b; }
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center text-zinc-100">
+  <div class="w-full max-w-sm px-6">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-3" style="background:rgba(16,185,129,.15);">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" style="color:#10b981" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18"/>
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold" id="store-name">Toko HP</h1>
+      <p class="text-sm text-zinc-400 mt-1">Masuk dengan akun Anda</p>
+    </div>
+
+    <form id="login-form" class="space-y-4">
+      <div>
+        <label class="block text-sm text-zinc-300 mb-1">Email</label>
+        <input id="email" type="email" required autocomplete="email"
+               class="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-zinc-100">
+      </div>
+      <div>
+        <label class="block text-sm text-zinc-300 mb-1">Password</label>
+        <input id="password" type="password" required autocomplete="current-password"
+               class="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-zinc-100">
+      </div>
+      <button type="submit" id="login-btn"
+              class="w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition">
+        Masuk
+      </button>
+    </form>
+
+    <div id="error" class="mt-4 text-sm text-red-400 text-center hidden"></div>
+    <p class="mt-6 text-xs text-zinc-600 text-center">POS Enterprise v3 · Clean Rebuild</p>
+  </div>
+
+<script>
+// --- Init Firebase with retry ---
+let auth = null;
+function initFirebase() {
+  if (auth) return true;
+  if (typeof firebase === 'undefined') return false;
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    auth = firebase.auth();
+    return true;
+  } catch (e) {
+    console.error('Firebase init failed', e);
+    return false;
+  }
+}
+if (!initFirebase()) {
+  document.addEventListener('DOMContentLoaded', function() {
+    if (!initFirebase()) {
+      document.body.innerHTML = '<div class="min-h-screen flex items-center justify-center text-red-400 p-6 text-center">⚠ Gagal memuat Firebase SDK. Periksa koneksi internet.</div>';
+    }
+  });
+}
+
+// --- Store name ---
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof STORE !== 'undefined') {
+    document.getElementById('store-name').textContent = STORE.name;
+    document.title = 'Login — ' + STORE.name;
+  }
+});
+
+// --- Already logged in? ---
+if (auth) {
+  auth.onAuthStateChanged(function(user) {
+    if (user) window.location.href = 'index.html';
+  });
+}
+
+// --- Submit ---
+document.getElementById('login-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  const errBox = document.getElementById('error');
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  errBox.classList.add('hidden');
+  btn.disabled = true;
+  btn.textContent = 'Memproses...';
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    window.location.href = 'index.html';
+  } catch (err) {
+    let msg = err.message || 'Login gagal';
+    if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+      msg = 'Email atau password salah';
+    } else if (err.code === 'auth/too-many-requests') {
+      msg = 'Terlalu banyak percobaan. Coba lagi nanti.';
+    } else if (err.code === 'auth/network-request-failed') {
+      msg = 'Gangguan jaringan. Periksa koneksi internet.';
+    }
+    errBox.textContent = msg;
+    errBox.classList.remove('hidden');
+    btn.disabled = false;
+    btn.textContent = 'Masuk';
+  }
+});
+</script>
+</body>
+</html>
