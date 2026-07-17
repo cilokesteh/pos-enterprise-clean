@@ -7,12 +7,12 @@
 // ISI dengan config dari Firebase Console > Project Settings > Web App.
 // Untuk sekarang pakai placeholder — ganti setelah buat Firebase project.
 const FIREBASE_CONFIG = {
-  apiKey:            'REPLACE_WITH_YOUR_API_KEY',
-  authDomain:        'REPLACE_WITH_YOUR_PROJECT.firebaseapp.com',
-  projectId:         'REPLACE_WITH_YOUR_PROJECT_ID',
-  storageBucket:     'REPLACE_WITH_YOUR_PROJECT.appspot.com',
-  messagingSenderId: 'REPLACE_WITH_YOUR_SENDER_ID',
-  appId:             'REPLACE_WITH_YOUR_APP_ID'
+  apiKey:            'AIzaSyAlBo62JwrIKyIZahBgYRYYuIo48bI623s',
+  authDomain:        'pos-enterprise-9dde0.firebaseapp.com',
+  projectId:         'pos-enterprise-9dde0',
+  storageBucket:     'pos-enterprise-9dde0.firebasestorage.app',
+  messagingSenderId: '468231563907',
+  appId:             '1:468231563907:web:ea437b138d7e868b66c9b6'
 };
 
 // --- Store identity ---
@@ -40,7 +40,7 @@ const COLLECTIONS = {
 
 // --- Auth / roles ---
 // Admin email (dapat akses semua). Email lain = kasir (kasir + history own + reprint).
-const ADMIN_EMAIL = 'admin@tokohp.com';
+const ADMIN_EMAIL = 'Admin@enterprise.com';
 
 // --- Theme ---
 const THEME = {
