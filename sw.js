@@ -1,5 +1,5 @@
 // sw.js — service worker (cache-first for app shell, never cache Firebase)
-const CACHE = 'pos-clean-v1';
+const CACHE = 'pos-clean-v2';
 const ASSETS = [
   './',
   './index.html',
