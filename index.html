@@ -554,7 +554,7 @@ function scanImei() {
         '</div>' +
         '<div class="text-right">' +
           '<div class="text-xs text-zinc-500">Harga Jual</div>' +
-          '<input id="scan-price" type="number" value="' + (found.price || 0) + '" class="w-32 px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100 mt-1">' +
+          '<input id="scan-price" type="text" inputmode="numeric" value="' + (found.price || 0) + '" class="w-32 px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100 mt-1">' +
         '</div>' +
       '</div>' +
       '<button onclick="addScannedToCart(\'' + found.id + '\',\'' + foundImei.replace(/'/g, "\\'") + '\')" class="w-full mt-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-medium text-white">+ Tambah ke Keranjang</button>' +
@@ -664,7 +664,7 @@ function showPaymentModal() {
         '</select>' +
         '<div id="pay-cash-fields" class="mt-4">' +
           '<label class="block text-sm text-zinc-400 mb-2">Uang Diterima</label>' +
-          '<input id="pay-cash" type="number" value="' + total + '" oninput="updateChange()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
+          '<input id="pay-cash" type="text" inputmode="numeric" value="' + total + '" oninput="updateChange()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
           '<div class="flex justify-between text-sm mt-2"><span class="text-zinc-400">Kembalian</span><span id="pay-change" class="font-bold">Rp 0</span></div>' +
         '</div>' +
         '<div id="pay-customer" class="mt-4">' +
@@ -994,7 +994,7 @@ function showEditPriceModal(id) {
         '<h3 class="text-lg font-semibold mb-1">Edit Harga Jual</h3>' +
         '<p class="text-sm text-zinc-400 mb-4">' + p.name + ' (' + (p.category || '') + ' · ' + (p.brand || '') + ')</p>' +
         '<label class="block text-sm text-zinc-400 mb-2">Harga Jual (Rp)</label>' +
-        '<input id="edit-price-input" type="number" value="' + (p.price || 0) + '" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
+        '<input id="edit-price-input" type="text" inputmode="numeric" value="' + (p.price || 0) + '" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
         '<div class="flex gap-2 mt-6">' +
           '<button onclick="hideModal(\'edit-price-modal\')" class="flex-1 py-2.5 bg-zinc-800 text-zinc-300 rounded-lg text-sm">Batal</button>' +
           '<button onclick="saveProductPrice(\'' + p.id + '\')" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium">Simpan</button>' +
@@ -1069,7 +1069,7 @@ function showStockModal(type) {
             '<label class="block text-sm text-zinc-400 mb-1">Qty</label>' +
             '<input id="sm-qty" type="number" value="1" min="1" oninput="updateImeiRows()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
           '</div>' +
-          (isRestock ? '<div><label class="block text-sm text-zinc-400 mb-1">Harga Modal (Rp)</label><input id="sm-cost" type="number" placeholder="0" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100"></div>' : '') +
+          (isRestock ? '<div><label class="block text-sm text-zinc-400 mb-1">Harga Modal (Rp)</label><input id="sm-cost" type="text" inputmode="numeric" placeholder="0" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100"></div>' : '') +
         '</div>' +
         // IMEI/SN
         '<div class="mt-3">' +
