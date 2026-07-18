@@ -139,7 +139,7 @@
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
         Keluar
       </button>
-      <div class="text-[10px] text-zinc-700 mt-3">v6</div>
+      <div class="text-[10px] text-zinc-700 mt-3">v7</div>
       <div class="text-[9px] text-zinc-700 mt-1">&copy; 2026 ciloktech.my.id</div>
     </div>
   </aside>
@@ -829,8 +829,8 @@ function showPaymentModal() {
   }
   var total = cart.reduce(function(s, i) { return s + i.subtotal; }, 0);
   var html =
-    '<div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center z-50" id="payment-modal" onclick="event.target.id===\'payment-modal\'&&hideModal(\'payment-modal\')">' +
-      '<div class="modal-box bg-zinc-900 rounded-xl p-6 w-full max-w-md border border-zinc-800" onclick="event.stopPropagation()">' +
+    '<div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" id="payment-modal" onclick="event.target.id===\'payment-modal\'&&hideModal(\'payment-modal\')">' +
+      '<div class="modal-box bg-zinc-900 rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto border border-zinc-800" onclick="event.stopPropagation()">' +
         '<h3 class="text-lg font-semibold mb-4">Pembayaran</h3>' +
         '<div class="flex justify-between text-sm mb-2"><span class="text-zinc-400">Total</span><span class="font-bold text-emerald-400" id="pay-total-display">' + formatRp(total) + '</span></div>' +
         '<label class="block text-sm text-zinc-400 mt-4 mb-2">Metode Pembayaran</label>' +
@@ -1229,38 +1229,34 @@ function downloadPdf() {
     alert('Library PDF belum siap. Coba lagi.');
     return;
   }
-  // Clone receipt into a temp wrapper with fixed width matching paper
-  var tmp = document.createElement('div');
-  tmp.style.cssText = 'position:fixed;left:-9999px;top:0;width:' + w + 'mm;padding:4mm 3mm;background:#fff;color:#000;font-family:"Courier New",monospace;font-size:12px;line-height:1.4;';
-  tmp.innerHTML = element.innerHTML;
-  document.body.appendChild(tmp);
+  // Capture the VISIBLE receipt-display directly (it's in the open receipt modal)
+  // Do NOT clone off-screen — html2canvas can't render zero-dimension off-screen elements
   try {
-    html2canvas(tmp, {
+    html2canvas(element, {
       scale: 2,
       backgroundColor: '#ffffff',
       useCORS: true,
       allowTaint: true,
       scrollX: 0,
       scrollY: 0,
-      windowWidth: tmp.scrollWidth || 400,
-      windowHeight: tmp.scrollHeight || 600
+      windowWidth: Math.max(400, element.scrollWidth || window.innerWidth),
+      windowHeight: Math.max(400, element.scrollHeight || window.innerHeight)
     }).then(function(canvas) {
-      document.body.removeChild(tmp);
       var imgData = canvas.toDataURL('image/jpeg', 0.98);
       var imgW = canvas.width;
       var imgH = canvas.height;
+      if (imgW === 0 || imgH === 0) {
+        alert('Gagal capture struk. Coba lagi.');
+        return;
+      }
       var pdfW = w; // mm
       var pdfH = (imgH / imgW) * pdfW; // auto aspect ratio
       var jsPDF = window.jspdf.jsPDF;
       var pdf = new jsPDF({ unit: 'mm', format: [pdfW, pdfH], orientation: 'portrait' });
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
       pdf.save((_lastReceiptNo || 'receipt') + '.pdf');
-    }).catch(function(e) {
-      document.body.removeChild(tmp);
-      alert('Gagal PDF: ' + e.message);
-    });
+    }).catch(function(e) { alert('Gagal PDF: ' + e.message); });
   } catch (e) {
-    if (tmp.parentNode) document.body.removeChild(tmp);
     alert('Gagal PDF: ' + e.message);
   }
 }
@@ -1325,18 +1321,12 @@ async function sendReceiptToWA() {
     var element = document.getElementById('receipt-display');
     if (element && typeof html2pdf !== 'undefined') {
       var w = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
-      // Clone into fixed-width wrapper for consistent capture
-      var tmpWa = document.createElement('div');
-      tmpWa.style.cssText = 'position:fixed;left:-9999px;top:0;width:' + w + 'mm;padding:4mm 3mm;background:#fff;color:#000;font-family:"Courier New",monospace;font-size:12px;line-height:1.4;';
-      tmpWa.innerHTML = element.innerHTML;
-      document.body.appendChild(tmpWa);
       var blob = await html2pdf().set({
         margin: 0, filename: (_lastReceiptNo || 'receipt') + '.pdf',
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true, scrollX: 0, scrollY: 0, windowWidth: tmpWa.scrollWidth || 400, windowHeight: tmpWa.scrollHeight || 600 },
+        html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true, scrollX: 0, scrollY: 0, windowWidth: Math.max(400, element.scrollWidth || window.innerWidth), windowHeight: Math.max(400, element.scrollHeight || window.innerHeight) },
         jsPDF: { unit: 'mm', format: [w, 200], orientation: 'portrait' }
-      }).from(tmpWa).outputPdf('blob');
-      document.body.removeChild(tmpWa);
+      }).from(element).outputPdf('blob');
       var file = new File([blob], 'struk.pdf', { type: 'application/pdf' });
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: 'Struk ' + t.receiptNo });
