@@ -872,13 +872,11 @@ function showPaymentModal() {
             '<input id="pay-split-transfer" type="text" inputmode="numeric" value="0" oninput="updateSplitTotals()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
           '</div>' +
           '<div>' +
-            '<label class="block text-sm text-zinc-400 mb-2">Kartu (Rp)</label>' +
-            '<input id="pay-split-card" type="text" inputmode="numeric" value="0" oninput="updateSplitTotals()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100 mb-2">' +
-            '<select id="pay-split-card-type" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 mb-2">' +
-              '<option value="debit">Debit</option>' +
-              '<option value="credit">Kredit</option>' +
-            '</select>' +
-            '<input id="pay-split-card-number" type="text" inputmode="numeric" placeholder="Nomor Kartu (opsional)" maxlength="19" oninput="formatCardNumber(this)" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
+            '<div class="flex items-center justify-between mb-2">' +
+              '<label class="text-sm text-zinc-400">Kartu (Rp)</label>' +
+              '<button type="button" onclick="addSplitCard()" id="btn-add-split-card" class="text-xs text-emerald-400 hover:text-emerald-300">+ Tambah Kartu</button>' +
+            '</div>' +
+            '<div id="split-cards-container" class="space-y-3"></div>' +
           '</div>' +
           '<div class="flex justify-between text-sm pt-2 border-t border-zinc-800"><span class="text-zinc-400">Total Input</span><span id="pay-split-sum" class="font-bold">Rp 0</span></div>' +
           '<div class="flex justify-between text-sm"><span class="text-zinc-400">Sisa/Kembalian</span><span id="pay-split-remaining" class="font-bold">Rp 0</span></div>' +
@@ -894,6 +892,8 @@ function showPaymentModal() {
       '</div>' +
     '</div>';
   document.body.insertAdjacentHTML('beforeend', html);
+  // Reset split cards counter
+  _splitCardCount = 0;
 }
 
 function onPayMethodChange() {
@@ -904,6 +904,8 @@ function onPayMethodChange() {
   if (cashFields) cashFields.style.display = (method === 'cash') ? 'block' : 'none';
   if (cardFields) cardFields.style.display = (method === 'card') ? 'block' : 'none';
   if (splitFields) splitFields.style.display = (method === 'split') ? 'block' : 'none';
+  // Reset split cards when switching away from split
+  if (method !== 'split') resetSplitCards();
 }
 
 function updateSplitTotals() {
@@ -911,8 +913,12 @@ function updateSplitTotals() {
   var cash = parseInt(document.getElementById('pay-split-cash').value) || 0;
   var qris = parseInt(document.getElementById('pay-split-qris').value) || 0;
   var transfer = parseInt(document.getElementById('pay-split-transfer').value) || 0;
-  var card = parseInt(document.getElementById('pay-split-card').value) || 0;
-  var sum = cash + qris + transfer + card;
+  // Sum all card amounts
+  var cardTotal = 0;
+  document.querySelectorAll('.split-card-amount').forEach(function(inp) {
+    cardTotal += parseInt(inp.value) || 0;
+  });
+  var sum = cash + qris + transfer + cardTotal;
   var remaining = sum - total;
   var sumEl = document.getElementById('pay-split-sum');
   var remEl = document.getElementById('pay-split-remaining');
@@ -921,6 +927,78 @@ function updateSplitTotals() {
     remEl.textContent = formatRp(remaining);
     remEl.style.color = remaining < 0 ? '#f87171' : (remaining > 0 ? '#fbbf24' : '#10b981');
   }
+}
+
+var _splitCardCount = 0;
+var MAX_SPLIT_CARDS = 5;
+
+function addSplitCard() {
+  if (_splitCardCount >= MAX_SPLIT_CARDS) {
+    alert('Maksimal ' + MAX_SPLIT_CARDS + ' kartu dalam 1 transaksi split');
+    return;
+  }
+  _splitCardCount++;
+  var n = _splitCardCount;
+  var container = document.getElementById('split-cards-container');
+  if (!container) return;
+  var html =
+    '<div class="flex gap-2 items-start split-card-row" id="split-card-row-' + n + '">' +
+      '<div class="flex-1 space-y-2">' +
+        '<div class="flex gap-2">' +
+          '<input type="text" inputmode="numeric" placeholder="Nominal (Rp)" class="split-card-amount flex-1 px-3 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100 text-sm" oninput="updateSplitTotals()">' +
+          '<select class="split-card-type px-2 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-sm">' +
+            '<option value="debit">Debit</option>' +
+            '<option value="credit">Kredit</option>' +
+          '</select>' +
+        '</div>' +
+        '<input type="text" inputmode="numeric" placeholder="Nomor Kartu (opsional)" maxlength="19" oninput="formatCardNumber(this)" class="split-card-number w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-sm">' +
+      '</div>' +
+      '<button type="button" onclick="removeSplitCard(' + n + ')" class="mt-1 text-red-400 hover:text-red-300 text-lg px-1">✕</button>' +
+    '</div>';
+  container.insertAdjacentHTML('beforeend', html);
+  // Focus the amount input
+  var lastAmount = container.querySelector('#split-card-row-' + n + ' .split-card-amount');
+  if (lastAmount) lastAmount.focus();
+  updateAddCardButton();
+}
+
+function removeSplitCard(n) {
+  var row = document.getElementById('split-card-row-' + n);
+  if (row) row.remove();
+  updateSplitTotals();
+  updateAddCardButton();
+}
+
+function updateAddCardButton() {
+  var btn = document.getElementById('btn-add-split-card');
+  var rows = document.querySelectorAll('.split-card-row');
+  if (btn) {
+    if (rows.length >= MAX_SPLIT_CARDS) {
+      btn.classList.add('hidden');
+    } else {
+      btn.classList.remove('hidden');
+    }
+  }
+}
+
+function resetSplitCards() {
+  _splitCardCount = 0;
+  var container = document.getElementById('split-cards-container');
+  if (container) container.innerHTML = '';
+  updateAddCardButton();
+}
+
+function getSplitCards() {
+  var cards = [];
+  document.querySelectorAll('.split-card-row').forEach(function(row) {
+    var amount = parseInt(row.querySelector('.split-card-amount').value) || 0;
+    var type = row.querySelector('.split-card-type').value;
+    var number = (row.querySelector('.split-card-number').value || '').replace(/\s+/g, '');
+    if (amount > 0) {
+      cards.push({ amount: amount, type: type, number: number, masked: number.length >= 12 ? maskCardNumber(number) : '' });
+    }
+  });
+  return cards;
 }
 
 function formatCardNumber(input) {
@@ -965,25 +1043,22 @@ async function processPayment() {
     var sCash = parseInt(document.getElementById('pay-split-cash').value) || 0;
     var sQris = parseInt(document.getElementById('pay-split-qris').value) || 0;
     var sTransfer = parseInt(document.getElementById('pay-split-transfer').value) || 0;
-    var sCard = parseInt(document.getElementById('pay-split-card').value) || 0;
-    var sSum = sCash + sQris + sTransfer + sCard;
-    if (sSum < total) { alert('Total split (Rp ' + sSum.toLocaleString('id-ID') + ') kurang dari total tagihan (Rp ' + total.toLocaleString('id-ID') + ')'); return; }
+    var sCards = getSplitCards();
+    var sCardTotal = sCards.reduce(function(s, c) { return s + c.amount; }, 0);
+    var sSum = sCash + sQris + sTransfer + sCardTotal;
+    if (sSum < total) { alert('Total split (' + formatRp(sSum) + ') kurang dari total tagihan (' + formatRp(total) + ')'); return; }
     if (sSum > total) {
-      // Overpayment in split — cash portion gets the change
       change = sSum - total;
-      cash = sCash; // cash portion as input
+      cash = sCash;
     } else {
       cash = sCash;
     }
-    var sCardType = document.getElementById('pay-split-card-type').value;
-    var sCardNum = (document.getElementById('pay-split-card-number').value || '').replace(/\s+/g, '');
-    var sCardMasked = '';
-    if (sCard > 0) {
-      if (sCardNum && sCardNum.length >= 12) sCardMasked = maskCardNumber(sCardNum);
-      cardType = sCardType;
-      cardMasked = sCardMasked;
+    // Use first card for cardType/cardMasked (for backward compat in receipt)
+    if (sCards.length > 0 && sCards[0].masked) {
+      cardType = sCards[0].type;
+      cardMasked = sCards[0].masked;
     }
-    split = { cash: sCash, qris: sQris, transfer: sTransfer, card: sCard, cardType: sCardType, cardMasked: sCardMasked };
+    split = { cash: sCash, qris: sQris, transfer: sTransfer, cards: sCards };
   } else {
     // Non-cash: exact match
     if (total <= 0) { alert('Total tidak valid'); return; }
@@ -1156,11 +1231,15 @@ function buildReceiptHtml(tx) {
     if (s.cash > 0) payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>Tunai</span><span>' + formatRp(s.cash) + '</span></div>';
     if (s.qris > 0) payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>QRIS</span><span>' + formatRp(s.qris) + '</span></div>';
     if (s.transfer > 0) payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>Transfer</span><span>' + formatRp(s.transfer) + '</span></div>';
-    if (s.card > 0) {
-      var sCardLabel = 'Kartu ' + (s.cardType === 'credit' ? 'Kredit' : 'Debit');
-      payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>' + sCardLabel + '</span><span>' + formatRp(s.card) + '</span></div>';
-      if (s.cardMasked) payLine += '<div style="display:flex;justify-content:space-between;font-size:10px;"><span>No Kartu</span><span>' + s.cardMasked + '</span></div>';
-    }
+    // Handle multiple cards
+    var cards = s.cards || (s.card > 0 ? [{ amount: s.card, type: s.cardType, masked: s.cardMasked }] : []);
+    cards.forEach(function(c, ci) {
+      if (c.amount > 0) {
+        var cardLabel = 'Kartu ' + (c.type === 'credit' ? 'Kredit' : 'Debit') + (cards.length > 1 ? ' #' + (ci + 1) : '');
+        payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>' + cardLabel + '</span><span>' + formatRp(c.amount) + '</span></div>';
+        if (c.masked) payLine += '<div style="display:flex;justify-content:space-between;font-size:10px;"><span>No Kartu</span><span>' + c.masked + '</span></div>';
+      }
+    });
     if (tx.change > 0) payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>Kembali</span><span>' + formatRp(tx.change) + '</span></div>';
   } else {
     payLine = '<div style="display:flex;justify-content:space-between;"><span>Metode</span><span>' + methodLabel + '</span></div>';
@@ -1290,10 +1369,15 @@ async function sendReceiptToWA() {
     if (sp.cash > 0) splitLine += '  Tunai: ' + formatRp(sp.cash) + '\n';
     if (sp.qris > 0) splitLine += '  QRIS: ' + formatRp(sp.qris) + '\n';
     if (sp.transfer > 0) splitLine += '  Transfer: ' + formatRp(sp.transfer) + '\n';
-    if (sp.card > 0) {
-      splitLine += '  Kartu ' + (sp.cardType === 'credit' ? 'Kredit' : 'Debit') + ': ' + formatRp(sp.card) + '\n';
-      if (sp.cardMasked) splitLine += '  No Kartu: ' + sp.cardMasked + '\n';
-    }
+    // Handle multiple cards
+    var cards = sp.cards || (sp.card > 0 ? [{ amount: sp.card, type: sp.cardType, masked: sp.cardMasked }] : []);
+    cards.forEach(function(c, ci) {
+      if (c.amount > 0) {
+        var cLabel = 'Kartu ' + (c.type === 'credit' ? 'Kredit' : 'Debit') + (cards.length > 1 ? ' #' + (ci + 1) : '');
+        splitLine += '  ' + cLabel + ': ' + formatRp(c.amount) + '\n';
+        if (c.masked) splitLine += '  No Kartu: ' + c.masked + '\n';
+      }
+    });
     if (t.change > 0) splitLine += 'Kembali: ' + formatRp(t.change) + '\n';
   }
   var textMsg = '*' + storeName + '*\n' +
