@@ -138,8 +138,8 @@
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
         Keluar
       </button>
-      <div class="text-[10px] text-zinc-700 mt-3">v4</div>
-      <div class="text-[9px] text-zinc-700 mt-1">&copy; 2026 POS Enterprise</div>
+      <div class="text-[10px] text-zinc-700 mt-3">v5</div>
+      <div class="text-[9px] text-zinc-700 mt-1">&copy; 2026 ciloktech.my.id</div>
     </div>
   </aside>
 
@@ -296,7 +296,12 @@
         <div class="max-w-5xl mx-auto">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
             <h3 class="text-lg font-semibold">Laporan</h3>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- Toggle: Transaksi / Terlaris -->
+              <div class="flex bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+                <button id="tab-transaksi" onclick="setReportMode('transaksi')" class="px-3 py-2 text-sm bg-emerald-600 text-white">Transaksi</button>
+                <button id="tab-terlaris" onclick="setReportMode('terlaris')" class="px-3 py-2 text-sm text-zinc-400 hover:text-white">Terlaris</button>
+              </div>
               <select id="report-period" onchange="onReportPeriodChange()" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm">
                 <option value="harian">Harian</option>
                 <option value="mingguan">Mingguan</option>
@@ -315,15 +320,24 @@
                 <input type="date" id="report-end-date" class="px-2 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100">
                 <button onclick="loadCustomReport()" class="px-3 py-2 bg-emerald-600 rounded-lg text-sm text-white">Go</button>
               </div>
-              <button onclick="exportReportExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
+              <button onclick="exportReportExcel()" id="btn-export-report" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Excel
+              </button>
+              <button onclick="exportTerlarisExcel()" id="btn-export-terlaris" class="hidden px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Excel Terlaris
               </button>
             </div>
           </div>
 
+          <!-- Terlaris info bar (only visible in terlaris mode) -->
+          <div id="terlaris-info" class="hidden mb-4 bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+            <p class="text-sm text-zinc-400">Menampilkan produk terlaris (fast moving) dalam 30 hari terakhir, diurutkan dari qty terbanyak.</p>
+          </div>
+
           <!-- Summary cards -->
-          <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+          <div id="report-summary-cards" class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500">Transaksi</div>
               <div class="text-xl font-bold" id="r-tx">0</div>
@@ -347,11 +361,13 @@
           </div>
 
           <!-- Report table -->
-          <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden table-wrap">
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+            <div class="table-wrap">
             <table class="w-full text-sm">
               <thead id="report-thead" class="bg-zinc-950 text-zinc-400"></thead>
               <tbody id="report-table-body"></tbody>
             </table>
+            </div>
           </div>
         </div>
       </section>
@@ -1771,6 +1787,158 @@ function exportHistoryExcel() {
 }
 
 // ============ LAPORAN ============
+window.reportMode = 'transaksi'; // 'transaksi' | 'terlaris'
+window.reportPeriod = 'harian';
+window.reportAnchor = new Date();
+window._currentReportRows = [];
+window._currentTerlarisRows = [];
+
+function setReportMode(mode) {
+  window.reportMode = mode;
+  var tabTx = document.getElementById('tab-transaksi');
+  var tabTl = document.getElementById('tab-terlaris');
+  var btnExportReport = document.getElementById('btn-export-report');
+  var btnExportTerlaris = document.getElementById('btn-export-terlaris');
+  var summaryCards = document.getElementById('report-summary-cards');
+  var terlarisInfo = document.getElementById('terlaris-info');
+  var periodSel = document.getElementById('report-period');
+  var navEl = document.getElementById('report-nav');
+  var customEl = document.getElementById('report-custom-dates');
+  if (mode === 'terlaris') {
+    if (tabTx) { tabTx.classList.remove('bg-emerald-600','text-white'); tabTx.classList.add('text-zinc-400'); }
+    if (tabTl) { tabTl.classList.add('bg-emerald-600','text-white'); tabTl.classList.remove('text-zinc-400'); }
+    if (btnExportReport) btnExportReport.classList.add('hidden');
+    if (btnExportTerlaris) btnExportTerlaris.classList.remove('hidden');
+    if (summaryCards) summaryCards.classList.add('hidden');
+    if (terlarisInfo) terlarisInfo.classList.remove('hidden');
+    // Hide period selector + nav — terlaris uses fixed 30-day window
+    if (periodSel) periodSel.classList.add('hidden');
+    if (navEl) navEl.classList.add('hidden');
+    if (customEl) customEl.classList.add('hidden');
+    loadTerlaris();
+  } else {
+    if (tabTx) { tabTx.classList.add('bg-emerald-600','text-white'); tabTx.classList.remove('text-zinc-400'); }
+    if (tabTl) { tabTl.classList.remove('bg-emerald-600','text-white'); tabTl.classList.add('text-zinc-400'); }
+    if (btnExportReport) btnExportReport.classList.remove('hidden');
+    if (btnExportTerlaris) btnExportTerlaris.classList.add('hidden');
+    if (summaryCards) summaryCards.classList.remove('hidden');
+    if (terlarisInfo) terlarisInfo.classList.add('hidden');
+    if (periodSel) periodSel.classList.remove('hidden');
+    onReportPeriodChange();
+  }
+}
+
+async function loadTerlaris() {
+  if (!db) return;
+  var thead = document.getElementById('report-thead');
+  var tbody = document.getElementById('report-table-body');
+  if (!thead || !tbody) return;
+  tbody.innerHTML = '<tr><td class="text-center py-6 text-zinc-600">Memuat...</td></tr>';
+  try {
+    // 30-day window
+    var now = Date.now();
+    var start = now - 30 * 24 * 60 * 60 * 1000;
+    var snap = await db.collection(col('transactions'))
+      .where('createdAt', '>=', start)
+      .where('createdAt', '<', now)
+      .orderBy('createdAt', 'desc')
+      .get();
+    // Aggregate items by product name
+    var agg = {};
+    snap.docs.forEach(function(doc) {
+      var d = doc.data();
+      (d.items || []).forEach(function(it) {
+        var key = it.name || 'Unknown';
+        if (!agg[key]) {
+          agg[key] = { name: key, qty: 0, omzet: 0, modal: 0, txCount: 0, category: it.category || '', brand: '' };
+        }
+        agg[key].qty += (it.qty || 0);
+        agg[key].omzet += (it.subtotal || (it.price * it.qty) || 0);
+        agg[key].modal += ((it.costPrice || 0) * (it.qty || 0));
+        agg[key].txCount += 1;
+      });
+    });
+    // Build product cost map for current cost
+    var prodMap = {};
+    products.forEach(function(p) { if (p.name) prodMap[p.name] = p; });
+    // Convert to array + sort by qty desc
+    var rows = Object.values(agg).map(function(a) {
+      var p = prodMap[a.name] || {};
+      a.brand = p.brand || '';
+      a.profit = a.omzet - a.modal;
+      return a;
+    }).sort(function(a, b) { return b.qty - a.qty; });
+    window._currentTerlarisRows = rows;
+    // Render header
+    thead.innerHTML = '<tr>' +
+      '<th class="text-left px-4 py-3">Rank</th>' +
+      '<th class="text-left px-4 py-3">Produk</th>' +
+      '<th class="text-left px-4 py-3">Kategori</th>' +
+      '<th class="text-left px-4 py-3">Brand</th>' +
+      '<th class="text-center px-4 py-3">Qty Terjual</th>' +
+      '<th class="text-center px-4 py-3">Frekuensi Tx</th>' +
+      '<th class="text-right px-4 py-3">Omzet</th>' +
+      '<th class="text-right px-4 py-3">Modal</th>' +
+      '<th class="text-right px-4 py-3">Profit</th>' +
+    '</tr>';
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center py-6 text-zinc-600">Belum ada penjualan dalam 30 hari terakhir</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(function(r, i) {
+      var rankBadge = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : String(i + 1)));
+      return '<tr class="border-t border-zinc-800">' +
+        '<td class="px-4 py-2 text-center font-bold">' + rankBadge + '</td>' +
+        '<td class="px-4 py-2 font-medium">' + r.name + '</td>' +
+        '<td class="px-4 py-2">' + (r.category || '-') + '</td>' +
+        '<td class="px-4 py-2">' + (r.brand || '-') + '</td>' +
+        '<td class="px-4 py-2 text-center font-bold text-emerald-400">' + r.qty + '</td>' +
+        '<td class="px-4 py-2 text-center">' + r.txCount + '</td>' +
+        '<td class="px-4 py-2 text-right">' + formatRp(r.omzet) + '</td>' +
+        '<td class="px-4 py-2 text-right text-orange-400">' + formatRp(r.modal) + '</td>' +
+        '<td class="px-4 py-2 text-right font-semibold">' + formatRp(r.profit) + '</td>' +
+      '</tr>';
+    }).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-6 text-red-400">Gagal: ' + e.message + '</td></tr>';
+  }
+}
+
+function exportTerlarisExcel() {
+  var rows = window._currentTerlarisRows || [];
+  if (rows.length === 0) { alert('Tidak ada data terlaris untuk diexport'); return; }
+  if (typeof XLSX === 'undefined') { alert('Library Excel belum siap'); return; }
+  var data = rows.map(function(r, i) {
+    return {
+      'Rank': i + 1,
+      'Produk': r.name,
+      'Kategori': r.category || '-',
+      'Brand': r.brand || '-',
+      'Qty Terjual': r.qty,
+      'Frekuensi Tx': r.txCount,
+      'Omzet': r.omzet,
+      'Modal': r.modal,
+      'Profit': r.profit
+    };
+  });
+  // Add TOTAL row
+  var totalQty = rows.reduce(function(s, r) { return s + r.qty; }, 0);
+  var totalTx = rows.reduce(function(s, r) { return s + r.txCount; }, 0);
+  var totalOmzet = rows.reduce(function(s, r) { return s + r.omzet; }, 0);
+  var totalModal = rows.reduce(function(s, r) { return s + r.modal; }, 0);
+  var totalProfit = rows.reduce(function(s, r) { return s + r.profit; }, 0);
+  data.push({ 'Rank': '', 'Produk': '', 'Kategori': '', 'Brand': 'TOTAL', 'Qty Terjual': totalQty, 'Frekuensi Tx': totalTx, 'Omzet': totalOmzet, 'Modal': totalModal, 'Profit': totalProfit });
+  var ws = XLSX.utils.json_to_sheet(data);
+  var colWidths = Object.keys(data[0]).map(function(k) {
+    return { wch: Math.max(k.length, ...data.map(function(r) { return String(r[k] || '').length; })) + 2 };
+  });
+  ws['!cols'] = colWidths;
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Terlaris');
+  var storeName = (typeof STORE !== 'undefined' && STORE.name) ? STORE.name : 'POS';
+  XLSX.writeFile(wb, 'TERLARIS-' + storeName + '-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+}
+
 function periodRange(period, anchor) {
   var start, end, label;
   var a = new Date(anchor);

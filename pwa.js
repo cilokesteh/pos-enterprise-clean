@@ -23,7 +23,7 @@
   // Register SW
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('sw.js?v=4').catch(function(e) {
+      navigator.serviceWorker.register('sw.js?v=5').catch(function(e) {
         console.warn('SW register failed:', e);
       });
     });
