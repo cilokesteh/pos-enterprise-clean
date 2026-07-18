@@ -1515,7 +1515,7 @@ async function sendReceiptToWA() {
       // Try share PDF via Web Share API (mobile)
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: 'Struk ' + t.receiptNo });
-        // FALLTHROUGH — jangan return, lanjut buka WA juga
+        return; // PDF sudah dishare, JANGAN buka wa.me text
       } else {
         // Fallback: download PDF
         var url = URL.createObjectURL(blob);
