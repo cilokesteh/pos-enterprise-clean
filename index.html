@@ -1273,7 +1273,7 @@ function showReceipt(tx) {
   var modalHtml =
     '<div class="modal-backdrop fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" id="receipt-modal" onclick="event.target.id===\'receipt-modal\'&&hideModal(\'receipt-modal\')">' +
       '<div class="modal-box bg-white rounded-xl p-6 w-full max-w-sm max-h-[90vh] overflow-auto" onclick="event.stopPropagation()">' +
-        '<div id="receipt-display" class="text-black text-sm font-mono">' + html + '</div>' +
+        '<div id="receipt-display" class="text-black text-sm" style="font-family:Calibri,Arial,sans-serif;text-align:center;">' + html + '</div>' +
         '<div class="flex gap-2 mt-4">' +
           '<button onclick="printReceipt()" class="flex-1 py-2.5 bg-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-zinc-900">Print</button>' +
           '<button onclick="downloadPdf()" class="flex-1 py-2.5 bg-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-zinc-900">PDF</button>' +
@@ -1295,7 +1295,17 @@ function buildReceiptHtml(tx) {
   var storeName = (typeof STORE !== 'undefined' && STORE.name) ? STORE.name : 'Toko';
   var storeAddr = (typeof STORE !== 'undefined' && STORE.address) ? STORE.address : '';
   var storePhone = (typeof STORE !== 'undefined' && STORE.phone) ? STORE.phone : '';
+  var storeHours = (typeof STORE !== 'undefined' && STORE.hours) ? STORE.hours : '';
+  var storeWA = (typeof STORE !== 'undefined' && STORE.wa) ? STORE.wa : '';
+  var storeIG = (typeof STORE !== 'undefined' && STORE.instagram) ? STORE.instagram : '';
+  var storeFB = (typeof STORE !== 'undefined' && STORE.facebook) ? STORE.facebook : '';
+  var storeTT = (typeof STORE !== 'undefined' && STORE.tiktok) ? STORE.tiktok : '';
+  var storeWeb = (typeof STORE !== 'undefined' && STORE.website) ? STORE.website : '';
   var footer = (typeof STORE !== 'undefined' && STORE.footer) ? STORE.footer : 'Terima kasih';
+  // Reusable styles
+  var _c = 'text-align:center;font-family:Calibri,Arial,sans-serif;';
+  var _s = _c + 'font-size:11px;';
+  var _sm = _c + 'font-size:10px;color:#444;';
   var methodLabel;
   if (tx.method === 'cash') methodLabel = 'Tunai';
   else if (tx.method === 'qris') methodLabel = 'QRIS';
@@ -1303,9 +1313,9 @@ function buildReceiptHtml(tx) {
   else if (tx.method === 'card') methodLabel = 'Kartu ' + (tx.cardType === 'credit' ? 'Kredit' : 'Debit');
   else methodLabel = tx.method;
   var itemsHtml = (tx.items || []).map(function(item) {
-    var imeiLine = (item.imei && item.imei.length > 0) ? '<div style="font-size:10px;color:#555;">IMEI: ' + esc(item.imei.join(', ')) + '</div>' : '';
-    return '<div style="margin-bottom:4px;">' +
-      '<div>' + esc(item.name) + '</div>' +
+    var imeiLine = (item.imei && item.imei.length > 0) ? '<div style="text-align:center;font-family:Calibri,Arial,sans-serif;font-size:10px;color:#555;">IMEI: ' + esc(item.imei.join(', ')) + '</div>' : '';
+    return '<div style="margin-bottom:4px;text-align:center;font-family:Calibri,Arial,sans-serif;">' +
+      '<div style="font-size:12px;">' + esc(item.name) + '</div>' +
       '<div style="display:flex;justify-content:space-between;font-size:12px;">' +
         '<span>' + item.qty + 'x @ ' + formatRp(item.price) + '</span>' +
         '<span>' + formatRp(item.subtotal) + '</span>' +
@@ -1346,25 +1356,58 @@ function buildReceiptHtml(tx) {
   if (tx._reprint) {
     reprintLine = '<div style="font-size:11px;font-style:italic;margin-top:4px;">*** REPRINT ***</div>';
   }
-  return '<div style="text-align:center;">' +
+  // === HEADER ===
+  var headerHtml = '<div style="' + _c + '">' +
     '<div style="font-size:16px;font-weight:bold;">' + storeName + '</div>' +
-    (storeAddr ? '<div style="font-size:11px;">' + storeAddr + '</div>' : '') +
-    (storePhone ? '<div style="font-size:11px;">Telp: ' + storePhone + '</div>' : '') +
-  '</div>' +
-  '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
-  '<div style="font-size:11px;">No: ' + tx.receiptNo + '</div>' +
-  '<div style="font-size:11px;">Tgl: ' + dd + '/' + MM + '/' + yy + ' ' + hh + ':' + mm + '</div>' +
-  '<div style="font-size:11px;">Customer: ' + (tx.customerName || 'Walk-in') + '</div>' +
-  waLine +
-  reprintLine +
-  '<div style="font-size:11px;">Kasir: ' + (tx.kasirName || '') + '</div>' +
-  '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
-  itemsHtml +
-  '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
-  '<div style="display:flex;justify-content:space-between;font-weight:bold;font-size:14px;"><span>TOTAL</span><span>' + formatRp(tx.total) + '</span></div>' +
-  '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
-  payLine +
-  '<div style="text-align:center;margin-top:8px;font-size:12px;">' + footer + '</div>';
+    (storeAddr ? '<div style="' + _s + '">' + storeAddr + '</div>' : '') +
+    (storePhone ? '<div style="' + _s + '">Telp: ' + storePhone + '</div>' : '') +
+  '</div>';
+
+  // === INFO ===
+  var infoHtml = '<div style="' + _c + '">' +
+    '<div style="' + _s + '">No: ' + tx.receiptNo + '</div>' +
+    '<div style="' + _s + '">Tgl: ' + dd + '/' + MM + '/' + yy + ' ' + hh + ':' + mm + '</div>' +
+    '<div style="' + _s + '">Customer: ' + (tx.customerName || 'Walk-in') + '</div>' +
+    waLine + reprintLine +
+    '<div style="' + _s + '">Kasir: ' + (tx.kasirName || '') + '</div>' +
+  '</div>';
+
+  // === ITEMS ===
+  var itemsBlock = '<div style="' + _c + '">' + itemsHtml + '</div>';
+
+  // === TOTAL ===
+  var totalHtml = '<div style="' + _c + 'font-weight:bold;font-size:14px;">TOTAL: ' + formatRp(tx.total) + '</div>';
+
+  // === PAYMENT ===
+  var payHtml = '<div style="' + _c + '">' + payLine + '</div>';
+
+  // === FOOTER ===
+  var footerHtml = '<div style="' + _c + 'margin-top:8px;font-size:12px;font-weight:bold;">' + footer + '</div>';
+
+  // === STORE INFO (bawah nota) ===
+  var storeInfoHtml = '<div style="' + _c + 'margin-top:6px;border-top:1px dashed #000;padding-top:6px;">' +
+    (storeAddr ? '<div style="' + _sm + '">' + storeAddr + '</div>' : '') +
+    (storeHours ? '<div style="' + _sm + '">Jam: ' + storeHours + '</div>' : '') +
+    (storeWA ? '<div style="' + _sm + '">WA: ' + storeWA + '</div>' : '') +
+    (storeIG ? '<div style="' + _sm + '">IG: ' + storeIG + '</div>' : '') +
+    (storeFB ? '<div style="' + _sm + '">FB: ' + storeFB + '</div>' : '') +
+    (storeTT ? '<div style="' + _sm + '">TikTok: ' + storeTT + '</div>' : '') +
+    (storeWeb ? '<div style="' + _sm + '">' + storeWeb + '</div>' : '') +
+  '</div>';
+
+  return '<div style="' + _c + '">' +
+    headerHtml +
+    '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
+    infoHtml +
+    '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
+    itemsBlock +
+    '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
+    totalHtml +
+    '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
+    payHtml +
+    footerHtml +
+    storeInfoHtml +
+  '</div>';
 }
 
 function printReceipt() {
@@ -1379,9 +1422,9 @@ function printReceipt() {
       '<style>' +
         '*{margin:0;padding:0;box-sizing:border-box;}' +
         '@page{margin:0;size:' + w + 'mm auto;}' +
-        'body{margin:0;padding:0;display:flex;justify-content:center;align-items:flex-start;font-family:"Courier New",monospace;background:#fff;}' +
-        '#pwrap{width:' + w + 'mm;padding:4mm 3mm;background:#fff;color:#000;font-size:12px;line-height:1.4;}' +
-        '#pwrap *{font-family:"Courier New",monospace;}' +
+        'body{margin:0;padding:0;display:flex;justify-content:center;align-items:flex-start;font-family:Calibri,Arial,sans-serif;background:#fff;}' +
+        '#pwrap{width:' + w + 'mm;padding:4mm 3mm;background:#fff;color:#000;font-size:12px;line-height:1.4;text-align:center;}' +
+        '#pwrap *{font-family:Calibri,Arial,sans-serif;}' +
         '.btn-row{display:flex;justify-content:center;gap:8px;padding:16px 0;}' +
         '.btn-row button{padding:10px 24px;font-size:14px;cursor:pointer;border:1px solid #ccc;border-radius:6px;background:#f5f5f5;}' +
         '.btn-row button:hover{background:#e5e5e5;}' +

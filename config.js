@@ -20,13 +20,19 @@ const STORE = {
   name:    'Toko HP',
   address: 'Jl. Contoh No. 1, Kota',
   phone:   '0812-0000-0000',
+  hours:   'Senin - Sabtu: 08.00 - 17.00',
+  wa:      '0812-0000-0000',
+  instagram: '@tokohp',
+  facebook:  'Toko HP Official',
+  tiktok:    '@tokohp',
+  website:   'www.tokohp.com',
   // Footer nota
   footer:  'Terima kasih atas kunjungan Anda'
 };
 
 // --- Receipt / printer ---
 const RECEIPT = {
-  width: 80,        // mm — thermal paper width (58 / 80)
+  width: 80,        // mm — thermal paper width (57 / 80)
   copies: 1
 };
 
