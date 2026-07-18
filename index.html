@@ -1494,14 +1494,17 @@ async function sendReceiptToWA() {
     waTarget = clean;
   }
 
-  // === GENERATE PDF (mobile + desktop) ===
+  // === STEP 1: Generate PDF ===
   var element = document.getElementById('receipt-display');
+  var pdfBlob = null;
+  var fileName = (_lastReceiptNo || 'receipt') + '.pdf';
+
   if (element && typeof html2pdf !== 'undefined') {
     try {
       var w = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
-      var blob = await html2pdf().set({
+      pdfBlob = await html2pdf().set({
         margin: 0,
-        filename: (_lastReceiptNo || 'receipt') + '.pdf',
+        filename: fileName,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true,
           scrollX: 0, scrollY: 0,
@@ -1509,44 +1512,52 @@ async function sendReceiptToWA() {
           windowHeight: Math.max(400, element.scrollHeight || window.innerHeight) },
         jsPDF: { unit: 'mm', format: [w, 200], orientation: 'portrait' }
       }).from(element).outputPdf('blob');
-
-      var fileName = (_lastReceiptNo || 'receipt') + '.pdf';
-      var file = new File([blob], fileName, { type: 'application/pdf' });
-
-      // MOBILE: Web Share API → user pilih WA dari share sheet
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'Struk ' + t.receiptNo });
-        return;
-      }
-
-      // DESKTOP: Download PDF + buka WhatsApp Web sekaligus
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-
-      // Buka WhatsApp Web (auto ke chat customer kalau ada nomor)
-      var waUrl = waTarget
-        ? 'https://web.whatsapp.com/send?phone=' + waTarget
-        : 'https://web.whatsapp.com';
-      window.open(waUrl, '_blank');
-      return;
-
     } catch (e) {
-      console.error('WA PDF error:', e);
-      // PDF gagal → lanjut text fallback
+      console.error('WA PDF generate error:', e);
     }
   }
 
-  // === LAST RESORT: text via wa.me (hanya jika html2pdf error/missing) ===
-  var waUrl = waTarget
-    ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(textMsg)
-    : 'https://wa.me/?text=' + encodeURIComponent(textMsg);
-  window.open(waUrl, '_blank');
+  // === STEP 2: Share / Download PDF + buka WA ke nomor customer ===
+  if (pdfBlob) {
+    var file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+    // MOBILE: Web Share API → user pilih WA dari share sheet, PDF langsung terkirim
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Struk ' + t.receiptNo });
+      return;
+    }
+
+    // DESKTOP: Auto-download PDF + buka WhatsApp Web ke nomor customer
+    var url = URL.createObjectURL(pdfBlob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+  }
+
+  // === STEP 3: Buka WA ke nomor customer (mobile + desktop) ===
+  // Mobile: wa.me deep link buka WhatsApp langsung ke chat customer
+  // Desktop: web.whatsapp.com ke chat customer
+  var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (waTarget) {
+    if (isMobile) {
+      // Mobile: wa.me buka WhatsApp app langsung ke chat
+      window.location.href = 'https://wa.me/' + waTarget;
+    } else {
+      // Desktop: buka WhatsApp Web ke chat customer
+      window.open('https://web.whatsapp.com/send?phone=' + waTarget, '_blank');
+    }
+  } else {
+    // Gak ada nomor WA customer → buka WA biasa
+    if (isMobile) {
+      window.location.href = 'https://wa.me/';
+    } else {
+      window.open('https://web.whatsapp.com', '_blank');
+    }
+  }
 }
 // ============ MODAL UTIL ============
 function hideModal(id) {
