@@ -18,6 +18,7 @@
 <!-- SheetJS for Excel export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- html2pdf + jspdf for receipt PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="config.js"></script>
@@ -131,6 +132,10 @@
       <button data-view="history" class="nav-btn w-full text-left px-4 py-3 text-sm hover:bg-zinc-900 flex items-center gap-3 transition text-zinc-400">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         History
+      </button>
+      <button data-view="dashboard" class="nav-btn w-full text-left px-4 py-3 text-sm hover:bg-zinc-900 flex items-center gap-3 transition text-zinc-400">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
       </button>
     </nav>
     <div class="p-4 border-t border-zinc-900">
@@ -405,6 +410,68 @@
         </div>
       </section>
 
+      <!-- ==================== DASHBOARD VIEW ==================== -->
+      <section id="view-dashboard" class="view">
+        <div class="max-w-6xl mx-auto">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500 mb-1">Transaksi Hari Ini</div>
+              <div class="text-2xl font-bold text-emerald-400" id="db-tx-count">0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500 mb-1">Omzet Hari Ini</div>
+              <div class="text-2xl font-bold text-emerald-400" id="db-omzet">Rp 0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500 mb-1">Modal Hari Ini</div>
+              <div class="text-2xl font-bold text-orange-400" id="db-modal">Rp 0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500 mb-1">Profit Hari Ini</div>
+              <div class="text-2xl font-bold text-blue-400" id="db-profit">Rp 0</div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800">
+              <h3 class="font-semibold mb-3">Transaksi Terbaru (Hari Ini)</h3>
+              <div class="table-wrap">
+                <table class="w-full text-sm">
+                  <thead class="bg-zinc-950 text-zinc-400">
+                    <tr>
+                      <th class="text-left px-3 py-2">No</th>
+                      <th class="text-left px-3 py-2">Waktu</th>
+                      <th class="text-left px-3 py-2">Customer</th>
+                      <th class="text-left px-3 py-2">Metode</th>
+                      <th class="text-right px-3 py-2">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="db-recent-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800">
+              <h3 class="font-semibold mb-3">Metode Pembayaran</h3>
+              <div id="db-methods" class="space-y-2"></div>
+            </div>
+          </div>
+          <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800 mt-6">
+            <h3 class="font-semibold mb-3">Produk Terlaris (Hari Ini)</h3>
+            <div class="table-wrap">
+              <table class="w-full text-sm">
+                <thead class="bg-zinc-950 text-zinc-400">
+                  <tr>
+                    <th class="text-left px-3 py-2">Produk</th>
+                    <th class="text-right px-3 py-2">Qty</th>
+                    <th class="text-right px-3 py-2">Omzet</th>
+                  </tr>
+                </thead>
+                <tbody id="db-bestseller-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
   </main>
 </div>
@@ -570,13 +637,14 @@ function loadStockMoves() {
 }
 
 // ============ VIEW SWITCHING ============
-var VIEWS = ['pos', 'products', 'stock', 'reports', 'history'];
+var VIEWS = ['pos', 'products', 'stock', 'reports', 'history', 'dashboard'];
 var VIEW_TITLES = {
   pos: 'Kasir',
   products: 'Produk',
   stock: 'Stok',
   reports: 'Laporan',
-  history: 'History'
+  history: 'History',
+  dashboard: 'Dashboard'
 };
 
 function toggleSidebar() {
@@ -622,6 +690,7 @@ function switchView(name) {
   if (name === 'reports') onReportPeriodChange();
   if (name === 'products') renderProductTable();
   if (name === 'stock') renderStockPanel();
+  if (name === 'dashboard') loadDashboard();
   // Close sidebar on mobile after view switch
   closeSidebar();
 }
@@ -1255,6 +1324,10 @@ function buildReceiptHtml(tx) {
   if (tx.customerWA && tx.customerWA.length > 0) {
     waLine = '<div style="font-size:11px;">WA: ' + tx.customerWA + '</div>';
   }
+  var reprintLine = '';
+  if (tx._reprint) {
+    reprintLine = '<div style="font-size:11px;font-style:italic;margin-top:4px;">*** REPRINT ***</div>';
+  }
   return '<div style="text-align:center;">' +
     '<div style="font-size:16px;font-weight:bold;">' + storeName + '</div>' +
     (storeAddr ? '<div style="font-size:11px;">' + storeAddr + '</div>' : '') +
@@ -1265,6 +1338,7 @@ function buildReceiptHtml(tx) {
   '<div style="font-size:11px;">Tgl: ' + dd + '/' + MM + '/' + yy + ' ' + hh + ':' + mm + '</div>' +
   '<div style="font-size:11px;">Customer: ' + (tx.customerName || 'Walk-in') + '</div>' +
   waLine +
+  reprintLine +
   '<div style="font-size:11px;">Kasir: ' + (tx.kasirName || '') + '</div>' +
   '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
   itemsHtml +
@@ -1822,6 +1896,122 @@ function updateStats() {
   if (ic) ic.textContent = products.reduce(function(s, p) { return s + (p.imeiPool || []).length; }, 0);
 }
 
+// ============ DASHBOARD ============
+async function loadDashboard() {
+  if (!db) return;
+  var now = new Date();
+  var startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  var endOfDay = startOfDay + 24 * 60 * 60 * 1000 - 1;
+  try {
+    var snap = await db.collection(col('transactions'))
+      .where('createdAt', '>=', startOfDay)
+      .where('createdAt', '<=', endOfDay)
+      .orderBy('createdAt', 'desc').get();
+    var txs = [];
+    snap.docs.forEach(function(doc) { var t = doc.data(); t.id = doc.id; txs.push(t); });
+
+    // Summary
+    var count = txs.length;
+    var omzet = txs.reduce(function(s, t) { return s + (t.total || 0); }, 0);
+    var modal = txs.reduce(function(s, t) {
+      return s + (t.items || []).reduce(function(ss, i) { return ss + (i.costPrice || 0) * (i.qty || 1); }, 0);
+    }, 0);
+    var profit = omzet - modal;
+
+    setText('db-tx-count', count);
+    setText('db-omzet', formatRp(omzet));
+    setText('db-modal', formatRp(modal));
+    setText('db-profit', formatRp(profit));
+
+    // Recent transactions
+    var recentBody = document.getElementById('db-recent-tbody');
+    if (recentBody) {
+      if (count === 0) {
+        recentBody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-zinc-600">Belum ada transaksi hari ini</td></tr>';
+      } else {
+        recentBody.innerHTML = txs.slice(0, 15).map(function(t) {
+          var d = new Date(t.createdAt);
+          var hh = String(d.getHours()).padStart(2, '0');
+          var mm = String(d.getMinutes()).padStart(2, '0');
+          var mLabel = methodLabelOf(t);
+          return '<tr class="border-t border-zinc-800">' +
+            '<td class="px-3 py-2 text-xs">' + (t.receiptNo || '-') + '</td>' +
+            '<td class="px-3 py-2 text-xs">' + hh + ':' + mm + '</td>' +
+            '<td class="px-3 py-2">' + (t.customerName || 'Walk-in') + '</td>' +
+            '<td class="px-3 py-2">' + mLabel + '</td>' +
+            '<td class="px-3 py-2 text-right font-semibold text-emerald-400">' + formatRp(t.total) + '</td>' +
+          '</tr>';
+        }).join('');
+      }
+    }
+
+    // Payment methods breakdown
+    var methods = {};
+    txs.forEach(function(t) {
+      var label = methodLabelOf(t);
+      methods[label] = (methods[label] || 0) + (t.total || 0);
+    });
+    var methodsEl = document.getElementById('db-methods');
+    if (methodsEl) {
+      var keys = Object.keys(methods);
+      if (keys.length === 0) {
+        methodsEl.innerHTML = '<p class="text-sm text-zinc-600">Belum ada transaksi</p>';
+      } else {
+        var maxVal = Math.max.apply(null, keys.map(function(k) { return methods[k]; }));
+        methodsEl.innerHTML = keys.map(function(k) {
+          var pct = maxVal > 0 ? Math.round(methods[k] / maxVal * 100) : 0;
+          return '<div>' +
+            '<div class="flex justify-between text-sm mb-1"><span>' + esc(k) + '</span><span class="text-emerald-400">' + formatRp(methods[k]) + '</span></div>' +
+            '<div class="w-full bg-zinc-800 rounded-full h-2"><div class="bg-emerald-500 h-2 rounded-full" style="width:' + pct + '%"></div></div>' +
+          '</div>';
+        }).join('');
+      }
+    }
+
+    // Bestsellers
+    var prodMap = {};
+    txs.forEach(function(t) {
+      (t.items || []).forEach(function(i) {
+        if (!prodMap[i.name]) prodMap[i.name] = { qty: 0, omzet: 0 };
+        prodMap[i.name].qty += (i.qty || 1);
+        prodMap[i.name].omzet += (i.subtotal || 0);
+      });
+    });
+    var sorted = Object.keys(prodMap).map(function(n) { return { name: n, qty: prodMap[n].qty, omzet: prodMap[n].omzet }; })
+      .sort(function(a, b) { return b.qty - a.qty; }).slice(0, 10);
+    var bsBody = document.getElementById('db-bestseller-tbody');
+    if (bsBody) {
+      if (sorted.length === 0) {
+        bsBody.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-zinc-600">Belum ada penjualan</td></tr>';
+      } else {
+        bsBody.innerHTML = sorted.map(function(p) {
+          return '<tr class="border-t border-zinc-800">' +
+            '<td class="px-3 py-2">' + esc(p.name) + '</td>' +
+            '<td class="px-3 py-2 text-right">' + p.qty + '</td>' +
+            '<td class="px-3 py-2 text-right text-emerald-400">' + formatRp(p.omzet) + '</td>' +
+          '</tr>';
+        }).join('');
+      }
+    }
+  } catch (e) {
+    console.error('Dashboard error:', e);
+  }
+}
+
+function methodLabelOf(t) {
+  if (t.method === 'cash') return 'Tunai';
+  if (t.method === 'qris') return 'QRIS';
+  if (t.method === 'transfer') return 'Transfer';
+  if (t.method === 'card') return 'Kartu ' + (t.cardType === 'credit' ? 'Kredit' : 'Debit');
+  if (t.method === 'split') return 'Split';
+  return t.method;
+}
+
+function setText(id, val) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
 // ============ HISTORY ============
 async function loadHistory() {
   var el = document.getElementById('history-table-body');
@@ -1873,6 +2063,7 @@ function renderHistoryTable() {
 function reprintReceipt(txId) {
   var t = _historyTx.find(function(x) { return x.id === txId; });
   if (!t) { alert('Transaksi tidak ditemukan'); return; }
+  t = Object.assign({}, t, { _reprint: true });
   _lastReceiptNo = t.receiptNo;
   _lastReceiptData = t;
   showReceipt(t);
