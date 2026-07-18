@@ -18,7 +18,6 @@
 <!-- SheetJS for Excel export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- html2pdf + jspdf for receipt PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="config.js"></script>
@@ -466,6 +465,24 @@
                   </tr>
                 </thead>
                 <tbody id="db-bestseller-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800 mt-6">
+            <h3 class="font-semibold mb-3">Log Stock Hari Ini (In / Out)</h3>
+            <div class="table-wrap">
+              <table class="w-full text-sm">
+                <thead class="bg-zinc-950 text-zinc-400">
+                  <tr>
+                    <th class="text-left px-3 py-2">Waktu</th>
+                    <th class="text-left px-3 py-2">Tipe</th>
+                    <th class="text-left px-3 py-2">Produk</th>
+                    <th class="text-right px-3 py-2">Qty</th>
+                    <th class="text-right px-3 py-2">Harga Modal</th>
+                    <th class="text-left px-3 py-2">IMEI/SN</th>
+                  </tr>
+                </thead>
+                <tbody id="db-stocklog-tbody"></tbody>
               </table>
             </div>
           </div>
@@ -1480,53 +1497,32 @@ async function sendReceiptToWA() {
     waTarget = clean;
   }
 
-  // Generate PDF + PNG from receipt-display
+  // Generate PDF from receipt-display via html2pdf (handles canvas internally)
   var element = document.getElementById('receipt-display');
   if (!element) { fallbackWA(); return; }
-  if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
-    fallbackWA(); return;
-  }
-  var canvas;
-  try {
-    var w = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
-    canvas = await html2canvas(element, {
-      scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true,
-      scrollX: 0, scrollY: 0,
-      windowWidth: Math.max(400, element.scrollWidth || window.innerWidth),
-      windowHeight: Math.max(400, element.scrollHeight || window.innerHeight)
-    });
-  } catch (e) { fallbackWA(); return; }
 
-  // Build PDF blob
-  var jsPDF = window.jspdf.jsPDF;
-  var imgData = canvas.toDataURL('image/jpeg', 0.98);
-  var pdfHeight = (canvas.height / canvas.width) * 80;
-  var pdf = new jsPDF({ unit: 'mm', format: [80, pdfHeight], orientation: 'portrait' });
-  pdf.addImage(imgData, 'JPEG', 0, 0, 80, pdfHeight);
-  var pdfBlob = pdf.output('blob');
-  var pdfFile = new File([pdfBlob], 'struk-' + t.receiptNo + '.pdf', { type: 'application/pdf' });
-
-  // Build PNG blob (WA prefers images over PDF)
-  var imgBlob = await new Promise(function(r) { canvas.toBlob(function(b) { r(b); }, 'image/png', 0.95); });
-  var imgFile = imgBlob ? new File([imgBlob], 'struk-' + t.receiptNo + '.png', { type: 'image/png' }) : null;
-
-  // PATH 1: navigator.share — auto-buka share sheet, pilih WhatsApp langsung
+  // PATH 1: Web Share API — auto share sheet → pilih WhatsApp
   if (navigator.share && navigator.canShare) {
-    // Try PNG first (WA handle gambar lebih baik dari PDF)
-    if (imgFile && navigator.canShare({ files: [imgFile] })) {
-      try {
-        await navigator.share({ files: [imgFile], title: 'Struk ' + t.receiptNo, text: textMsg });
+    try {
+      var w = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
+      var blob = await html2pdf().set({
+        margin: 0,
+        filename: 'struk-' + t.receiptNo + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true, scrollX: 0, scrollY: 0,
+          windowWidth: Math.max(400, element.scrollWidth || window.innerWidth),
+          windowHeight: Math.max(400, element.scrollHeight || window.innerHeight) },
+        jsPDF: { unit: 'mm', format: [w, 200], orientation: 'portrait' }
+      }).from(element).outputPdf('blob');
+      var file = new File([blob], 'struk-' + t.receiptNo + '.pdf', { type: 'application/pdf' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Struk ' + t.receiptNo });
         return;
-      } catch (e) { if (e.name === 'AbortError') return; }
+      }
+    } catch (e) {
+      if (e.name === 'AbortError') return;
     }
-    // Try PDF
-    if (navigator.canShare({ files: [pdfFile] })) {
-      try {
-        await navigator.share({ files: [pdfFile], title: 'Struk ' + t.receiptNo });
-        return;
-      } catch (e) { if (e.name === 'AbortError') return; }
-    }
-    // Try text only (navigator.share tanpa file)
+    // Try text share (no file)
     try {
       await navigator.share({ title: 'Struk ' + t.receiptNo, text: textMsg });
       return;
@@ -1534,11 +1530,18 @@ async function sendReceiptToWA() {
   }
 
   // PATH 2: Desktop — auto-download PDF + auto-open WA chat
-  var url = URL.createObjectURL(pdfBlob);
-  var a = document.createElement('a'); a.href = url;
-  a.download = 'struk-' + t.receiptNo + '.pdf';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
+  try {
+    var w2 = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
+    var blob2 = await html2pdf().set({
+      margin: 0,
+      filename: 'struk-' + t.receiptNo + '.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true, scrollX: 0, scrollY: 0,
+        windowWidth: Math.max(400, element.scrollWidth || window.innerWidth),
+        windowHeight: Math.max(400, element.scrollHeight || window.innerHeight) },
+      jsPDF: { unit: 'mm', format: [w2, 200], orientation: 'portrait' }
+    }).from(element).save();
+  } catch (e) { /* skip */ }
   // Auto-open WA chat dengan nomor customer
   var waUrl = waTarget
     ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(textMsg)
@@ -1546,7 +1549,6 @@ async function sendReceiptToWA() {
   window.open(waUrl, '_blank');
 
   function fallbackWA() {
-    // Text only fallback
     var waUrl = waTarget
       ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(textMsg)
       : 'https://wa.me/?text=' + encodeURIComponent(textMsg);
@@ -2001,6 +2003,41 @@ async function loadDashboard() {
   } catch (e) {
     console.error('Dashboard error:', e);
   }
+
+  // Stock log today
+  try {
+    var stockSnap = await db.collection(col('stockMoves'))
+      .where('createdAt', '>=', startOfDay)
+      .where('createdAt', '<=', endOfDay)
+      .orderBy('createdAt', 'desc').get();
+    var stockLogBody = document.getElementById('db-stocklog-tbody');
+    if (stockLogBody) {
+      var moves = [];
+      stockSnap.docs.forEach(function(doc) { var s = doc.data(); s.id = doc.id; moves.push(s); });
+      if (moves.length === 0) {
+        stockLogBody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-zinc-600">Belum ada aktivitas stock hari ini</td></tr>';
+      } else {
+        stockLogBody.innerHTML = moves.slice(0, 30).map(function(s) {
+          var d = new Date(s.createdAt);
+          var hh = String(d.getHours()).padStart(2, '0');
+          var mm = String(d.getMinutes()).padStart(2, '0');
+          var isRestock = s.type === 'restock';
+          var typeBadge = isRestock
+            ? '<span class="text-emerald-400">MASUK</span>'
+            : '<span class="text-red-400">KELUAR</span>';
+          var imeiList = (s.imeiList || []).join(', ');
+          return '<tr class="border-t border-zinc-800">' +
+            '<td class="px-3 py-2 text-xs">' + hh + ':' + mm + '</td>' +
+            '<td class="px-3 py-2">' + typeBadge + '</td>' +
+            '<td class="px-3 py-2">' + esc(s.productName || '-') + '</td>' +
+            '<td class="px-3 py-2 text-right">' + (s.qty || 0) + '</td>' +
+            '<td class="px-3 py-2 text-right text-orange-400">' + formatRp(s.costPrice || 0) + '</td>' +
+            '<td class="px-3 py-2 text-xs text-zinc-400">' + esc(imeiList) + '</td>' +
+          '</tr>';
+        }).join('');
+      }
+    }
+  } catch (e) { console.error('Stock log error:', e); }
 }
 
 function methodLabelOf(t) {
