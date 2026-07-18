@@ -416,6 +416,13 @@
 <script>
 // ============ STATE ============
 var db = null, auth = null;
+
+// === XSS Protection ===
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 var products = [];
 var stockMoves = [];
 var cart = [];
@@ -779,11 +786,11 @@ function renderCart() {
   } else {
     el.innerHTML = cart.map(function(item, idx) {
       var imeiBadge = item.imei && item.imei.length > 0
-        ? '<span class="text-xs text-emerald-400">✓ IMEI: ' + item.imei.join(', ') + '</span>'
+        ? '<span class="text-xs text-emerald-400">✓ IMEI: ' + esc(item.imei.join(', ')) + '</span>'
         : '<span class="text-xs text-orange-400">⚠ Input IMEI</span>';
       return '<div class="flex items-center justify-between bg-zinc-950 rounded-lg p-3">' +
         '<div>' +
-          '<div class="text-sm font-medium">' + item.name + '</div>' +
+          '<div class="text-sm font-medium">' + esc(item.name) + '</div>' +
           '<div class="text-xs text-zinc-500">' + formatRp(item.price) + ' × ' + item.qty + '</div>' +
           '<div class="mt-1">' + imeiBadge + '</div>' +
         '</div>' +
@@ -1209,9 +1216,9 @@ function buildReceiptHtml(tx) {
   else if (tx.method === 'card') methodLabel = 'Kartu ' + (tx.cardType === 'credit' ? 'Kredit' : 'Debit');
   else methodLabel = tx.method;
   var itemsHtml = (tx.items || []).map(function(item) {
-    var imeiLine = (item.imei && item.imei.length > 0) ? '<div style="font-size:10px;color:#555;">IMEI: ' + item.imei.join(', ') + '</div>' : '';
+    var imeiLine = (item.imei && item.imei.length > 0) ? '<div style="font-size:10px;color:#555;">IMEI: ' + esc(item.imei.join(', ')) + '</div>' : '';
     return '<div style="margin-bottom:4px;">' +
-      '<div>' + item.name + '</div>' +
+      '<div>' + esc(item.name) + '</div>' +
       '<div style="display:flex;justify-content:space-between;font-size:12px;">' +
         '<span>' + item.qty + 'x @ ' + formatRp(item.price) + '</span>' +
         '<span>' + formatRp(item.subtotal) + '</span>' +
@@ -1461,7 +1468,7 @@ function showEditPriceModal(id) {
     '<div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center z-50" id="edit-price-modal" onclick="event.target.id===\'edit-price-modal\'&&hideModal(\'edit-price-modal\')">' +
       '<div class="modal-box bg-zinc-900 rounded-xl p-6 w-full max-w-sm border border-zinc-800" onclick="event.stopPropagation()">' +
         '<h3 class="text-lg font-semibold mb-1">Edit Harga Jual</h3>' +
-        '<p class="text-sm text-zinc-400 mb-4">' + p.name + ' (' + (p.category || '') + ' · ' + (p.brand || '') + ')</p>' +
+        '<p class="text-sm text-zinc-400 mb-4">' + esc(p.name) + ' (' + (esc(p.category || '')) + ' · ' + (esc(p.brand || '')) + ')</p>' +
         '<label class="block text-sm text-zinc-400 mb-2">Harga Jual (Rp)</label>' +
         '<input id="edit-price-input" type="text" inputmode="numeric" value="' + (p.price || 0) + '" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
         '<div class="flex gap-2 mt-6">' +
@@ -1504,7 +1511,7 @@ function showStockModal(type) {
   var catOpts = ['HP', 'Tablet', 'Laptop', 'Aksesoris'];
   // Product dropdown
   var prodOpts = '<option value="">— Pilih produk existing —</option>' +
-    products.map(function(p) { return '<option value="' + p.id + '">' + p.name + ' (Stok: ' + (p.stock || 0) + ')</option>'; }).join('');
+    products.map(function(p) { return '<option value="' + p.id + '">' + esc(p.name) + ' (Stok: ' + (p.stock || 0) + ')</option>'; }).join('');
   var html =
     '<div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" id="stock-modal" onclick="event.target.id===\'stock-modal\'&&hideModal(\'stock-modal\')">' +
       '<div class="modal-box bg-zinc-900 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-auto border border-zinc-800" onclick="event.stopPropagation()">' +
@@ -1731,7 +1738,7 @@ async function saveStockMove(type) {
     updateStats();
     hideModal('stock-modal');
     var verb = isRestock ? 'ditambah' : 'diretur';
-    showToast('Stok ' + verb + ': ' + p.name + ' → ' + newStock);
+    showToast('Stok ' + verb + ': ' + esc(p.name) + ' → ' + newStock);
   } catch (e) {
     alert('Gagal simpan: ' + e.message);
   }
@@ -1788,7 +1795,7 @@ async function loadHistory() {
     });
     renderHistoryTable();
   } catch (e) {
-    el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-red-400">Gagal: ' + e.message + '</td></tr>';
+    el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-red-400">Gagal: ' + esc(e.message) + '</td></tr>';
   }
 }
 
@@ -2016,7 +2023,7 @@ async function loadTerlaris() {
       '</tr>';
     }).join('');
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-6 text-red-400">Gagal: ' + e.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-6 text-red-400">Gagal: ' + esc(e.message) + '</td></tr>';
   }
 }
 
@@ -2201,7 +2208,7 @@ async function loadTransactionsInRange(start, end) {
     // Store rows for export
     window._currentReportRows = rows;
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-6 text-red-400">Gagal: ' + e.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-6 text-red-400">Gagal: ' + esc(e.message) + '</td></tr>';
   }
 }
 
