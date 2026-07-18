@@ -27,6 +27,9 @@
   .view { display:none; }
   .view.active { display:block; }
 
+  /* Table wrap for horizontal scroll — ALL screen sizes */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
   /* ===== MOBILE RESPONSIVE ===== */
   #app { height: 100dvh; }
   #content { -webkit-overflow-scrolling: touch; }
@@ -59,8 +62,6 @@
     }
     /* Content full width */
     #content { padding: 1rem; }
-    /* Tables scroll horizontally */
-    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     /* Summary cards stack */
     .grid-cols-5 { grid-template-columns: repeat(2, 1fr) !important; }
     .grid-cols-3 { grid-template-columns: repeat(2, 1fr) !important; }
@@ -215,7 +216,8 @@
             <h3 class="text-lg font-semibold">Manajemen Produk</h3>
             <p class="text-xs text-zinc-500">Produk dibuat dari Restock. Edit hanya Harga Jual.</p>
           </div>
-          <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden table-wrap">
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+            <div class="table-wrap">
             <table class="w-full text-sm">
               <thead class="bg-zinc-950 text-zinc-400">
                 <tr>
@@ -230,6 +232,7 @@
               </thead>
               <tbody id="product-table-body"></tbody>
             </table>
+            </div>
           </div>
         </div>
       </section>
@@ -382,7 +385,8 @@
               Excel
             </button>
           </div>
-          <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden table-wrap">
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+            <div class="table-wrap">
             <table class="w-full text-sm">
               <thead class="bg-zinc-950 text-zinc-400">
                 <tr>
@@ -396,6 +400,7 @@
               </thead>
               <tbody id="history-table-body"></tbody>
             </table>
+            </div>
           </div>
         </div>
       </section>
