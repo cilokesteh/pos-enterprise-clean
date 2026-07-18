@@ -1515,18 +1515,18 @@ async function sendReceiptToWA() {
       // Try share PDF via Web Share API (mobile)
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: 'Struk ' + t.receiptNo });
-        return;
+        // FALLTHROUGH — jangan return, lanjut buka WA juga
+      } else {
+        // Fallback: download PDF
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = (_lastReceiptNo || 'receipt') + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
       }
-
-      // Fallback: download PDF + auto-open WA
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = (_lastReceiptNo || 'receipt') + '.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
     } catch (e) {
       console.error('WA PDF error:', e);
     }
