@@ -15,7 +15,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- SheetJS for Excel export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- html2pdf + jspdf for receipt PDF -->
@@ -500,7 +499,7 @@
 <!-- ==================== MAIN SCRIPT ==================== -->
 <script>
 // ============ STATE ============
-var db = null, auth = null, storage = null;
+var db = null, auth = null;
 
 // === XSS Protection ===
 function esc(s) {
@@ -577,7 +576,6 @@ function initFirebase() {
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
     auth = firebase.auth();
-    storage = firebase.storage();
     return true;
   } catch (e) {
     console.error('Firebase init failed', e);
@@ -1519,27 +1517,40 @@ async function sendReceiptToWA() {
     }
   }
 
-  // === STEP 2: Upload PDF ke Firebase Storage ===
-  var pdfUrl = '';
-  if (pdfBlob && storage) {
-    try {
-      var storageRef = storage.ref('receipts/' + fileName);
-      var snapshot = await storageRef.put(pdfBlob, { contentType: 'application/pdf' });
-      pdfUrl = await snapshot.ref.getDownloadURL();
-    } catch (e) {
-      console.error('WA PDF upload error:', e);
+  // === STEP 2: Mobile → share PDF langsung via Web Share API ===
+  if (pdfBlob) {
+    var file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'Struk ' + t.receiptNo });
+        return;
+      } catch (e) { /* user batal share, lanjut */ }
     }
   }
 
-  // === STEP 3: Build text + link, kirim via WA ===
-  // Tambahin link download PDF ke text message
-  var pdfLine = pdfUrl ? '\n\n📄 Download Struk PDF:\n' + pdfUrl : '';
-  var fullMsg = textMsg + pdfLine;
+  // === STEP 3: Desktop / fallback → download PDF + buka WA ===
+  if (pdfBlob) {
+    var url = URL.createObjectURL(pdfBlob);
+    var a = document.createElement('a');
+    a.href = url; a.download = fileName;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+  }
 
+  // Buka WA ke nomor customer
   var waUrl = waTarget
-    ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(fullMsg)
-    : 'https://wa.me/?text=' + encodeURIComponent(fullMsg);
+    ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(textMsg)
+    : 'https://wa.me/?text=' + encodeURIComponent(textMsg);
   window.open(waUrl, '_blank');
+
+  // Toast: ingetin user buat attach PDF
+  if (pdfBlob) {
+    var toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:90%;text-align:center;';
+    toast.innerHTML = '📎 PDF sudah di-download!<br><b>Attach file <i>' + fileName + '</i> di chat WA</b>';
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 6000);
+  }
 }
 // ============ MODAL UTIL ============
 function hideModal(id) {
