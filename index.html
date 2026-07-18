@@ -15,6 +15,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- SheetJS for Excel export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- html2pdf + jspdf for receipt PDF -->
@@ -499,7 +500,7 @@
 <!-- ==================== MAIN SCRIPT ==================== -->
 <script>
 // ============ STATE ============
-var db = null, auth = null;
+var db = null, auth = null, storage = null;
 
 // === XSS Protection ===
 function esc(s) {
@@ -576,6 +577,7 @@ function initFirebase() {
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
     auth = firebase.auth();
+    storage = firebase.storage();
     return true;
   } catch (e) {
     console.error('Firebase init failed', e);
@@ -1517,47 +1519,27 @@ async function sendReceiptToWA() {
     }
   }
 
-  // === STEP 2: Share / Download PDF + buka WA ke nomor customer ===
-  if (pdfBlob) {
-    var file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-
-    // MOBILE: Web Share API → user pilih WA dari share sheet, PDF langsung terkirim
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'Struk ' + t.receiptNo });
-      return;
-    }
-
-    // DESKTOP: Auto-download PDF + buka WhatsApp Web ke nomor customer
-    var url = URL.createObjectURL(pdfBlob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-  }
-
-  // === STEP 3: Buka WA ke nomor customer (mobile + desktop) ===
-  // Mobile: wa.me deep link buka WhatsApp langsung ke chat customer
-  // Desktop: web.whatsapp.com ke chat customer
-  var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  if (waTarget) {
-    if (isMobile) {
-      // Mobile: wa.me buka WhatsApp app langsung ke chat
-      window.location.href = 'https://wa.me/' + waTarget;
-    } else {
-      // Desktop: buka WhatsApp Web ke chat customer
-      window.open('https://web.whatsapp.com/send?phone=' + waTarget, '_blank');
-    }
-  } else {
-    // Gak ada nomor WA customer → buka WA biasa
-    if (isMobile) {
-      window.location.href = 'https://wa.me/';
-    } else {
-      window.open('https://web.whatsapp.com', '_blank');
+  // === STEP 2: Upload PDF ke Firebase Storage ===
+  var pdfUrl = '';
+  if (pdfBlob && storage) {
+    try {
+      var storageRef = storage.ref('receipts/' + fileName);
+      var snapshot = await storageRef.put(pdfBlob, { contentType: 'application/pdf' });
+      pdfUrl = await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      console.error('WA PDF upload error:', e);
     }
   }
+
+  // === STEP 3: Build text + link, kirim via WA ===
+  // Tambahin link download PDF ke text message
+  var pdfLine = pdfUrl ? '\n\n📄 Download Struk PDF:\n' + pdfUrl : '';
+  var fullMsg = textMsg + pdfLine;
+
+  var waUrl = waTarget
+    ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(fullMsg)
+    : 'https://wa.me/?text=' + encodeURIComponent(fullMsg);
+  window.open(waUrl, '_blank');
 }
 // ============ MODAL UTIL ============
 function hideModal(id) {
