@@ -1471,7 +1471,7 @@ async function sendReceiptToWA() {
     (splitLine ? splitLine : 'Metode: ' + methodLabel + '\n' + cardLine) +
     '\nTerima kasih';
 
-  // Determine WA target
+  // Determine WA target (normalize 08→628)
   var waTarget = '';
   if (t.customerWA && t.customerWA.length > 0) {
     var clean = t.customerWA.replace(/[\+\s\-]/g, '');
@@ -1480,73 +1480,78 @@ async function sendReceiptToWA() {
     waTarget = clean;
   }
 
-  // PATH 1: Generate PDF → share or download
+  // Generate PDF + PNG from receipt-display
+  var element = document.getElementById('receipt-display');
+  if (!element) { fallbackWA(); return; }
+  if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+    fallbackWA(); return;
+  }
+  var canvas;
   try {
-    var element = document.getElementById('receipt-display');
-    if (element && (typeof html2canvas !== 'undefined') && (typeof window.jspdf !== 'undefined')) {
-      var w = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
-      var canvas = await html2canvas(element, {
-        scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true,
-        scrollX: 0, scrollY: 0,
-        windowWidth: Math.max(400, element.scrollWidth || window.innerWidth),
-        windowHeight: Math.max(400, element.scrollHeight || window.innerHeight)
-      });
-      var imgData = canvas.toDataURL('image/jpeg', 0.98);
-      var pdfHeight = (canvas.height / canvas.width) * w;
-      var jsPDF = window.jspdf.jsPDF;
-      var pdf = new jsPDF({ unit: 'mm', format: [w, pdfHeight], orientation: 'portrait' });
-      pdf.addImage(imgData, 'JPEG', 0, 0, w, pdfHeight);
-      var pdfBlob = pdf.output('blob');
-      var pdfFile = new File([pdfBlob], 'struk-' + t.receiptNo + '.pdf', { type: 'application/pdf' });
+    var w = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
+    canvas = await html2canvas(element, {
+      scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true,
+      scrollX: 0, scrollY: 0,
+      windowWidth: Math.max(400, element.scrollWidth || window.innerWidth),
+      windowHeight: Math.max(400, element.scrollHeight || window.innerHeight)
+    });
+  } catch (e) { fallbackWA(); return; }
 
-      // Try Web Share API with PDF file (works on modern mobile browsers)
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-        try {
-          await navigator.share({ files: [pdfFile], title: 'Struk ' + t.receiptNo });
-          return;
-        } catch (shareErr) {
-          if (shareErr.name === 'AbortError') return;
-        }
-      }
+  // Build PDF blob
+  var jsPDF = window.jspdf.jsPDF;
+  var imgData = canvas.toDataURL('image/jpeg', 0.98);
+  var pdfHeight = (canvas.height / canvas.width) * 80;
+  var pdf = new jsPDF({ unit: 'mm', format: [80, pdfHeight], orientation: 'portrait' });
+  pdf.addImage(imgData, 'JPEG', 0, 0, 80, pdfHeight);
+  var pdfBlob = pdf.output('blob');
+  var pdfFile = new File([pdfBlob], 'struk-' + t.receiptNo + '.pdf', { type: 'application/pdf' });
 
-      // Also try sharing as image (WA handles images better than PDF on some devices)
-      var imgBlob = await new Promise(function(resolve) {
-        canvas.toBlob(function(b) { resolve(b); }, 'image/png', 0.95);
-      });
-      if (imgBlob) {
-        var imgFile = new File([imgBlob], 'struk-' + t.receiptNo + '.png', { type: 'image/png' });
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [imgFile] })) {
-          try {
-            await navigator.share({ files: [imgFile], title: 'Struk ' + t.receiptNo, text: textMsg });
-            return;
-          } catch (shareErr) {
-            if (shareErr.name === 'AbortError') return;
-          }
-        }
-      }
+  // Build PNG blob (WA prefers images over PDF)
+  var imgBlob = await new Promise(function(r) { canvas.toBlob(function(b) { r(b); }, 'image/png', 0.95); });
+  var imgFile = imgBlob ? new File([imgBlob], 'struk-' + t.receiptNo + '.png', { type: 'image/png' }) : null;
 
-      // Fallback: download PDF + alert user to attach manually
-      var url = URL.createObjectURL(pdfBlob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'struk-' + t.receiptNo + '.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-      alert('Struk PDF sudah didownload.\n\nUntuk kirim ke WhatsApp:\n1. Buka chat WA customer\n2. Tap attachment (📎) → Document\n3. Pilih file struk-' + t.receiptNo + '.pdf');
-      return;
+  // PATH 1: navigator.share — auto-buka share sheet, pilih WhatsApp langsung
+  if (navigator.share && navigator.canShare) {
+    // Try PNG first (WA handle gambar lebih baik dari PDF)
+    if (imgFile && navigator.canShare({ files: [imgFile] })) {
+      try {
+        await navigator.share({ files: [imgFile], title: 'Struk ' + t.receiptNo, text: textMsg });
+        return;
+      } catch (e) { if (e.name === 'AbortError') return; }
     }
-  } catch (e) {
-    console.error('PDF generation failed:', e);
-    alert('Gagal generate PDF: ' + e.message + '\n\nMengirim teks ke WhatsApp...');
+    // Try PDF
+    if (navigator.canShare({ files: [pdfFile] })) {
+      try {
+        await navigator.share({ files: [pdfFile], title: 'Struk ' + t.receiptNo });
+        return;
+      } catch (e) { if (e.name === 'AbortError') return; }
+    }
+    // Try text only (navigator.share tanpa file)
+    try {
+      await navigator.share({ title: 'Struk ' + t.receiptNo, text: textMsg });
+      return;
+    } catch (e) { if (e.name === 'AbortError') return; }
   }
 
-  // PATH 2: Fallback — text via wa.me (only if PDF completely failed)
+  // PATH 2: Desktop — auto-download PDF + auto-open WA chat
+  var url = URL.createObjectURL(pdfBlob);
+  var a = document.createElement('a'); a.href = url;
+  a.download = 'struk-' + t.receiptNo + '.pdf';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
+  // Auto-open WA chat dengan nomor customer
   var waUrl = waTarget
     ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(textMsg)
     : 'https://wa.me/?text=' + encodeURIComponent(textMsg);
   window.open(waUrl, '_blank');
+
+  function fallbackWA() {
+    // Text only fallback
+    var waUrl = waTarget
+      ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(textMsg)
+      : 'https://wa.me/?text=' + encodeURIComponent(textMsg);
+    window.open(waUrl, '_blank');
+  }
 }
 
 // ============ MODAL UTIL ============
