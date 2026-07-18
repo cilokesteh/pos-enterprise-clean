@@ -1494,63 +1494,11 @@ async function sendReceiptToWA() {
     waTarget = clean;
   }
 
-  // === STEP 1: Generate PDF ===
-  var element = document.getElementById('receipt-display');
-  var pdfBlob = null;
-  var fileName = (_lastReceiptNo || 'receipt') + '.pdf';
-
-  if (element && typeof html2pdf !== 'undefined') {
-    try {
-      var w = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
-      pdfBlob = await html2pdf().set({
-        margin: 0,
-        filename: fileName,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true,
-          scrollX: 0, scrollY: 0,
-          windowWidth: Math.max(400, element.scrollWidth || window.innerWidth),
-          windowHeight: Math.max(400, element.scrollHeight || window.innerHeight) },
-        jsPDF: { unit: 'mm', format: [w, 200], orientation: 'portrait' }
-      }).from(element).outputPdf('blob');
-    } catch (e) {
-      console.error('WA PDF generate error:', e);
-    }
-  }
-
-  // === STEP 2: Mobile → share PDF langsung via Web Share API ===
-  if (pdfBlob) {
-    var file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: 'Struk ' + t.receiptNo });
-        return;
-      } catch (e) { /* user batal share, lanjut */ }
-    }
-  }
-
-  // === STEP 3: Desktop / fallback → download PDF + buka WA ===
-  if (pdfBlob) {
-    var url = URL.createObjectURL(pdfBlob);
-    var a = document.createElement('a');
-    a.href = url; a.download = fileName;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-  }
-
-  // Buka WA ke nomor customer
+  // Kirim text struk via wa.me langsung ke nomor customer
   var waUrl = waTarget
     ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(textMsg)
     : 'https://wa.me/?text=' + encodeURIComponent(textMsg);
   window.open(waUrl, '_blank');
-
-  // Toast: ingetin user buat attach PDF
-  if (pdfBlob) {
-    var toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:90%;text-align:center;';
-    toast.innerHTML = '📎 PDF sudah di-download!<br><b>Attach file <i>' + fileName + '</i> di chat WA</b>';
-    document.body.appendChild(toast);
-    setTimeout(function() { toast.remove(); }, 6000);
-  }
 }
 // ============ MODAL UTIL ============
 function hideModal(id) {
