@@ -1406,12 +1406,11 @@ async function sendReceiptToWA() {
     waTarget = clean;
   }
 
-  // PATH 1: Generate PDF → download first → then open WA
+  // PATH 1: Generate PDF → share or download
   try {
     var element = document.getElementById('receipt-display');
-    if (element && typeof html2pdf !== 'undefined' && typeof window.jspdf !== 'undefined') {
+    if (element && (typeof html2canvas !== 'undefined') && (typeof window.jspdf !== 'undefined')) {
       var w = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
-      // Use html2canvas + jsPDF for auto aspect ratio
       var canvas = await html2canvas(element, {
         scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true,
         scrollX: 0, scrollY: 0,
@@ -1420,24 +1419,39 @@ async function sendReceiptToWA() {
       });
       var imgData = canvas.toDataURL('image/jpeg', 0.98);
       var pdfHeight = (canvas.height / canvas.width) * w;
-      var { jsPDF } = window.jspdf;
+      var jsPDF = window.jspdf.jsPDF;
       var pdf = new jsPDF({ unit: 'mm', format: [w, pdfHeight], orientation: 'portrait' });
       pdf.addImage(imgData, 'JPEG', 0, 0, w, pdfHeight);
       var pdfBlob = pdf.output('blob');
       var pdfFile = new File([pdfBlob], 'struk-' + t.receiptNo + '.pdf', { type: 'application/pdf' });
 
-      // Try Web Share API with PDF file
+      // Try Web Share API with PDF file (works on modern mobile browsers)
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
         try {
           await navigator.share({ files: [pdfFile], title: 'Struk ' + t.receiptNo });
           return;
         } catch (shareErr) {
-          if (shareErr.name === 'AbortError') return; // user cancelled
-          // fall through to download + wa.me
+          if (shareErr.name === 'AbortError') return;
         }
       }
 
-      // Download PDF first, then open WA
+      // Also try sharing as image (WA handles images better than PDF on some devices)
+      var imgBlob = await new Promise(function(resolve) {
+        canvas.toBlob(function(b) { resolve(b); }, 'image/png', 0.95);
+      });
+      if (imgBlob) {
+        var imgFile = new File([imgBlob], 'struk-' + t.receiptNo + '.png', { type: 'image/png' });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [imgFile] })) {
+          try {
+            await navigator.share({ files: [imgFile], title: 'Struk ' + t.receiptNo, text: textMsg });
+            return;
+          } catch (shareErr) {
+            if (shareErr.name === 'AbortError') return;
+          }
+        }
+      }
+
+      // Fallback: download PDF + alert user to attach manually
       var url = URL.createObjectURL(pdfBlob);
       var a = document.createElement('a');
       a.href = url;
@@ -1445,18 +1459,16 @@ async function sendReceiptToWA() {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      alert('PDF struk sudah didownload. Silakan kirim manual ke customer via WhatsApp.');
-      // Open WA with text summary
-      var waUrl = waTarget
-        ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(textMsg)
-        : 'https://wa.me/?text=' + encodeURIComponent(textMsg);
-      setTimeout(function() { window.open(waUrl, '_blank'); }, 1000);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+      alert('Struk PDF sudah didownload.\n\nUntuk kirim ke WhatsApp:\n1. Buka chat WA customer\n2. Tap attachment (📎) → Document\n3. Pilih file struk-' + t.receiptNo + '.pdf');
       return;
     }
-  } catch (e) { console.error('PDF generation failed:', e); }
+  } catch (e) {
+    console.error('PDF generation failed:', e);
+    alert('Gagal generate PDF: ' + e.message + '\n\nMengirim teks ke WhatsApp...');
+  }
 
-  // PATH 2: Fallback — text via wa.me
+  // PATH 2: Fallback — text via wa.me (only if PDF completely failed)
   var waUrl = waTarget
     ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(textMsg)
     : 'https://wa.me/?text=' + encodeURIComponent(textMsg);
