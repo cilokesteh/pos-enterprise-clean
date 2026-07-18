@@ -138,7 +138,7 @@
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
         Keluar
       </button>
-      <div class="text-[10px] text-zinc-700 mt-3">v3</div>
+      <div class="text-[10px] text-zinc-700 mt-3">v4</div>
       <div class="text-[9px] text-zinc-700 mt-1">&copy; 2026 POS Enterprise</div>
     </div>
   </aside>
@@ -237,9 +237,13 @@
       <!-- ==================== STOK VIEW ==================== -->
       <section id="view-stock" class="view">
         <div class="max-w-4xl mx-auto">
-          <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h3 class="text-lg font-semibold">Manajemen Stok</h3>
             <div class="flex gap-2">
+              <button onclick="exportStockOpname()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Download Stock Opname
+              </button>
               <button onclick="showStockModal('restock')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white">
                 + Restock (Masuk)
               </button>
@@ -807,19 +811,22 @@ function showPaymentModal() {
     '<div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center z-50" id="payment-modal" onclick="event.target.id===\'payment-modal\'&&hideModal(\'payment-modal\')">' +
       '<div class="modal-box bg-zinc-900 rounded-xl p-6 w-full max-w-md border border-zinc-800" onclick="event.stopPropagation()">' +
         '<h3 class="text-lg font-semibold mb-4">Pembayaran</h3>' +
-        '<div class="flex justify-between text-sm mb-2"><span class="text-zinc-400">Total</span><span class="font-bold text-emerald-400">' + formatRp(total) + '</span></div>' +
+        '<div class="flex justify-between text-sm mb-2"><span class="text-zinc-400">Total</span><span class="font-bold text-emerald-400" id="pay-total-display">' + formatRp(total) + '</span></div>' +
         '<label class="block text-sm text-zinc-400 mt-4 mb-2">Metode Pembayaran</label>' +
         '<select id="pay-method" onchange="onPayMethodChange()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
           '<option value="cash">Tunai</option>' +
           '<option value="qris">QRIS</option>' +
           '<option value="transfer">Transfer</option>' +
           '<option value="card">Kartu Debit/Kredit</option>' +
+          '<option value="split">Split (Gabungan)</option>' +
         '</select>' +
+        // Cash fields
         '<div id="pay-cash-fields" class="mt-4">' +
           '<label class="block text-sm text-zinc-400 mb-2">Uang Diterima</label>' +
           '<input id="pay-cash" type="text" inputmode="numeric" value="' + total + '" oninput="updateChange()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
           '<div class="flex justify-between text-sm mt-2"><span class="text-zinc-400">Kembalian</span><span id="pay-change" class="font-bold">Rp 0</span></div>' +
         '</div>' +
+        // Card fields
         '<div id="pay-card-fields" class="mt-4 hidden">' +
           '<label class="block text-sm text-zinc-400 mb-2">Jenis Kartu</label>' +
           '<select id="pay-card-type" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 mb-3">' +
@@ -829,6 +836,33 @@ function showPaymentModal() {
           '<label class="block text-sm text-zinc-400 mb-2">Nomor Kartu</label>' +
           '<input id="pay-card-number" type="text" inputmode="numeric" placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatCardNumber(this)" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
         '</div>' +
+        // Split fields
+        '<div id="pay-split-fields" class="mt-4 hidden space-y-3">' +
+          '<div>' +
+            '<label class="block text-sm text-zinc-400 mb-2">Tunai (Rp)</label>' +
+            '<input id="pay-split-cash" type="text" inputmode="numeric" value="0" oninput="updateSplitTotals()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-sm text-zinc-400 mb-2">QRIS (Rp)</label>' +
+            '<input id="pay-split-qris" type="text" inputmode="numeric" value="0" oninput="updateSplitTotals()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-sm text-zinc-400 mb-2">Transfer (Rp)</label>' +
+            '<input id="pay-split-transfer" type="text" inputmode="numeric" value="0" oninput="updateSplitTotals()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-sm text-zinc-400 mb-2">Kartu (Rp)</label>' +
+            '<input id="pay-split-card" type="text" inputmode="numeric" value="0" oninput="updateSplitTotals()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100 mb-2">' +
+            '<select id="pay-split-card-type" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 mb-2">' +
+              '<option value="debit">Debit</option>' +
+              '<option value="credit">Kredit</option>' +
+            '</select>' +
+            '<input id="pay-split-card-number" type="text" inputmode="numeric" placeholder="Nomor Kartu (opsional)" maxlength="19" oninput="formatCardNumber(this)" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
+          '</div>' +
+          '<div class="flex justify-between text-sm pt-2 border-t border-zinc-800"><span class="text-zinc-400">Total Input</span><span id="pay-split-sum" class="font-bold">Rp 0</span></div>' +
+          '<div class="flex justify-between text-sm"><span class="text-zinc-400">Sisa/Kembalian</span><span id="pay-split-remaining" class="font-bold">Rp 0</span></div>' +
+        '</div>' +
+        // Customer info
         '<div id="pay-customer" class="mt-4">' +
           '<label class="block text-sm text-zinc-400 mb-2">Nama Customer (opsional)</label>' +
           '<input id="pay-cust-name" type="text" placeholder="Walk-in" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 mb-3">' +
@@ -845,8 +879,27 @@ function onPayMethodChange() {
   var method = document.getElementById('pay-method').value;
   var cashFields = document.getElementById('pay-cash-fields');
   var cardFields = document.getElementById('pay-card-fields');
+  var splitFields = document.getElementById('pay-split-fields');
   if (cashFields) cashFields.style.display = (method === 'cash') ? 'block' : 'none';
   if (cardFields) cardFields.style.display = (method === 'card') ? 'block' : 'none';
+  if (splitFields) splitFields.style.display = (method === 'split') ? 'block' : 'none';
+}
+
+function updateSplitTotals() {
+  var total = cart.reduce(function(s, i) { return s + i.subtotal; }, 0);
+  var cash = parseInt(document.getElementById('pay-split-cash').value) || 0;
+  var qris = parseInt(document.getElementById('pay-split-qris').value) || 0;
+  var transfer = parseInt(document.getElementById('pay-split-transfer').value) || 0;
+  var card = parseInt(document.getElementById('pay-split-card').value) || 0;
+  var sum = cash + qris + transfer + card;
+  var remaining = sum - total;
+  var sumEl = document.getElementById('pay-split-sum');
+  var remEl = document.getElementById('pay-split-remaining');
+  if (sumEl) sumEl.textContent = formatRp(sum);
+  if (remEl) {
+    remEl.textContent = formatRp(remaining);
+    remEl.style.color = remaining < 0 ? '#f87171' : (remaining > 0 ? '#fbbf24' : '#10b981');
+  }
 }
 
 function formatCardNumber(input) {
@@ -877,6 +930,7 @@ async function processPayment() {
   var custWA = (document.getElementById('pay-cust-wa').value || '').trim();
   var cash = 0, change = 0;
   var cardType = '', cardNumber = '', cardMasked = '';
+  var split = null;
   if (method === 'cash') {
     cash = parseInt(document.getElementById('pay-cash').value) || 0;
     if (cash < total) { alert('Uang diterima kurang dari total'); return; }
@@ -886,6 +940,29 @@ async function processPayment() {
     cardNumber = (document.getElementById('pay-card-number').value || '').replace(/\s+/g, '');
     if (!cardNumber || cardNumber.length < 12) { alert('Nomor kartu belum lengkap (min 12 digit)'); return; }
     cardMasked = maskCardNumber(cardNumber);
+  } else if (method === 'split') {
+    var sCash = parseInt(document.getElementById('pay-split-cash').value) || 0;
+    var sQris = parseInt(document.getElementById('pay-split-qris').value) || 0;
+    var sTransfer = parseInt(document.getElementById('pay-split-transfer').value) || 0;
+    var sCard = parseInt(document.getElementById('pay-split-card').value) || 0;
+    var sSum = sCash + sQris + sTransfer + sCard;
+    if (sSum < total) { alert('Total split (Rp ' + sSum.toLocaleString('id-ID') + ') kurang dari total tagihan (Rp ' + total.toLocaleString('id-ID') + ')'); return; }
+    if (sSum > total) {
+      // Overpayment in split — cash portion gets the change
+      change = sSum - total;
+      cash = sCash; // cash portion as input
+    } else {
+      cash = sCash;
+    }
+    var sCardType = document.getElementById('pay-split-card-type').value;
+    var sCardNum = (document.getElementById('pay-split-card-number').value || '').replace(/\s+/g, '');
+    var sCardMasked = '';
+    if (sCard > 0) {
+      if (sCardNum && sCardNum.length >= 12) sCardMasked = maskCardNumber(sCardNum);
+      cardType = sCardType;
+      cardMasked = sCardMasked;
+    }
+    split = { cash: sCash, qris: sQris, transfer: sTransfer, card: sCard, cardType: sCardType, cardMasked: sCardMasked };
   } else {
     // Non-cash: exact match
     if (total <= 0) { alert('Total tidak valid'); return; }
@@ -923,9 +1000,13 @@ async function processPayment() {
     createdAt: now
   };
   // Card info (masked only in DB — never store raw card number)
-  if (method === 'card') {
+  if (method === 'card' || (method === 'split' && cardMasked)) {
     txData.cardType = cardType;
     txData.cardMasked = cardMasked;
+  }
+  // Split breakdown
+  if (split) {
+    txData.split = split;
   }
   try {
     if (!db) throw new Error('Database tidak siap');
@@ -1048,6 +1129,18 @@ function buildReceiptHtml(tx) {
   } else if (tx.method === 'card') {
     payLine = '<div style="display:flex;justify-content:space-between;"><span>Metode</span><span>' + methodLabel + '</span></div>' +
       '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>No Kartu</span><span>' + (tx.cardMasked || maskCardNumber(tx.cardNumber)) + '</span></div>';
+  } else if (tx.method === 'split' && tx.split) {
+    var s = tx.split;
+    payLine = '<div style="font-size:11px;font-weight:bold;margin-bottom:2px;">Split Pembayaran:</div>';
+    if (s.cash > 0) payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>Tunai</span><span>' + formatRp(s.cash) + '</span></div>';
+    if (s.qris > 0) payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>QRIS</span><span>' + formatRp(s.qris) + '</span></div>';
+    if (s.transfer > 0) payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>Transfer</span><span>' + formatRp(s.transfer) + '</span></div>';
+    if (s.card > 0) {
+      var sCardLabel = 'Kartu ' + (s.cardType === 'credit' ? 'Kredit' : 'Debit');
+      payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>' + sCardLabel + '</span><span>' + formatRp(s.card) + '</span></div>';
+      if (s.cardMasked) payLine += '<div style="display:flex;justify-content:space-between;font-size:10px;"><span>No Kartu</span><span>' + s.cardMasked + '</span></div>';
+    }
+    if (tx.change > 0) payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>Kembali</span><span>' + formatRp(tx.change) + '</span></div>';
   } else {
     payLine = '<div style="display:flex;justify-content:space-between;"><span>Metode</span><span>' + methodLabel + '</span></div>';
   }
@@ -1136,10 +1229,24 @@ async function sendReceiptToWA() {
   else if (t.method === 'qris') methodLabel = 'QRIS';
   else if (t.method === 'transfer') methodLabel = 'Transfer';
   else if (t.method === 'card') methodLabel = 'Kartu ' + (t.cardType === 'credit' ? 'Kredit' : 'Debit');
+  else if (t.method === 'split') methodLabel = 'Split';
   else methodLabel = t.method;
   var cardLine = '';
   if (t.method === 'card' && t.cardMasked) {
     cardLine = 'No Kartu: ' + t.cardMasked + '\n';
+  }
+  var splitLine = '';
+  if (t.method === 'split' && t.split) {
+    var sp = t.split;
+    splitLine = 'Pembayaran Split:\n';
+    if (sp.cash > 0) splitLine += '  Tunai: ' + formatRp(sp.cash) + '\n';
+    if (sp.qris > 0) splitLine += '  QRIS: ' + formatRp(sp.qris) + '\n';
+    if (sp.transfer > 0) splitLine += '  Transfer: ' + formatRp(sp.transfer) + '\n';
+    if (sp.card > 0) {
+      splitLine += '  Kartu ' + (sp.cardType === 'credit' ? 'Kredit' : 'Debit') + ': ' + formatRp(sp.card) + '\n';
+      if (sp.cardMasked) splitLine += '  No Kartu: ' + sp.cardMasked + '\n';
+    }
+    if (t.change > 0) splitLine += 'Kembali: ' + formatRp(t.change) + '\n';
   }
   var textMsg = '*' + storeName + '*\n' +
     'No: ' + t.receiptNo + '\n' +
@@ -1150,8 +1257,7 @@ async function sendReceiptToWA() {
       return i.qty + 'x ' + i.name + ' = ' + formatRp(i.subtotal);
     }).join('\n') +
     '\n---\n*TOTAL: ' + formatRp(t.total) + '*\n' +
-    'Metode: ' + methodLabel + '\n' +
-    cardLine +
+    (splitLine ? splitLine : 'Metode: ' + methodLabel + '\n' + cardLine) +
     '\nTerima kasih';
   // Determine WA target
   var waTarget = '';
@@ -1567,6 +1673,7 @@ function renderHistoryTable() {
     else if (t.method === 'qris') methodLabel = 'QRIS';
     else if (t.method === 'transfer') methodLabel = 'Transfer';
     else if (t.method === 'card') methodLabel = 'Kartu ' + (t.cardType === 'credit' ? 'Kredit' : 'Debit');
+    else if (t.method === 'split') methodLabel = 'Split';
     else methodLabel = t.method;
     return '<tr class="border-t border-zinc-800 hover:bg-zinc-950">' +
       '<td class="px-4 py-3 text-xs">' + (t.receiptNo || '-') + '</td>' +
@@ -1589,6 +1696,38 @@ function reprintReceipt(txId) {
   showReceipt(t);
 }
 
+function exportStockOpname() {
+  if (products.length === 0) { alert('Belum ada produk untuk diexport'); return; }
+  if (typeof XLSX === 'undefined') { alert('Library Excel belum siap'); return; }
+  var data = products.map(function(p, i) {
+    var pool = (p.imeiPool || []).join(', ');
+    return {
+      'No': i + 1,
+      'Nama Produk': p.name || '-',
+      'Kategori': p.category || '-',
+      'Brand': p.brand || '-',
+      'Stok Sistem': p.stock || 0,
+      'Stok Fisik': '',  // kosong — diisi manual saat opname
+      'Selisih': '',     // kosong — dihitung manual (Stok Fisik - Stok Sistem)
+      'Harga Modal': p.costPrice || 0,
+      'Harga Jual': p.price || 0,
+      'Nilai Modal (Total)': (p.costPrice || 0) * (p.stock || 0),
+      'IMEI/SN Terdaftar': pool,
+      'Jumlah IMEI/SN': (p.imeiPool || []).length
+    };
+  });
+  var ws = XLSX.utils.json_to_sheet(data);
+  // Auto width
+  var colWidths = Object.keys(data[0]).map(function(k) {
+    return { wch: Math.max(k.length, ...data.map(function(r) { return String(r[k] || '').length; })) + 2 };
+  });
+  ws['!cols'] = colWidths;
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Stock Opname');
+  var storeName = (typeof STORE !== 'undefined' && STORE.name) ? STORE.name : 'POS';
+  XLSX.writeFile(wb, 'STOCK-OPNAME-' + storeName + '-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+}
+
 function exportHistoryExcel() {
   if (_historyTx.length === 0) { alert('Tidak ada data untuk diexport'); return; }
   if (typeof XLSX === 'undefined') { alert('Library Excel belum siap'); return; }
@@ -1598,6 +1737,7 @@ function exportHistoryExcel() {
     else if (t.method === 'qris') methodLabel = 'QRIS';
     else if (t.method === 'transfer') methodLabel = 'Transfer';
     else if (t.method === 'card') methodLabel = 'Kartu ' + (t.cardType === 'credit' ? 'Kredit' : 'Debit') + (t.cardMasked ? ' (' + t.cardMasked + ')' : '');
+    else if (t.method === 'split') methodLabel = 'Split';
     else methodLabel = t.method;
     var itemsStr = (t.items || []).map(function(it) {
       return it.qty + 'x ' + it.name + ' @ ' + formatRp(it.price);
@@ -1728,7 +1868,7 @@ async function loadTransactionsInRange(start, end) {
         receiptNo: d.receiptNo || '-',
         date: formatDate(d.createdAt),
         customer: d.customerName || 'Walk-in',
-        method: d.method === 'cash' ? 'Tunai' : (d.method === 'qris' ? 'QRIS' : (d.method === 'transfer' ? 'Transfer' : (d.method === 'card' ? 'Kartu ' + (d.cardType === 'credit' ? 'Kredit' : 'Debit') : d.method))),
+        method: d.method === 'cash' ? 'Tunai' : (d.method === 'qris' ? 'QRIS' : (d.method === 'transfer' ? 'Transfer' : (d.method === 'card' ? 'Kartu ' + (d.cardType === 'credit' ? 'Kredit' : 'Debit') : (d.method === 'split' ? 'Split' : d.method)))),
         total: total,
         modal: modal,
         profit: profit,
