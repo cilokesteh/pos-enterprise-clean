@@ -1456,9 +1456,7 @@ async function sendReceiptToWA() {
   else if (t.method === 'split') methodLabel = 'Split';
   else methodLabel = t.method;
   var cardLine = '';
-  if (t.method === 'card' && t.cardMasked) {
-    cardLine = 'No Kartu: ' + t.cardMasked + '\n';
-  }
+  if (t.method === 'card' && t.cardMasked) { cardLine = 'No Kartu: ' + t.cardMasked + '\n'; }
   var splitLine = '';
   if (t.method === 'split' && t.split) {
     var sp = t.split;
@@ -1481,81 +1479,65 @@ async function sendReceiptToWA() {
     'Tgl: ' + dd + '/' + MM + '/' + yy + ' ' + hh + ':' + mm + '\n' +
     'Customer: ' + (t.customerName || 'Walk-in') + '\n' +
     '---\n' +
-    (t.items || []).map(function(i) {
-      return i.qty + 'x ' + i.name + ' = ' + formatRp(i.subtotal);
-    }).join('\n') +
+    (t.items || []).map(function(i) { return i.qty + 'x ' + i.name + ' = ' + formatRp(i.subtotal); }).join('\n') +
     '\n---\n*TOTAL: ' + formatRp(t.total) + '*\n' +
     (splitLine ? splitLine : 'Metode: ' + methodLabel + '\n' + cardLine) +
     '\nTerima kasih';
 
-  // Determine WA target (normalize 08→628)
+  // Normalize WA number: 08xx → 628xx
   var waTarget = '';
   if (t.customerWA && t.customerWA.length > 0) {
     var clean = t.customerWA.replace(/[\+\s\-]/g, '');
     if (clean.startsWith('08')) clean = '62' + clean.substring(1);
     else if (clean.startsWith('8')) clean = '62' + clean;
+    else if (!clean.startsWith('62')) clean = '62' + clean;
     waTarget = clean;
   }
 
-  // Generate PDF from receipt-display via html2pdf (handles canvas internally)
+  // === PATH 1: Generate PDF via html2pdf → share via Web Share API ===
   var element = document.getElementById('receipt-display');
-  if (!element) { fallbackWA(); return; }
-
-  // PATH 1: Web Share API — auto share sheet → pilih WhatsApp
-  if (navigator.share && navigator.canShare) {
+  if (element && typeof html2pdf !== 'undefined') {
     try {
       var w = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
       var blob = await html2pdf().set({
         margin: 0,
-        filename: 'struk-' + t.receiptNo + '.pdf',
+        filename: (_lastReceiptNo || 'receipt') + '.pdf',
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true, scrollX: 0, scrollY: 0,
+        html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true,
+          scrollX: 0, scrollY: 0,
           windowWidth: Math.max(400, element.scrollWidth || window.innerWidth),
           windowHeight: Math.max(400, element.scrollHeight || window.innerHeight) },
         jsPDF: { unit: 'mm', format: [w, 200], orientation: 'portrait' }
       }).from(element).outputPdf('blob');
-      var file = new File([blob], 'struk-' + t.receiptNo + '.pdf', { type: 'application/pdf' });
-      if (navigator.canShare({ files: [file] })) {
+
+      var file = new File([blob], (_lastReceiptNo || 'receipt') + '.pdf', { type: 'application/pdf' });
+
+      // Try share PDF via Web Share API (mobile)
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: 'Struk ' + t.receiptNo });
         return;
       }
+
+      // Fallback: download PDF + auto-open WA
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = (_lastReceiptNo || 'receipt') + '.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
     } catch (e) {
-      if (e.name === 'AbortError') return;
+      console.error('WA PDF error:', e);
     }
-    // Try text share (no file)
-    try {
-      await navigator.share({ title: 'Struk ' + t.receiptNo, text: textMsg });
-      return;
-    } catch (e) { if (e.name === 'AbortError') return; }
   }
 
-  // PATH 2: Desktop — auto-download PDF + auto-open WA chat
-  try {
-    var w2 = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
-    var blob2 = await html2pdf().set({
-      margin: 0,
-      filename: 'struk-' + t.receiptNo + '.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true, scrollX: 0, scrollY: 0,
-        windowWidth: Math.max(400, element.scrollWidth || window.innerWidth),
-        windowHeight: Math.max(400, element.scrollHeight || window.innerHeight) },
-      jsPDF: { unit: 'mm', format: [w2, 200], orientation: 'portrait' }
-    }).from(element).save();
-  } catch (e) { /* skip */ }
-  // Auto-open WA chat dengan nomor customer
+  // === PATH 2: Fallback — text via wa.me ===
   var waUrl = waTarget
     ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(textMsg)
     : 'https://wa.me/?text=' + encodeURIComponent(textMsg);
   window.open(waUrl, '_blank');
-
-  function fallbackWA() {
-    var waUrl = waTarget
-      ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(textMsg)
-      : 'https://wa.me/?text=' + encodeURIComponent(textMsg);
-    window.open(waUrl, '_blank');
-  }
 }
-
 // ============ MODAL UTIL ============
 function hideModal(id) {
   var el = document.getElementById(id);
