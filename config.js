@@ -1,4 +1,4 @@
-/* Copyright © 2026 CilokTech (ciloktech.web.id) | Proprietary Software | Unauthorized copying/distribution prohibited | License: Commercial - Contact ciloktech.web.id */
+/* Copyright © 2026 CilokTech (ciloktech.my.id) | Proprietary Software | Unauthorized copying/distribution prohibited | License: Commercial - Contact ciloktech.my.id */
 
 // ============================================================
 // POS Enterprise Clean — Configuration

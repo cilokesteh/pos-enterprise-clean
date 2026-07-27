@@ -1,6 +1,6 @@
 PROPRIETARY SOFTWARE LICENSE
 
-Copyright © 2026 CilokTech (ciloktech.web.id)
+Copyright © 2026 CilokTech (ciloktech.my.id)
 All Rights Reserved.
 
 This software and associated documentation files (the "Software") are proprietary 
@@ -63,7 +63,7 @@ TERMS AND CONDITIONS:
     Indonesia.
 
 FOR LICENSING INQUIRIES OR PERMISSIONS:
-Contact: ciloktech.web.id
+Contact: ciloktech.my.id
 Email: Available on website
 
 BY USING THIS SOFTWARE, YOU ACKNOWLEDGE THAT YOU HAVE READ THIS LICENSE, UNDERSTAND 
