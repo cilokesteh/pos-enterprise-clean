@@ -1,5 +1,7 @@
+/* Copyright © 2026 CilokTech (ciloktech.web.id) | Proprietary Software | Unauthorized copying/distribution prohibited | License: Commercial - Contact ciloktech.web.id */
+
 // sw.js — service worker (cache-first for app shell, never cache Firebase)
-const CACHE = 'pos-clean-v10';
+const CACHE = 'pos-clean-v11';
 const ASSETS = [
   './',
   './index.html',

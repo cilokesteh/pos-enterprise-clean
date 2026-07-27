@@ -1,3 +1,5 @@
+/* Copyright © 2026 CilokTech (ciloktech.web.id) | Proprietary Software | Unauthorized copying/distribution prohibited | License: Commercial - Contact ciloktech.web.id */
+
 // pwa.js — register service worker + dynamic manifest
 (function() {
   if (typeof STORE === 'undefined') return;
