@@ -1419,7 +1419,7 @@ function showReceipt(tx) {
         '<div class="flex gap-2 mt-4">' +
           '<button onclick="printReceipt()" class="flex-1 py-2.5 bg-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-zinc-900">Print</button>' +
           '<button onclick="downloadPdf()" class="flex-1 py-2.5 bg-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-zinc-900">PDF</button>' +
-          '<button onclick="sendReceiptToWA()" class="flex-1 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700">WA</button>' +
+          '<button onclick="sendReceiptToWA()" class="flex-1 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700">Kirim PDF</button>' +
         '</div>' +
         '<button onclick="hideModal(\'receipt-modal\')" class="w-full mt-2 py-2.5 bg-zinc-200 text-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-300">Tutup</button>' +
       '</div>' +
@@ -1624,9 +1624,7 @@ function downloadPdf() {
   }
 }
 
-async function sendReceiptToWA() {
-  var t = _lastReceiptData;
-  if (!t) { alert('Data struk tidak tersedia'); return; }
+function buildReceiptText(t) {
   var d = new Date(t.createdAt);
   var dd = String(d.getDate()).padStart(2, '0');
   var MM = String(d.getMonth() + 1).padStart(2, '0');
@@ -1634,53 +1632,104 @@ async function sendReceiptToWA() {
   var hh = String(d.getHours()).padStart(2, '0');
   var mm = String(d.getMinutes()).padStart(2, '0');
   var storeName = (typeof STORE !== 'undefined' && STORE.name) ? STORE.name : 'Toko';
-  var methodLabel;
-  if (t.method === 'cash') methodLabel = 'Tunai';
-  else if (t.method === 'qris') methodLabel = 'QRIS';
-  else if (t.method === 'transfer') methodLabel = 'Transfer';
-  else if (t.method === 'card') methodLabel = 'Kartu ' + (t.cardType === 'credit' ? 'Kredit' : 'Debit');
-  else if (t.method === 'split') methodLabel = 'Split';
-  else methodLabel = t.method;
-  var cardLine = '';
-  if (t.method === 'card' && t.cardMasked) { cardLine = 'No Kartu: ' + t.cardMasked + '\n'; }
-  var splitLine = '';
+  var methodLabel = methodLabelOf(t);
+  var paymentLine = 'Metode: ' + methodLabel + '\n';
+  if (t.method === 'cash') paymentLine += 'Tunai: ' + formatRp(t.cash) + '\nKembali: ' + formatRp(t.change) + '\n';
+  if (t.method === 'card' && t.cardMasked) paymentLine += 'No Kartu: ' + t.cardMasked + '\n';
   if (t.method === 'split' && t.split) {
     var sp = t.split;
-    splitLine = 'Pembayaran Split:\n';
-    if (sp.cash > 0) splitLine += '  Tunai: ' + formatRp(sp.cash) + '\n';
-    if (sp.qris > 0) splitLine += '  QRIS: ' + formatRp(sp.qris) + '\n';
-    if (sp.transfer > 0) splitLine += '  Transfer: ' + formatRp(sp.transfer) + '\n';
-    var cards = sp.cards || (sp.card > 0 ? [{ amount: sp.card, type: sp.cardType, masked: sp.cardMasked }] : []);
-    cards.forEach(function(c, ci) {
-      if (c.amount > 0) {
-        var cLabel = 'Kartu ' + (c.type === 'credit' ? 'Kredit' : 'Debit') + (cards.length > 1 ? ' #' + (ci + 1) : '');
-        splitLine += '  ' + cLabel + ': ' + formatRp(c.amount) + '\n';
-        if (c.masked) splitLine += '  No Kartu: ' + c.masked + '\n';
-      }
+    paymentLine = 'Pembayaran Split:\n';
+    if (sp.cash > 0) paymentLine += '  Tunai: ' + formatRp(sp.cash) + '\n';
+    if (sp.qris > 0) paymentLine += '  QRIS: ' + formatRp(sp.qris) + '\n';
+    if (sp.transfer > 0) paymentLine += '  Transfer: ' + formatRp(sp.transfer) + '\n';
+    (sp.cards || []).forEach(function(c, index) {
+      if (c.amount > 0) paymentLine += '  Kartu #' + (index + 1) + ': ' + formatRp(c.amount) + '\n';
     });
-    if (t.change > 0) splitLine += 'Kembali: ' + formatRp(t.change) + '\n';
+    if (t.change > 0) paymentLine += 'Kembali: ' + formatRp(t.change) + '\n';
   }
-  var textMsg = '*' + storeName + '*\n' +
+  return '*' + storeName + '*\n' +
     'No: ' + t.receiptNo + '\n' +
     'Tgl: ' + dd + '/' + MM + '/' + yy + ' ' + hh + ':' + mm + '\n' +
-    'Customer: ' + (t.customerName || 'Walk-in') + '\n' +
-    '---\n' +
-    (t.items || []).map(function(i) { return i.qty + 'x ' + i.name + ' = ' + formatRp(i.subtotal); }).join('\n') +
-    '\n---\n*TOTAL: ' + formatRp(t.total) + '*\n' +
-    (splitLine ? splitLine : 'Metode: ' + methodLabel + '\n' + cardLine) +
-    '\nTerima kasih';
+    'Customer: ' + (t.customerName || 'Walk-in') + '\n---\n' +
+    (t.items || []).map(function(item) { return item.qty + 'x ' + item.name + ' = ' + formatRp(item.subtotal); }).join('\n') +
+    '\n---\n*TOTAL: ' + formatRp(t.total) + '*\n' + paymentLine + '\nTerima kasih';
+}
 
-  // Normalize WA number: 08xx → 628xx
-  var waTarget = '';
-  if (t.customerWA && t.customerWA.length > 0) {
-    var clean = t.customerWA.replace(/[\+\s\-]/g, '');
-    if (clean.startsWith('08')) clean = '62' + clean.substring(1);
-    else if (clean.startsWith('8')) clean = '62' + clean;
-    else if (!clean.startsWith('62')) clean = '62' + clean;
-    waTarget = clean;
+function normalizeWaTarget(value) {
+  var clean = String(value || '').replace(/[^0-9]/g, '');
+  if (!clean) return '';
+  if (clean.indexOf('08') === 0) return '62' + clean.substring(1);
+  if (clean.indexOf('8') === 0) return '62' + clean;
+  if (clean.indexOf('62') !== 0) return '62' + clean;
+  return clean;
+}
+
+async function createReceiptPdfFile() {
+  var element = document.getElementById('receipt-display');
+  if (!element) throw new Error('Tampilan struk tidak ditemukan');
+  if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') throw new Error('Library PDF belum siap');
+  var width = (typeof RECEIPT !== 'undefined' && RECEIPT.width) ? RECEIPT.width : 80;
+  var canvas = await html2canvas(element, {
+    scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true,
+    scrollX: 0, scrollY: 0,
+    windowWidth: Math.max(400, element.scrollWidth || window.innerWidth),
+    windowHeight: Math.max(400, element.scrollHeight || window.innerHeight)
+  });
+  if (!canvas.width || !canvas.height) throw new Error('Gagal membuat gambar struk');
+  var pdfHeight = (canvas.height / canvas.width) * width;
+  var jsPDF = window.jspdf.jsPDF;
+  var pdf = new jsPDF({ unit: 'mm', format: [width, pdfHeight], orientation: 'portrait' });
+  pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, 0, width, pdfHeight);
+  var blob = pdf.output('blob');
+  var filename = (_lastReceiptNo || 'receipt') + '.pdf';
+  return new File([blob], filename, { type: 'application/pdf' });
+}
+
+function downloadReceiptPdfForDesktop(pdfFile) {
+  var downloadUrl = URL.createObjectURL(pdfFile);
+  var link = document.createElement('a');
+  link.href = downloadUrl;
+  link.download = pdfFile.name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(function() { URL.revokeObjectURL(downloadUrl); }, 1000);
+}
+
+async function sendReceiptToWA() {
+  var t = _lastReceiptData;
+  if (!t) { alert('Data struk tidak tersedia'); return; }
+  var textMsg = buildReceiptText(t);
+  var pdfFile;
+  try {
+    pdfFile = await createReceiptPdfFile();
+  } catch (error) {
+    alert('PDF gagal dibuat: ' + error.message + '. Struk akan dikirim sebagai teks.');
+    openReceiptTextInWhatsApp();
+    return;
   }
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+    try {
+      await navigator.share({
+        files: [pdfFile],
+        title: 'Nota ' + (t.receiptNo || ''),
+        text: textMsg
+      });
+      return;
+    } catch (error) {
+      if (error && error.name === 'AbortError') return;
+    }
+  }
+  downloadReceiptPdfForDesktop(pdfFile);
+  alert('Mode PC/Laptop: PDF nota sudah diunduh dan WhatsApp Web akan dibuka. Lampirkan file PDF tersebut ke chat customer.');
+  openReceiptTextInWhatsApp();
+}
 
-  // Kirim text struk via wa.me langsung ke nomor customer
+async function openReceiptTextInWhatsApp() {
+  var t = _lastReceiptData;
+  if (!t) { alert('Data struk tidak tersedia'); return; }
+  var textMsg = buildReceiptText(t);
+  var waTarget = normalizeWaTarget(t.customerWA);
   var waUrl = waTarget
     ? 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(textMsg)
     : 'https://wa.me/?text=' + encodeURIComponent(textMsg);
