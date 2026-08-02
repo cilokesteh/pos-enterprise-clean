@@ -1715,6 +1715,7 @@ async function sendReceiptToWA() {
         title: 'Nota ' + (t.receiptNo || ''),
         text: textMsg
       });
+      openReceiptTextInWhatsApp();
       return;
     } catch (error) {
       if (error && error.name === 'AbortError') return;

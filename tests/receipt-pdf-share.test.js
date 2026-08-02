@@ -51,6 +51,8 @@ assert.match(source, /function createReceiptPdfFile/);
 assert.match(source, /new File\(\[blob\]/);
 assert.match(source, /navigator\.canShare\(\{ files: \[pdfFile\] \}\)/);
 assert.match(source, /navigator\.share\(\{[\s\S]*?files: \[pdfFile\][\s\S]*?text: textMsg/);
+const sendFn = extractFunction('sendReceiptToWA');
+assert.match(sendFn, /await navigator\.share\([\s\S]*?\);\s*openReceiptTextInWhatsApp\(\);\s*return;/);
 assert.match(source, /function downloadReceiptPdfForDesktop/);
 assert.match(source, /downloadReceiptPdfForDesktop\(pdfFile\)/);
 assert.match(source, /Mode PC\/Laptop/);
