@@ -489,6 +489,20 @@
               <div class="text-2xl font-bold text-blue-400" id="db-profit">Rp 0</div>
             </div>
           </div>
+          <div class="grid grid-cols-3 gap-3 mb-6">
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500 mb-1">Total Stok</div>
+              <div class="text-xl font-bold text-emerald-400" id="db-stock-total">0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500 mb-1">Stok Habis</div>
+              <div class="text-xl font-bold text-red-400" id="db-stock-empty">0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500 mb-1">Stok Menipis</div>
+              <div class="text-xl font-bold text-orange-400" id="db-stock-low">0</div>
+            </div>
+          </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800">
               <h3 class="font-semibold mb-3">Transaksi Terbaru (Hari Ini)</h3>
@@ -524,6 +538,29 @@
                   </tr>
                 </thead>
                 <tbody id="db-bestseller-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800 mt-6">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <h3 class="font-semibold">Cek Stok Produk</h3>
+                <p class="text-xs text-zinc-500 mt-1">Stok menipis: 1–5 unit</p>
+              </div>
+              <button type="button" onclick="switchView('stock')" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs text-zinc-300">Buka Manajemen Stok</button>
+            </div>
+            <div class="table-wrap">
+              <table class="w-full text-sm">
+                <thead class="bg-zinc-950 text-zinc-400">
+                  <tr>
+                    <th class="text-left px-3 py-2">Produk</th>
+                    <th class="text-left px-3 py-2">Kategori</th>
+                    <th class="text-left px-3 py-2">Brand</th>
+                    <th class="text-right px-3 py-2">Stok</th>
+                    <th class="text-center px-3 py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="db-stock-check-tbody"></tbody>
               </table>
             </div>
           </div>
@@ -710,6 +747,8 @@ function loadProducts() {
     renderProductTable();
     renderStockPanel();
     updateStats();
+    var dashboardView = document.getElementById('view-dashboard');
+    if (dashboardView && dashboardView.classList.contains('active')) renderDashboardStock(products);
   }, function(err) {
     alert('Gagal memuat produk: ' + err.message);
   });
@@ -1996,7 +2035,58 @@ function updateStats() {
 }
 
 // ============ DASHBOARD ============
+function getDashboardStockData(productList) {
+  var rows = productList.map(function(product) {
+    var stock = Math.max(0, Number(product.stock) || 0);
+    return {
+      id: product.id,
+      name: product.name || '-',
+      category: product.category || '-',
+      brand: product.brand || '-',
+      stock: stock,
+      status: stock === 0 ? 'Habis' : (stock <= 5 ? 'Menipis' : 'Tersedia')
+    };
+  }).sort(function(a, b) {
+    if (a.stock !== b.stock) return a.stock - b.stock;
+    return a.name.localeCompare(b.name);
+  });
+  return {
+    summary: {
+      totalProducts: rows.length,
+      totalStock: rows.reduce(function(sum, row) { return sum + row.stock; }, 0),
+      outOfStock: rows.filter(function(row) { return row.stock === 0; }).length,
+      lowStock: rows.filter(function(row) { return row.stock > 0 && row.stock <= 5; }).length
+    },
+    rows: rows
+  };
+}
+
+function renderDashboardStock(productList) {
+  var data = getDashboardStockData(productList);
+  setText('db-stock-total', data.summary.totalStock);
+  setText('db-stock-empty', data.summary.outOfStock);
+  setText('db-stock-low', data.summary.lowStock);
+  var body = document.getElementById('db-stock-check-tbody');
+  if (!body) return;
+  if (data.rows.length === 0) {
+    body.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-zinc-600">Belum ada produk</td></tr>';
+    return;
+  }
+  body.innerHTML = data.rows.map(function(row) {
+    var badgeClass = row.status === 'Habis' ? 'bg-red-950 text-red-400' :
+      (row.status === 'Menipis' ? 'bg-orange-950 text-orange-400' : 'bg-emerald-950 text-emerald-400');
+    return '<tr class="border-t border-zinc-800">' +
+      '<td class="px-3 py-2 font-medium">' + esc(row.name) + '</td>' +
+      '<td class="px-3 py-2 text-zinc-400">' + esc(row.category) + '</td>' +
+      '<td class="px-3 py-2 text-zinc-400">' + esc(row.brand) + '</td>' +
+      '<td class="px-3 py-2 text-right font-semibold">' + row.stock + '</td>' +
+      '<td class="px-3 py-2 text-center"><span class="text-xs px-2 py-1 rounded ' + badgeClass + '">' + row.status + '</span></td>' +
+    '</tr>';
+  }).join('');
+}
+
 async function loadDashboard() {
+  renderDashboardStock(products);
   if (!db) return;
   var now = new Date();
   var startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
