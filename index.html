@@ -923,7 +923,7 @@ function addScannedToCart(productId, imei) {
       return;
     }
   }
-  cart.push({
+  var newItem = {
     productId: productId,
     name: p.name,
     category: p.category || '',
@@ -933,12 +933,36 @@ function addScannedToCart(productId, imei) {
     subtotal: price,
     costPrice: p.costPrice || 0,
     imei: [imei]
-  });
+  };
+  var candidateCart = cart.concat([newItem]);
+  var stockError = validateCartStock(products, candidateCart);
+  if (stockError) { alert(stockError); return; }
+  cart.push(newItem);
   renderCart();
   // Clear scan result
   var resultEl = document.getElementById('scan-result');
   if (resultEl) resultEl.innerHTML = '';
   showToast('Ditambahkan ke keranjang');
+}
+
+function validateCartStock(productList, cartItems) {
+  for (var i = 0; i < cartItems.length; i++) {
+    var item = cartItems[i];
+    var product = productList.find(function(p) { return p.id === item.productId; });
+    if (!product) return 'Produk ' + item.name + ' tidak ditemukan';
+    var available = Math.max(0, Number(product.stock) || 0);
+    var requested = Math.max(0, Number(item.qty) || 0);
+    if (available === 0) return 'Stok ' + item.name + ' sudah habis';
+    if (requested > available) return 'Stok ' + item.name + ' tidak cukup. Tersedia: ' + available;
+    var pool = (product.imeiPool || []).map(normalizeImei);
+    var imeiList = item.imei || [];
+    for (var j = 0; j < imeiList.length; j++) {
+      if (pool.indexOf(normalizeImei(imeiList[j])) < 0) {
+        return 'IMEI/SN ' + imeiList[j] + ' sudah tidak tersedia di stok';
+      }
+    }
+  }
+  return '';
 }
 
 function renderCart() {
@@ -1193,6 +1217,9 @@ function updateChange() {
 }
 
 async function processPayment() {
+  if (cart.length === 0) { alert('Keranjang masih kosong'); return; }
+  var stockError = validateCartStock(products, cart);
+  if (stockError) { alert(stockError + '. Muat ulang data stok lalu coba lagi.'); return; }
   var method = document.getElementById('pay-method').value;
   var total = cart.reduce(function(s, i) { return s + i.subtotal; }, 0);
   var custName = (document.getElementById('pay-cust-name').value || '').trim() || 'Walk-in';
@@ -1283,7 +1310,7 @@ async function processPayment() {
     cart.forEach(function(item) {
       var p = products.find(function(x) { return x.id === item.productId; });
       if (!p) return;
-      var newStock = (p.stock || 0) - item.qty;
+      var newStock = Math.max(0, (Number(p.stock) || 0) - item.qty);
       var newPool = (p.imeiPool || []).filter(function(im) {
         return !(item.imei || []).some(function(x) { return normalizeImei(x) === normalizeImei(im); });
       });
@@ -1894,6 +1921,7 @@ async function saveStockMove(type) {
     }
     // Calculate new stock + pool
     var newStock = isRestock ? (p.stock || 0) + qty : (p.stock || 0) - qty;
+    if (newStock < 0) { alert('Stok tidak boleh minus. Stok tersedia: ' + Math.max(0, p.stock || 0)); return; }
     var newPool;
     if (isRestock) {
       newPool = (p.imeiPool || []).concat(imeiList);
