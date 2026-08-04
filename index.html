@@ -1,3 +1,4 @@
+<!-- v9 POS Enterprise — Camera Scan + Filters + Search + Pagination -->
 <!-- Copyright © 2026 CilokTech (ciloktech.my.id) | Proprietary Software | Unauthorized copying/distribution prohibited | License: Commercial - Contact ciloktech.my.id -->
 
 <!DOCTYPE html>
@@ -19,6 +20,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <!-- SheetJS for Excel export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- html2canvas + jspdf + html2pdf for receipt PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -136,6 +139,19 @@
     button, .nav-btn { min-height: 44px; }
     .nav-btn { padding: 12px 16px; }
   }
+
+  .prod-filter-bar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .prod-filter-bar input, .prod-filter-bar select { padding:8px 12px; background:#18181b; border:1px solid #27272a; border-radius:8px; color:#fafafa; font-size:14px; }
+  html[data-theme="light"] .prod-filter-bar input, html[data-theme="light"] .prod-filter-bar select { background:#fff; border-color:#d4d4d8; color:#18181b; }
+  #qr-reader { width:100%; border-radius:12px; overflow:hidden; border:1px solid #27272a; margin-top:8px; }
+  #qr-reader video { width:100% !important; }
+  .lowstock-banner { animation: slideDown .3s ease; }
+  @keyframes slideDown { from { transform:translateY(-100%); } to { transform:translateY(0); } }
+  .kb-badge { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:20px; padding:0 6px; font-size:10px; font-weight:600; background:#27272a; border:1px solid #3f3f46; border-radius:4px; color:#a1a1aa; }
+  .count-badge { display:inline-flex; align-items:center; padding:2px 8px; background:#18181b; border:1px solid #27272a; border-radius:999px; font-size:11px; color:#a1a1aa; }
+  .empty-illust { text-align:center; padding:32px 16px; }
+  .empty-illust .ico { font-size:36px; margin-bottom:8px; }
+
 </style>
 </head>
 <body class="text-zinc-100 overflow-hidden">
@@ -147,6 +163,15 @@
 <div id="ptr-indicator">Tarik untuk refresh</div>
 
 <!-- ==================== APP SHELL ==================== -->
+<!-- Lowstock banner -->
+<div id="lowstock-banner" class="lowstock-banner hidden fixed top-0 left-0 right-0 z-[70] bg-orange-600 text-white text-sm px-4 py-2 flex items-center justify-between">
+  <span id="lowstock-banner-text">⚠️ Stok menipis</span>
+  <div class="flex gap-2">
+    <button onclick="switchView('stock')" class="px-3 py-1 bg-white/20 rounded-lg text-xs">Lihat</button>
+    <button onclick="document.getElementById('lowstock-banner').classList.add('hidden')" class="px-2 py-1 bg-white/10 rounded text-xs">✕</button>
+  </div>
+</div>
+
 <div id="app" class="flex h-screen">
 
   <!-- Sidebar -->
@@ -192,7 +217,7 @@
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
         Keluar
       </button>
-      <div class="text-[10px] text-zinc-700 mt-3">v8</div>
+      <div class="text-[10px] text-zinc-700 mt-3">v9</div>
       <div class="text-[9px] text-zinc-700 mt-1">&copy; 2026 ciloktech.my.id</div>
     </div>
   </aside>
@@ -240,6 +265,13 @@
                   Cari
                 </button>
               </div>
+              <div class="flex items-center gap-2 mt-2 flex-wrap">
+                <span class="kb-badge">Enter = Cari</span>
+                <span class="kb-badge">F2 = Fokus Scan</span>
+                <span class="kb-badge">F9 = Camera</span>
+                <button onclick="toggleCameraScan()" id="btn-camera-scan" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300">📷 Scan Kamera</button>
+              </div>
+              <div id="qr-reader" class="hidden"></div>
               <p class="text-xs text-zinc-600 mt-2">Scan IMEI/SN barang → muncul deskripsi → input harga jual → bayar</p>
             </div>
 
@@ -274,10 +306,34 @@
 
       <!-- ==================== PRODUK VIEW ==================== -->
       <section id="view-products" class="view">
-        <div class="max-w-4xl mx-auto">
-          <div class="flex items-center justify-between mb-4">
+        <div class="max-w-5xl mx-auto">
+          <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h3 class="text-lg font-semibold">Manajemen Produk</h3>
-            <p class="text-xs text-zinc-500">Produk dibuat dari Restock. Edit hanya Harga Jual.</p>
+            <div class="flex items-center gap-2">
+              <span id="prod-count-badge" class="count-badge">0 produk</span>
+              <button onclick="exportProdukExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs font-medium text-white">Export Excel</button>
+            </div>
+          </div>
+          <p class="text-xs text-zinc-500 mb-3">Produk dibuat dari Restock. Edit hanya Harga Jual.</p>
+          <div class="prod-filter-bar">
+            <input id="prod-search" type="text" placeholder="🔍 Cari nama/kategori/brand/IMEI..." oninput="renderProductTable()" class="flex-1 min-w-[180px]">
+            <select id="prod-cat-filter" onchange="renderProductTable()">
+              <option value="">Semua Kategori</option>
+              <option value="HP">HP</option>
+              <option value="Tablet">Tablet</option>
+              <option value="Laptop">Laptop</option>
+              <option value="Aksesoris">Aksesoris</option>
+            </select>
+            <select id="prod-brand-filter" onchange="renderProductTable()">
+              <option value="">Semua Brand</option>
+            </select>
+            <select id="prod-stock-filter" onchange="renderProductTable()">
+              <option value="">Semua Stok</option>
+              <option value="habis">Habis</option>
+              <option value="menipis">Menipis (≤5)</option>
+              <option value="tersedia">Tersedia (&gt;5)</option>
+            </select>
+            <button onclick="clearProdFilters()" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs">Clear</button>
           </div>
           <div class="bg-zinc-900 rounded-xl border border-zinc-800">
             <div class="table-wrap">
@@ -302,10 +358,11 @@
 
       <!-- ==================== STOK VIEW ==================== -->
       <section id="view-stock" class="view">
-        <div class="max-w-4xl mx-auto">
+        <div class="max-w-5xl mx-auto">
           <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h3 class="text-lg font-semibold">Manajemen Stok</h3>
-            <div class="flex gap-2">
+            <div class="flex gap-2 flex-wrap items-center">
+              <span id="stock-count-badge" class="count-badge">0 log</span>
               <button onclick="exportStockOpname()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Download Stock Opname
@@ -319,7 +376,6 @@
             </div>
           </div>
 
-          <!-- Stock summary -->
           <div class="grid grid-cols-3 gap-3 mb-4">
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500">Total Produk</div>
@@ -335,7 +391,18 @@
             </div>
           </div>
 
-          <!-- Stock move history -->
+          <div class="prod-filter-bar">
+            <input id="stock-search" type="text" placeholder="🔍 Cari produk/IMEI..." oninput="renderStockPanel()" class="flex-1 min-w-[180px]">
+            <select id="stock-type-filter" onchange="renderStockPanel()">
+              <option value="">Semua Tipe</option>
+              <option value="restock">Restock</option>
+              <option value="retur">Retur</option>
+              <option value="sale">Sale</option>
+            </select>
+            <button onclick="clearStockFilters()" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs">Clear</button>
+            <span class="text-xs text-zinc-500">Max 100 log</span>
+          </div>
+
           <div class="bg-zinc-900 rounded-xl border border-zinc-800">
             <div class="px-4 py-3 border-b border-zinc-800 font-semibold text-sm">Riwayat Pergerakan Stok</div>
             <div class="table-wrap">
@@ -441,12 +508,33 @@
       <!-- ==================== HISTORY VIEW ==================== -->
       <section id="view-history" class="view">
         <div class="max-w-5xl mx-auto">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold">History Transaksi</h3>
+          <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div class="flex items-center gap-3">
+              <h3 class="text-lg font-semibold">History Transaksi</h3>
+              <span id="history-count-badge" class="count-badge">0</span>
+            </div>
             <button onclick="exportHistoryExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               Excel
             </button>
+          </div>
+          <div class="prod-filter-bar">
+            <input id="history-search" type="text" placeholder="🔍 No struk / customer..." oninput="filterHistoryAndRender()" class="flex-1 min-w-[160px]">
+            <select id="history-method-filter" onchange="filterHistoryAndRender()">
+              <option value="">Semua Metode</option>
+              <option value="cash">Tunai</option>
+              <option value="qris">QRIS</option>
+              <option value="transfer">Transfer</option>
+              <option value="card">Kartu</option>
+              <option value="split">Split</option>
+            </select>
+            <select id="history-date-filter" onchange="filterHistoryAndRender()">
+              <option value="">Semua Tanggal</option>
+              <option value="today">Hari Ini</option>
+              <option value="week">7 Hari Terakhir</option>
+              <option value="month">Bulan Ini</option>
+            </select>
+            <button onclick="clearHistoryFilters()" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs">Clear</button>
           </div>
           <div class="bg-zinc-900 rounded-xl border border-zinc-800">
             <div class="table-wrap">
@@ -465,11 +553,19 @@
             </table>
             </div>
           </div>
+          <div class="flex items-center justify-between mt-3">
+            <div class="flex gap-2">
+              <button onclick="historyPrevPage()" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs">‹ Prev</button>
+              <button onclick="historyNextPage()" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs">Next ›</button>
+            </div>
+            <span id="history-page-info" class="text-xs text-zinc-500">Hal 0 / 0</span>
+          </div>
         </div>
       </section>
 
       <!-- ==================== DASHBOARD VIEW ==================== -->
-      <section id="view-dashboard" class="view">
+      <div id="db-lowstock-alert" class="hidden max-w-6xl mx-auto mb-4 bg-orange-950/50 border border-orange-800 rounded-xl p-4 text-sm text-orange-300"><span id="db-lowstock-alert-text"></span><button onclick="switchView('products')" class="ml-3 px-3 py-1 bg-orange-800 rounded text-xs">Lihat Produk</button></div>
+<section id="view-dashboard" class="view">
         <div class="max-w-6xl mx-auto">
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
@@ -610,6 +706,11 @@ var _historyTx = [];
 var currentUser = null;
 var _lastReceiptNo = null;
 var _lastReceiptData = null;
+var _historyFiltered = [];
+var _historyPage = 0;
+var HISTORY_PER_PAGE = 20;
+var _cameraScanner = null;
+var _cameraScanning = false;
 
 // ============ THEME ============
 function setTheme(theme) {
@@ -1407,15 +1508,320 @@ async function getNextReceiptSeq() {
 }
 
 // ============ RECEIPT ============
+
+
+
+function getFilteredProducts() {
+  var search = (document.getElementById('prod-search') ? document.getElementById('prod-search').value.trim().toLowerCase() : '');
+  var catF = (document.getElementById('prod-cat-filter') ? document.getElementById('prod-cat-filter').value : '');
+  var brandF = (document.getElementById('prod-brand-filter') ? document.getElementById('prod-brand-filter').value : '');
+  var stockF = (document.getElementById('prod-stock-filter') ? document.getElementById('prod-stock-filter').value : '');
+  return products.filter(function(p){
+    var matchSearch = true;
+    if (search) {
+      var hay = (p.name + ' ' + (p.category||'') + ' ' + (p.brand||'') + ' ' + (p.imeiPool||[]).join(' ')).toLowerCase();
+      matchSearch = hay.indexOf(search) >= 0;
+    }
+    var matchCat = catF ? (p.category === catF) : true;
+    var matchBrand = brandF ? (p.brand === brandF) : true;
+    var matchStock = true;
+    if (stockF === 'habis') matchStock = (p.stock||0) === 0;
+    else if (stockF === 'menipis') matchStock = (p.stock||0) > 0 && (p.stock||0) <= 5;
+    else if (stockF === 'tersedia') matchStock = (p.stock||0) > 5;
+    return matchSearch && matchCat && matchBrand && matchStock;
+  });
+}
+function clearProdFilters(){
+  var a=document.getElementById('prod-search'); if(a) a.value='';
+  var b=document.getElementById('prod-cat-filter'); if(b) b.value='';
+  var c=document.getElementById('prod-brand-filter'); if(c) c.value='';
+  var d=document.getElementById('prod-stock-filter'); if(d) d.value='';
+  renderProductTable();
+}
+function fillBrandFilter(){
+  var brandSel = document.getElementById('prod-brand-filter');
+  if (!brandSel) return;
+  var curVal = brandSel.value;
+  var brands = {};
+  products.forEach(function(p){ if(p.brand) brands[p.brand]=1; });
+  var opts = '<option value="">Semua Brand</option>' + Object.keys(brands).sort().map(function(b){ return '<option value="'+esc(b)+'">'+esc(b)+'</option>'; }).join('');
+  brandSel.innerHTML = opts;
+  brandSel.value = curVal;
+}
+function renderProductTable() {
+  var el = document.getElementById('product-table-body');
+  var badge = document.getElementById('prod-count-badge');
+  fillBrandFilter();
+  var filtered = getFilteredProducts();
+  if (badge) badge.textContent = filtered.length + ' / ' + products.length + ' produk';
+  if (!el) return;
+  if (products.length === 0) {
+    el.innerHTML = '<tr><td colspan="7"><div class="empty-illust"><div class="ico">📦</div><div class="text-sm text-zinc-400">Belum ada produk</div><div class="text-xs text-zinc-600 mt-1">Tambah produk via Restock</div><button onclick="showStockModal(\'restock\')" class="mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs text-white">+ Restock Sekarang</button></div></td></tr>';
+    return;
+  }
+  if (filtered.length === 0) {
+    el.innerHTML = '<tr><td colspan="7"><div class="empty-illust"><div class="ico">🔍</div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearProdFilters()" class="mt-3 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs">Clear Filter</button></div></td></tr>';
+    return;
+  }
+  el.innerHTML = filtered.map(function(p) {
+    var stockBadge = '';
+    if ((p.stock||0) === 0) stockBadge = '<span class="text-[10px] px-1.5 py-0.5 bg-red-950 text-red-400 rounded ml-1">HABIS</span>';
+    else if ((p.stock||0) <=5) stockBadge = '<span class="text-[10px] px-1.5 py-0.5 bg-orange-950 text-orange-400 rounded ml-1">MENIPIS</span>';
+    return '<tr class="border-t border-zinc-800 hover:bg-zinc-950">' +
+      '<td class="px-4 py-3">' + esc(p.name || '-') + stockBadge + '</td>' +
+      '<td class="px-4 py-3">' + esc(p.category || '-') + '</td>' +
+      '<td class="px-4 py-3">' + esc(p.brand || '-') + '</td>' +
+      '<td class="px-4 py-3 text-right text-orange-400">' + formatRp(p.costPrice || 0) + '</td>' +
+      '<td class="px-4 py-3 text-right text-emerald-400">' + formatRp(p.price || 0) + '</td>' +
+      '<td class="px-4 py-3 text-center">' + (p.stock || 0) + '</td>' +
+      '<td class="px-4 py-3 text-center">' +
+        '<button onclick="showEditPriceModal(\'' + p.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300">Edit Harga</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+function exportProdukExcel(){
+  var filtered = getFilteredProducts();
+  if (filtered.length===0){ alert('Tidak ada data untuk diexport'); return; }
+  if (typeof XLSX==='undefined'){ alert('Library Excel belum siap'); return; }
+  var data = filtered.map(function(p,i){
+    return { No:i+1, Nama:p.name||'-', Kategori:p.category||'-', Brand:p.brand||'-', Stok:p.stock||0, Modal:p.costPrice||0, HargaJual:p.price||0, IMEI:(p.imeiPool||[]).join(', ') };
+  });
+  var ws = XLSX.utils.json_to_sheet(data);
+  var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Produk');
+  XLSX.writeFile(wb, 'PRODUK-'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+function clearStockFilters(){
+  var s=document.getElementById('stock-search'); if(s) s.value='';
+  var t=document.getElementById('stock-type-filter'); if(t) t.value='';
+  renderStockPanel();
+}
+function checkLowStockBanner(){
+  var banner = document.getElementById('lowstock-banner');
+  var txt = document.getElementById('lowstock-banner-text');
+  if (!banner) return;
+  var low = products.filter(function(p){ return (p.stock||0) <=5; });
+  if (low.length>0){
+    var habis = low.filter(function(p){ return (p.stock||0)===0; }).length;
+    var menipis = low.length - habis;
+    if (txt) txt.textContent = '⚠️ ' + low.length + ' produk perlu perhatian: ' + habis + ' habis, ' + menipis + ' menipis';
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
+  var alertBox = document.getElementById('db-lowstock-alert');
+  var alertTxt = document.getElementById('db-lowstock-alert-text');
+  if (alertBox && alertTxt){
+    if (low.length>0){
+      var names = low.slice(0,3).map(function(p){ return p.name; }).join(', ');
+      if (low.length>3) names += ' +'+(low.length-3)+' lainnya';
+      alertTxt.textContent = low.length + ' produk: ' + names;
+      alertBox.classList.remove('hidden');
+    } else alertBox.classList.add('hidden');
+  }
+}
+function renderStockPanel() {
+  var el = document.getElementById('stock-move-body');
+  var badge = document.getElementById('stock-count-badge');
+  var search = (document.getElementById('stock-search') ? document.getElementById('stock-search').value.trim().toLowerCase() : '');
+  var typeF = (document.getElementById('stock-type-filter') ? document.getElementById('stock-type-filter').value : '');
+  var filtered = stockMoves.filter(function(m){
+    var ms = true;
+    if (search) {
+      var hay = ((m.productName||'') + ' ' + (m.imeiList||[]).join(' ')).toLowerCase();
+      ms = hay.indexOf(search) >= 0;
+    }
+    var mt = typeF ? (m.type === typeF) : true;
+    return ms && mt;
+  });
+  if (badge) badge.textContent = filtered.length + ' / ' + stockMoves.length + ' log';
+  if (!el) { updateStats(); try{ checkLowStockBanner(); }catch(e){} return; }
+  if (stockMoves.length === 0) {
+    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico">📋</div><div class="text-sm text-zinc-400">Belum ada pergerakan stok</div><button onclick="showStockModal(\'restock\')" class="mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs">+ Restock</button></div></td></tr>';
+  } else if (filtered.length === 0) {
+    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico">🔍</div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearStockFilters()" class="mt-3 px-4 py-2 bg-zinc-800 rounded-lg text-xs">Clear</button></div></td></tr>';
+  } else {
+    el.innerHTML = filtered.slice(0, 100).map(function(m) {
+      var badgeType = '';
+      if (m.type === 'restock') badgeType = '<span class="text-xs px-2 py-0.5 bg-emerald-950 text-emerald-400 rounded">RESTOCK</span>';
+      else if (m.type === 'retur') badgeType = '<span class="text-xs px-2 py-0.5 bg-orange-950 text-orange-400 rounded">RETUR</span>';
+      else if (m.type === 'sale') badgeType = '<span class="text-xs px-2 py-0.5 bg-blue-950 text-blue-400 rounded">JUAL</span>';
+      var imei = (m.imeiList || []).join(', ');
+      if (imei.length > 30) imei = imei.substring(0, 30) + '...';
+      return '<tr class="border-t border-zinc-800">' +
+        '<td class="px-4 py-2 text-xs">' + formatDate(m.createdAt) + '</td>' +
+        '<td class="px-4 py-2">' + badgeType + '</td>' +
+        '<td class="px-4 py-2">' + esc(m.productName || '-') + '</td>' +
+        '<td class="px-4 py-2 text-right">' + (m.qty || 0) + '</td>' +
+        '<td class="px-4 py-2 text-right text-orange-400">' + formatRp(m.costPrice || 0) + '</td>' +
+        '<td class="px-4 py-2 text-xs text-zinc-400">' + esc(imei) + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+  updateStats();
+  try{ checkLowStockBanner(); }catch(e){}
+}
+function updateStats() {
+  var tp = document.getElementById('stk-total-products');
+  var ts = document.getElementById('stk-total-stock');
+  var ic = document.getElementById('stk-imei-count');
+  if (tp) tp.textContent = products.length;
+  if (ts) ts.textContent = products.reduce(function(s, p) { return s + (p.stock || 0); }, 0);
+  if (ic) ic.textContent = products.reduce(function(s, p) { return s + (p.imeiPool || []).length; }, 0);
+  try{ checkLowStockBanner(); }catch(e){}
+}
+function clearHistoryFilters(){
+  var s=document.getElementById('history-search'); if(s) s.value='';
+  var m=document.getElementById('history-method-filter'); if(m) m.value='';
+  var d=document.getElementById('history-date-filter'); if(d) d.value='';
+  filterHistoryAndRender();
+}
+function historyPrevPage(){
+  if (_historyPage>0){ _historyPage--; renderHistoryTable(); }
+}
+function historyNextPage(){
+  var totalPages = Math.ceil(_historyFiltered.length / HISTORY_PER_PAGE);
+  if (_historyPage < totalPages-1){ _historyPage++; renderHistoryTable(); }
+}
+function filterHistoryAndRender(){
+  var search = (document.getElementById('history-search') ? document.getElementById('history-search').value.trim().toLowerCase() : '');
+  var methodF = (document.getElementById('history-method-filter') ? document.getElementById('history-method-filter').value : '');
+  var dateF = (document.getElementById('history-date-filter') ? document.getElementById('history-date-filter').value : '');
+  var now = Date.now();
+  var filtered = _historyTx.filter(function(t){
+    if (search){
+      var hay = ((t.receiptNo||'') + ' ' + (t.customerName||'')).toLowerCase();
+      if (hay.indexOf(search) < 0) return false;
+    }
+    if (methodF){
+      if (methodF === 'card'){
+        if (t.method === 'card') {} else if (t.method === 'split' && t.split && ((t.split.cards && t.split.cards.length>0) || t.split.card>0)) {} else return false;
+      } else if (t.method !== methodF) return false;
+    }
+    if (dateF){
+      var ts = t.createdAt||0;
+      if (dateF==='today'){ var s=new Date(); s.setHours(0,0,0,0); if (ts < s.getTime()) return false; }
+      else if (dateF==='week'){ if (ts < now - 7*24*60*60*1000) return false; }
+      else if (dateF==='month'){ var ms=new Date(); ms.setDate(1); ms.setHours(0,0,0,0); if (ts < ms.getTime()) return false; }
+    }
+    return true;
+  });
+  _historyFiltered = filtered;
+  _historyPage = 0;
+  renderHistoryTable();
+}
+function renderHistoryTable() {
+  var el = document.getElementById('history-table-body');
+  var badge = document.getElementById('history-count-badge');
+  var pageInfo = document.getElementById('history-page-info');
+  if (badge) badge.textContent = _historyFiltered.length + ' / ' + _historyTx.length;
+  if (!el) return;
+  if (_historyTx.length === 0) {
+    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico">🧾</div><div class="text-sm text-zinc-400">Belum ada transaksi</div></div></td></tr>';
+    if (pageInfo) pageInfo.textContent = 'Hal 0 / 0';
+    return;
+  }
+  if (_historyFiltered.length === 0) {
+    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico">🔍</div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearHistoryFilters()" class="mt-3 px-4 py-2 bg-zinc-800 rounded-lg text-xs">Clear Filter</button></div></td></tr>';
+    if (pageInfo) pageInfo.textContent = 'Hal 0 / 0';
+    return;
+  }
+  var totalPages = Math.max(1, Math.ceil(_historyFiltered.length / HISTORY_PER_PAGE));
+  if (_historyPage >= totalPages) _historyPage = totalPages-1;
+  var start = _historyPage * HISTORY_PER_PAGE;
+  var slice = _historyFiltered.slice(start, start + HISTORY_PER_PAGE);
+  el.innerHTML = slice.map(function(t) {
+    var methodLabel;
+    if (t.method === 'cash') methodLabel = 'Tunai';
+    else if (t.method === 'qris') methodLabel = 'QRIS';
+    else if (t.method === 'transfer') methodLabel = 'Transfer';
+    else if (t.method === 'card') methodLabel = 'Kartu ' + (t.cardType === 'credit' ? 'Kredit' : 'Debit');
+    else if (t.method === 'split') methodLabel = 'Split';
+    else methodLabel = t.method;
+    return '<tr class="border-t border-zinc-800 hover:bg-zinc-950">' +
+      '<td class="px-4 py-3 text-xs">' + esc(t.receiptNo || '-') + '</td>' +
+      '<td class="px-4 py-3 text-xs">' + formatDate(t.createdAt) + '</td>' +
+      '<td class="px-4 py-3">' + esc(t.customerName || 'Walk-in') + '</td>' +
+      '<td class="px-4 py-3">' + esc(methodLabel) + '</td>' +
+      '<td class="px-4 py-3 text-right font-semibold text-emerald-400">' + formatRp(t.total) + '</td>' +
+      '<td class="px-4 py-3 text-center">' +
+        '<button onclick="reprintReceipt(\'' + t.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300">Reprint</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+  if (pageInfo) pageInfo.textContent = 'Hal ' + (_historyPage+1) + ' / ' + totalPages + ' (' + _historyFiltered.length + ' data)';
+}
+async function loadHistory() {
+  var el = document.getElementById('history-table-body');
+  if (!el) return;
+  el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-zinc-600">Memuat...</td></tr>';
+  if (!db) return;
+  try {
+    var snap = await db.collection(col('transactions')).orderBy('createdAt', 'desc').limit(100).get();
+    _historyTx = [];
+    snap.docs.forEach(function(doc) {
+      var t = doc.data();
+      t.id = doc.id;
+      _historyTx.push(t);
+    });
+    _historyFiltered = _historyTx.slice();
+    _historyPage = 0;
+    renderHistoryTable();
+  } catch (e) {
+    el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-red-400">Gagal: ' + esc(e.message) + '</td></tr>';
+  }
+}
+
+
+function toggleCameraScan(){
+  if (_cameraScanning) { stopCameraScan(); } else { startCameraScan(); }
+}
+function startCameraScan(){
+  var readerEl = document.getElementById('qr-reader');
+  var btn = document.getElementById('btn-camera-scan');
+  if (!readerEl) return;
+  if (typeof Html5Qrcode === 'undefined'){ alert('Library camera belum siap. Cek koneksi.'); return; }
+  readerEl.classList.remove('hidden');
+  if (_cameraScanner) { try{ _cameraScanner.clear(); }catch(e){} }
+  _cameraScanner = new Html5Qrcode('qr-reader');
+  _cameraScanning = true;
+  if (btn) { btn.textContent = '✕ Stop Kamera'; btn.classList.add('bg-red-800'); }
+  _cameraScanner.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 250, height: 150 } },
+    function(decodedText){
+      var input = document.getElementById('imei-scan');
+      if (input) { input.value = decodedText; }
+      stopCameraScan();
+      scanImei();
+    },
+    function(err){ }
+  ).catch(function(e){
+    alert('Gagal buka kamera: ' + e);
+    stopCameraScan();
+  });
+}
+function stopCameraScan(){
+  var readerEl = document.getElementById('qr-reader');
+  var btn = document.getElementById('btn-camera-scan');
+  _cameraScanning = false;
+  if (btn){ btn.textContent = '📷 Scan Kamera'; btn.classList.remove('bg-red-800'); }
+  if (readerEl) readerEl.classList.add('hidden');
+  if (_cameraScanner){
+    try{
+      _cameraScanner.stop().then(function(){ try{ _cameraScanner.clear(); }catch(e){} }).catch(function(){});
+    }catch(e){}
+    _cameraScanner = null;
+  }
+}
 function showReceipt(tx) {
-  var html = buildReceiptHtml(tx);
+  var htmlR = buildReceiptHtml(tx);
   var el = document.getElementById('receipt-content');
-  if (el) el.innerHTML = html;
-  // Modal with receipt + action buttons
+  if (el) el.innerHTML = htmlR;
   var modalHtml =
     '<div class="modal-backdrop fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" id="receipt-modal" onclick="event.target.id===\'receipt-modal\'&&hideModal(\'receipt-modal\')">' +
       '<div class="modal-box bg-white rounded-xl p-6 w-full max-w-sm max-h-[90vh] overflow-auto" onclick="event.stopPropagation()">' +
-        '<div id="receipt-display" class="text-black text-sm" style="font-family:Calibri,Arial,sans-serif;text-align:center;">' + html + '</div>' +
+        '<div id="receipt-display" class="text-black text-sm" style="font-family:Calibri,Arial,sans-serif;text-align:center;">' + htmlR + '</div>' +
         '<div class="flex gap-2 mt-4">' +
           '<button onclick="printReceipt()" class="flex-1 py-2.5 bg-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-zinc-900">Print</button>' +
           '<button onclick="downloadPdf()" class="flex-1 py-2.5 bg-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-zinc-900">PDF</button>' +
@@ -1425,7 +1831,165 @@ function showReceipt(tx) {
       '</div>' +
     '</div>';
   document.body.insertAdjacentHTML('beforeend', modalHtml);
+  setTimeout(function(){
+    try {
+      var qrEl = document.getElementById('receipt-qrcode');
+      if (qrEl && typeof QRCode !== 'undefined') {
+        qrEl.innerHTML = '';
+        new QRCode(qrEl, { text: tx.receiptNo || '', width: 90, height: 90, correctLevel: QRCode.CorrectLevel.M });
+      }
+    } catch(e){ console.warn('QR gen failed', e); }
+  }, 200);
 }
+async function saveStockMove(type) {
+  var isRestock = type === 'restock';
+  var isRetur = type === 'retur';
+  var productId = document.getElementById('sm-product').value;
+  var manualName = document.getElementById('sm-new-name').value.trim();
+  var qty = parseInt(document.getElementById('sm-qty').value) || 0;
+  if (qty <= 0) { alert('Qty harus > 0'); return; }
+  var imeiInputs = document.querySelectorAll('.sm-imei-input');
+  var imeiList = [];
+  imeiInputs.forEach(function(inp) {
+    var v = inp.value.trim();
+    if (v) imeiList.push(v);
+  });
+  if (imeiList.length !== qty) {
+    alert('Jumlah IMEI/SN harus sama dengan qty (' + qty + '). Sekarang: ' + imeiList.length);
+    return;
+  }
+  var normalized = imeiList.map(normalizeImei);
+  var seen = {};
+  for (var i = 0; i < normalized.length; i++) {
+    if (seen[normalized[i]]) { alert('Ada IMEI/SN duplikat input: ' + imeiList[i]); return; }
+    seen[normalized[i]] = true;
+  }
+  if (isRestock) {
+    var globalMap = {};
+    products.forEach(function(prod){
+      (prod.imeiPool||[]).forEach(function(im){
+        var n = normalizeImei(im);
+        if (n) globalMap[n] = prod.name;
+      });
+    });
+    for (var k=0;k<normalized.length;k++){
+      var nk = normalized[k];
+      if (globalMap[nk]){
+        alert('IMEI/SN ' + imeiList[k] + ' sudah terdaftar di produk: ' + globalMap[nk] + '. Tidak bisa restock duplikat.');
+        return;
+      }
+    }
+  }
+  var cost = null;
+  if (isRestock) {
+    var costInput = document.getElementById('sm-cost');
+    cost = parseInt(costInput ? costInput.value : 0) || 0;
+    if (cost <= 0) { alert('Harga modal wajib diisi untuk restock'); return; }
+  }
+  var now = Date.now();
+  try {
+    if (!db) throw new Error('Database tidak siap');
+    if (manualName) {
+      var cat = document.getElementById('sm-new-category').value;
+      var brand = document.getElementById('sm-new-brand').value.trim();
+      var fresh = {
+        name: manualName,
+        category: cat,
+        brand: brand,
+        price: 0,
+        costPrice: isRestock ? cost : 0,
+        stock: isRestock ? qty : 0,
+        imeiPool: isRestock ? imeiList.slice() : [],
+        hasImei: imeiList.length > 0,
+        createdAt: now,
+        updatedAt: now
+      };
+      if (isRetur) {
+        alert('Retur tidak bisa membuat produk baru. Pilih produk existing.');
+        return;
+      }
+      var docRef = await db.collection(col('products')).add(fresh);
+      fresh.id = docRef.id;
+      products.push(fresh);
+      await db.collection(col('stockMoves')).add({
+        type: 'restock',
+        productId: fresh.id,
+        productName: fresh.name,
+        qty: qty,
+        costPrice: cost,
+        imeiList: imeiList,
+        createdAt: now
+      });
+      renderProductTable();
+      renderStockPanel();
+      updateStats();
+      hideModal('stock-modal');
+      showToast('Restock berhasil: ' + fresh.name + ' -> +' + qty);
+      return;
+    }
+    if (!productId) { alert('Pilih produk existing atau isi manual untuk produk baru'); return; }
+    var p = products.find(function(x) { return x.id === productId; });
+    if (!p) { alert('Produk tidak ditemukan'); return; }
+    if (isRetur) {
+      var poolNorm = (p.imeiPool || []).map(normalizeImei);
+      for (var j = 0; j < normalized.length; j++) {
+        if (poolNorm.indexOf(normalized[j]) < 0) {
+          alert('IMEI/SN tidak ada di stok: ' + imeiList[j] + '. Tidak bisa retur.');
+          return;
+        }
+      }
+      if (qty > (p.stock || 0)) { alert('Qty retur melebihi stok (' + p.stock + ')'); return; }
+    }
+    var newStock = isRestock ? (p.stock || 0) + qty : (p.stock || 0) - qty;
+    if (newStock < 0) { alert('Stok tidak boleh minus. Stok tersedia: ' + Math.max(0, p.stock || 0)); return; }
+    var newPool;
+    if (isRestock) {
+      newPool = (p.imeiPool || []).concat(imeiList);
+    } else {
+      newPool = (p.imeiPool || []).filter(function(im) {
+        return !normalized.some(function(n) { return normalizeImei(im) === n; });
+      });
+    }
+    p.stock = newStock;
+    p.imeiPool = newPool;
+    p.hasImei = newPool.length > 0;
+    if (isRestock && cost !== null) p.costPrice = cost;
+    var upd = { stock: newStock, imeiPool: newPool, hasImei: newPool.length > 0, updatedAt: now };
+    if (isRestock && cost !== null) upd.costPrice = cost;
+    await db.collection(col('products')).doc(p.id).update(upd);
+    await db.collection(col('stockMoves')).add({
+      type: type,
+      productId: p.id,
+      productName: p.name,
+      qty: qty,
+      costPrice: isRestock ? cost : (p.costPrice || 0),
+      imeiList: imeiList,
+      createdAt: now
+    });
+    renderProductTable();
+    renderStockPanel();
+    updateStats();
+    hideModal('stock-modal');
+    var verb = isRestock ? 'ditambah' : 'diretur';
+    showToast('Stok ' + verb + ': ' + esc(p.name) + ' -> ' + newStock);
+  } catch (e) {
+    alert('Gagal simpan: ' + e.message);
+  }
+}
+document.addEventListener('keydown', function(e){
+  if (e.key === 'F2'){
+    e.preventDefault();
+    var inp = document.getElementById('imei-scan');
+    if (inp){ inp.focus(); inp.select(); }
+  }
+  if (e.key === 'F9'){
+    e.preventDefault();
+    toggleCameraScan();
+  }
+  if (e.key === 'Escape' && _cameraScanning){
+    stopCameraScan();
+  }
+});
 
 function buildReceiptHtml(tx) {
   var d = new Date(tx.createdAt);
@@ -1693,27 +2257,7 @@ function hideModal(id) {
 }
 
 // ============ PRODUK — EDIT HARGA ONLY ============
-function renderProductTable() {
-  var el = document.getElementById('product-table-body');
-  if (!el) return;
-  if (products.length === 0) {
-    el.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-zinc-600">Belum ada produk. Tambah produk via Restock.</td></tr>';
-    return;
-  }
-  el.innerHTML = products.map(function(p) {
-    return '<tr class="border-t border-zinc-800 hover:bg-zinc-950">' +
-      '<td class="px-4 py-3">' + (p.name || '-') + '</td>' +
-      '<td class="px-4 py-3">' + (p.category || '-') + '</td>' +
-      '<td class="px-4 py-3">' + (p.brand || '-') + '</td>' +
-      '<td class="px-4 py-3 text-right text-orange-400">' + formatRp(p.costPrice || 0) + '</td>' +
-      '<td class="px-4 py-3 text-right text-emerald-400">' + formatRp(p.price || 0) + '</td>' +
-      '<td class="px-4 py-3 text-center">' + (p.stock || 0) + '</td>' +
-      '<td class="px-4 py-3 text-center">' +
-        '<button onclick="showEditPriceModal(\'' + p.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300">Edit Harga</button>' +
-      '</td>' +
-    '</tr>';
-  }).join('');
-}
+
 
 function showEditPriceModal(id) {
   var p = products.find(function(x) { return x.id === id; });
@@ -1866,173 +2410,11 @@ function updateStockHint() {
   }
 }
 
-async function saveStockMove(type) {
-  var isRestock = type === 'restock';
-  var isRetur = type === 'retur';
-  var productId = document.getElementById('sm-product').value;
-  var manualName = document.getElementById('sm-new-name').value.trim();
-  var qty = parseInt(document.getElementById('sm-qty').value) || 0;
-  if (qty <= 0) { alert('Qty harus > 0'); return; }
-  // Collect IMEI/SN
-  var imeiInputs = document.querySelectorAll('.sm-imei-input');
-  var imeiList = [];
-  imeiInputs.forEach(function(inp) {
-    var v = inp.value.trim();
-    if (v) imeiList.push(v);
-  });
-  // Validate IMEI/SN — wajib for both restock and retur
-  if (imeiList.length !== qty) {
-    alert('Jumlah IMEI/SN harus sama dengan qty (' + qty + '). Sekarang: ' + imeiList.length);
-    return;
-  }
-  // Check duplicates within imeiList
-  var normalized = imeiList.map(normalizeImei);
-  var seen = {};
-  for (var i = 0; i < normalized.length; i++) {
-    if (seen[normalized[i]]) { alert('Ada IMEI/SN duplikat: ' + imeiList[i]); return; }
-    seen[normalized[i]] = true;
-  }
-  // Cost price (restock only)
-  var cost = null;
-  if (isRestock) {
-    var costInput = document.getElementById('sm-cost');
-    cost = parseInt(costInput ? costInput.value : 0) || 0;
-    if (cost <= 0) { alert('Harga modal wajib diisi untuk restock'); return; }
-  }
-  var now = Date.now();
-  try {
-    if (!db) throw new Error('Database tidak siap');
-    if (manualName) {
-      // Create new product from manual fields
-      var cat = document.getElementById('sm-new-category').value;
-      var brand = document.getElementById('sm-new-brand').value.trim();
-      var fresh = {
-        name: manualName,
-        category: cat,
-        brand: brand,
-        price: 0, // harga jual default 0, di-set saat kasir or edit
-        costPrice: isRestock ? cost : 0,
-        stock: isRestock ? qty : 0,
-        imeiPool: isRestock ? imeiList.slice() : [],
-        hasImei: imeiList.length > 0,
-        createdAt: now,
-        updatedAt: now
-      };
-      if (isRetur) {
-        alert('Retur tidak bisa membuat produk baru. Pilih produk existing.');
-        return;
-      }
-      // For retur, must select existing
-      var docRef = await db.collection(col('products')).add(fresh);
-      fresh.id = docRef.id;
-      products.push(fresh);
-      // Stock move
-      await db.collection(col('stockMoves')).add({
-        type: 'restock',
-        productId: fresh.id,
-        productName: fresh.name,
-        qty: qty,
-        costPrice: cost,
-        imeiList: imeiList,
-        createdAt: now
-      });
-      renderProductTable();
-      renderStockPanel();
-      updateStats();
-      hideModal('stock-modal');
-      showToast('Restock berhasil: ' + fresh.name + ' → +' + qty);
-      return;
-    }
-    // Existing product
-    if (!productId) { alert('Pilih produk existing atau isi manual untuk produk baru'); return; }
-    var p = products.find(function(x) { return x.id === productId; });
-    if (!p) { alert('Produk tidak ditemukan'); return; }
-    if (isRetur) {
-      // Validate IMEI exists in pool
-      var poolNorm = (p.imeiPool || []).map(normalizeImei);
-      for (var j = 0; j < normalized.length; j++) {
-        if (poolNorm.indexOf(normalized[j]) < 0) {
-          alert('IMEI/SN tidak ada di stok: ' + imeiList[j] + '. Tidak bisa retur.');
-          return;
-        }
-      }
-      if (qty > (p.stock || 0)) { alert('Qty retur melebihi stok (' + p.stock + ')'); return; }
-    }
-    // Calculate new stock + pool
-    var newStock = isRestock ? (p.stock || 0) + qty : (p.stock || 0) - qty;
-    if (newStock < 0) { alert('Stok tidak boleh minus. Stok tersedia: ' + Math.max(0, p.stock || 0)); return; }
-    var newPool;
-    if (isRestock) {
-      newPool = (p.imeiPool || []).concat(imeiList);
-    } else {
-      newPool = (p.imeiPool || []).filter(function(im) {
-        return !normalized.some(function(n) { return normalizeImei(im) === n; });
-      });
-    }
-    // Update local FIRST
-    p.stock = newStock;
-    p.imeiPool = newPool;
-    p.hasImei = newPool.length > 0;
-    if (isRestock && cost !== null) p.costPrice = cost;
-    // Build Firestore update
-    var upd = { stock: newStock, imeiPool: newPool, hasImei: newPool.length > 0, updatedAt: now };
-    if (isRestock && cost !== null) upd.costPrice = cost;
-    await db.collection(col('products')).doc(p.id).update(upd);
-    // Stock move
-    await db.collection(col('stockMoves')).add({
-      type: type,
-      productId: p.id,
-      productName: p.name,
-      qty: qty,
-      costPrice: isRestock ? cost : (p.costPrice || 0),
-      imeiList: imeiList,
-      createdAt: now
-    });
-    renderProductTable();
-    renderStockPanel();
-    updateStats();
-    hideModal('stock-modal');
-    var verb = isRestock ? 'ditambah' : 'diretur';
-    showToast('Stok ' + verb + ': ' + esc(p.name) + ' → ' + newStock);
-  } catch (e) {
-    alert('Gagal simpan: ' + e.message);
-  }
-}
+async 
 
-function renderStockPanel() {
-  var el = document.getElementById('stock-move-body');
-  if (!el) return;
-  if (stockMoves.length === 0) {
-    el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-zinc-600">Belum ada pergerakan stok</td></tr>';
-  } else {
-    el.innerHTML = stockMoves.slice(0, 50).map(function(m) {
-      var badge = '';
-      if (m.type === 'restock') badge = '<span class="text-xs px-2 py-0.5 bg-emerald-950 text-emerald-400 rounded">RESTOCK</span>';
-      else if (m.type === 'retur') badge = '<span class="text-xs px-2 py-0.5 bg-orange-950 text-orange-400 rounded">RETUR</span>';
-      else if (m.type === 'sale') badge = '<span class="text-xs px-2 py-0.5 bg-blue-950 text-blue-400 rounded">JUAL</span>';
-      var imei = (m.imeiList || []).join(', ');
-      if (imei.length > 30) imei = imei.substring(0, 30) + '...';
-      return '<tr class="border-t border-zinc-800">' +
-        '<td class="px-4 py-2 text-xs">' + formatDate(m.createdAt) + '</td>' +
-        '<td class="px-4 py-2">' + badge + '</td>' +
-        '<td class="px-4 py-2">' + (m.productName || '-') + '</td>' +
-        '<td class="px-4 py-2 text-right">' + (m.qty || 0) + '</td>' +
-        '<td class="px-4 py-2 text-right text-orange-400">' + formatRp(m.costPrice || 0) + '</td>' +
-        '<td class="px-4 py-2 text-xs text-zinc-400">' + imei + '</td>' +
-      '</tr>';
-    }).join('');
-  }
-  updateStats();
-}
 
-function updateStats() {
-  var tp = document.getElementById('stk-total-products');
-  var ts = document.getElementById('stk-total-stock');
-  var ic = document.getElementById('stk-imei-count');
-  if (tp) tp.textContent = products.length;
-  if (ts) ts.textContent = products.reduce(function(s, p) { return s + (p.stock || 0); }, 0);
-  if (ic) ic.textContent = products.reduce(function(s, p) { return s + (p.imeiPool || []).length; }, 0);
-}
+
+
 
 // ============ DASHBOARD ============
 function getDashboardStockData(productList) {
@@ -2237,52 +2619,9 @@ function setText(id, val) {
 }
 
 // ============ HISTORY ============
-async function loadHistory() {
-  var el = document.getElementById('history-table-body');
-  if (!el) return;
-  el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-zinc-600">Memuat...</td></tr>';
-  if (!db) return;
-  try {
-    var snap = await db.collection(col('transactions')).orderBy('createdAt', 'desc').limit(100).get();
-    _historyTx = [];
-    snap.docs.forEach(function(doc) {
-      var t = doc.data();
-      t.id = doc.id;
-      _historyTx.push(t);
-    });
-    renderHistoryTable();
-  } catch (e) {
-    el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-red-400">Gagal: ' + esc(e.message) + '</td></tr>';
-  }
-}
+async 
 
-function renderHistoryTable() {
-  var el = document.getElementById('history-table-body');
-  if (!el) return;
-  if (_historyTx.length === 0) {
-    el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-zinc-600">Belum ada transaksi</td></tr>';
-    return;
-  }
-  el.innerHTML = _historyTx.map(function(t) {
-    var methodLabel;
-    if (t.method === 'cash') methodLabel = 'Tunai';
-    else if (t.method === 'qris') methodLabel = 'QRIS';
-    else if (t.method === 'transfer') methodLabel = 'Transfer';
-    else if (t.method === 'card') methodLabel = 'Kartu ' + (t.cardType === 'credit' ? 'Kredit' : 'Debit');
-    else if (t.method === 'split') methodLabel = 'Split';
-    else methodLabel = t.method;
-    return '<tr class="border-t border-zinc-800 hover:bg-zinc-950">' +
-      '<td class="px-4 py-3 text-xs">' + (t.receiptNo || '-') + '</td>' +
-      '<td class="px-4 py-3 text-xs">' + formatDate(t.createdAt) + '</td>' +
-      '<td class="px-4 py-3">' + (t.customerName || 'Walk-in') + '</td>' +
-      '<td class="px-4 py-3">' + methodLabel + '</td>' +
-      '<td class="px-4 py-3 text-right font-semibold text-emerald-400">' + formatRp(t.total) + '</td>' +
-      '<td class="px-4 py-3 text-center">' +
-        '<button onclick="reprintReceipt(\'' + t.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300">Reprint</button>' +
-      '</td>' +
-    '</tr>';
-  }).join('');
-}
+
 
 function reprintReceipt(txId) {
   var t = _historyTx.find(function(x) { return x.id === txId; });
