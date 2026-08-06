@@ -1,13 +1,13 @@
 /* Copyright © 2026 CilokTech (ciloktech.my.id) | Proprietary Software | Unauthorized copying/distribution prohibited | License: Commercial - Contact ciloktech.my.id */
 
-// pwa.js v9 — register service worker + dynamic manifest
+// pwa.js v10 — register service worker + dynamic manifest
 (function() {
   if (typeof STORE === 'undefined') return;
   var manifest = {
     name: STORE.name + ' POS',
     short_name: 'POS',
-    description: 'POS Enterprise v9 — Toko HP, stok IMEI/SN, kasir scanner kamera, laporan.',
-    start_url: './index.html?v=9',
+    description: 'POS Enterprise v10 — Toko HP, stok IMEI/SN, kasir scanner kamera, laporan.',
+    start_url: './index.html?v=10',
     display: 'standalone',
     orientation: 'any',
     background_color: '#0a0a0b',

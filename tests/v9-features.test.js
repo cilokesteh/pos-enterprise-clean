@@ -59,8 +59,11 @@ has('F2');
 has('kb-badge');
 
 // Version
-has('v9');
-has('>v9<');
+has('v10');
+has('>v10<');
+// v10 features: delete product + text PDF fallback
+has('function deleteProduct');
+has('function buildTextReceipt');
 
 // No HTML leak
 const jsStart = html.indexOf('// ============ STATE');
