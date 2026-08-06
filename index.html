@@ -317,56 +317,71 @@
 
       <!-- ==================== KASIR VIEW ==================== -->
       <section id="view-pos" class="view active">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
-          <!-- Scanner -->
-          <div>
-            <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800">
-              <label class="block text-sm text-zinc-400 mb-2">Scan / Input IMEI atau SN</label>
-              <div class="flex gap-2">
-                <input id="imei-scan" type="text" placeholder="Scan barcode atau ketik IMEI/SN..."
-                       class="flex-1 px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg focus:border-emerald-500 focus:outline-none text-zinc-100"
-                       onkeydown="if(event.key==='Enter')scanImei()">
-                <button onclick="scanImei()" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-medium text-white">
-                  Cari
-                </button>
+        <div class="max-w-6xl mx-auto">
+          <!-- Scanner card -->
+          <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800 mb-6">
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-sm text-zinc-400">Scan / Input IMEI atau SN</label>
+              <div class="flex items-center gap-1.5">
+                <span class="kb-badge">Enter</span><span class="text-[10px] text-zinc-600">Cari</span>
+                <span class="kb-badge">F2</span><span class="text-[10px] text-zinc-600">Fokus</span>
+                <span class="kb-badge">F9</span><span class="text-[10px] text-zinc-600">Kamera</span>
               </div>
-              <div class="flex items-center gap-2 mt-2 flex-wrap">
-                <span class="kb-badge">Enter = Cari</span>
-                <span class="kb-badge">F2 = Fokus Scan</span>
-                <span class="kb-badge">F9 = Camera</span>
-                <button onclick="toggleCameraScan()" id="btn-camera-scan" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300">📷 Scan Kamera</button>
-              </div>
-              <div id="qr-reader" class="hidden"></div>
-              <p class="text-xs text-zinc-600 mt-2">Scan IMEI/SN barang → muncul deskripsi → input harga jual → bayar</p>
             </div>
-
-            <!-- Scan result -->
-            <div id="scan-result" class="mt-4"></div>
+            <div class="flex gap-2">
+              <input id="imei-scan" type="text" placeholder="Scan barcode atau ketik IMEI/SN..."
+                     class="flex-1 px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl focus:border-emerald-500 focus:outline-none text-zinc-100"
+                     onkeydown="if(event.key==='Enter')scanImei()">
+              <button onclick="scanImei()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-xl font-medium text-white">
+                Cari
+              </button>
+              <button onclick="toggleCameraScan()" id="btn-camera-scan" class="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-zinc-300 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Scan Kamera
+              </button>
+            </div>
+            <div id="qr-reader" class="hidden mt-3"></div>
           </div>
 
-          <!-- Cart -->
-          <div>
-            <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold">Keranjang</h3>
-                <button onclick="clearCart()" class="text-xs text-zinc-500 hover:text-red-400">Kosongkan</button>
+          <!-- Scan result -->
+          <div id="scan-result" class="mb-6"></div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Product grid (Moka-style quick pick) -->
+            <div class="lg:col-span-2">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-sm text-zinc-400 uppercase tracking-wide">Produk Cepat</h3>
+                <span id="quick-prod-count" class="text-xs text-zinc-600"></span>
               </div>
-              <div id="cart-list" class="space-y-2 min-h-[100px]">
-                <div class="empty-cart flex flex-col items-center justify-center py-10 text-zinc-600">
-                  <svg class="w-12 h-12 mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                  <p class="text-sm">Belum ada item</p>
-                  <p class="text-xs mt-1 opacity-70">Scan atau input IMEI untuk mulai</p>
-                </div>
+              <div id="quick-product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <!-- rendered by JS -->
               </div>
-              <div class="border-t border-zinc-800 mt-4 pt-4">
-                <div class="flex justify-between text-lg font-bold">
-                  <span>Total</span>
-                  <span id="cart-total" class="text-emerald-400">Rp 0</span>
+            </div>
+
+            <!-- Cart -->
+            <div>
+              <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800 lg:sticky lg:top-4">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-semibold">Keranjang</h3>
+                  <button onclick="clearCart()" class="text-xs text-zinc-500 hover:text-red-400">Kosongkan</button>
                 </div>
-                <button id="checkout-btn" onclick="showPaymentModal()" disabled
-                        class="w-full mt-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-lg font-semibold text-white transition">
-                  Bayar
-                </button>
+                <div id="cart-list" class="space-y-2 min-h-[100px]">
+                  <div class="empty-cart flex flex-col items-center justify-center py-10 text-zinc-600">
+                    <svg class="w-12 h-12 mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <p class="text-sm">Belum ada item</p>
+                    <p class="text-xs mt-1 opacity-70">Scan atau input IMEI untuk mulai</p>
+                  </div>
+                </div>
+                <div class="border-t border-zinc-800 mt-4 pt-4">
+                  <div class="flex justify-between text-lg font-bold">
+                    <span>Total</span>
+                    <span id="cart-total" class="text-emerald-400">Rp 0</span>
+                  </div>
+                  <button id="checkout-btn" onclick="showPaymentModal()" disabled
+                          class="w-full mt-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-xl font-semibold text-white transition">
+                    Bayar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -982,6 +997,7 @@ function loadProducts() {
     renderProductTable();
     renderStockPanel();
     updateStats();
+    renderQuickProducts();
     var dashboardView = document.getElementById('view-dashboard');
     if (dashboardView && dashboardView.classList.contains('active')) renderDashboardStock(products);
   }, function(err) {
@@ -1055,6 +1071,7 @@ function switchView(name) {
   var titleEl = document.getElementById('page-title');
   if (titleEl) titleEl.textContent = VIEW_TITLES[name] || name;
   // Render hooks
+  if (name === 'pos') renderQuickProducts();
   if (name === 'history') loadHistory();
   if (name === 'reports') onReportPeriodChange();
   if (name === 'products') renderProductTable();
@@ -1276,6 +1293,72 @@ function renderCart() {
   // Checkout button
   var btn = document.getElementById('checkout-btn');
   if (btn) btn.disabled = cart.length === 0;
+}
+
+// ============ QUICK PRODUCT GRID (Moka-style) ============
+function renderQuickProducts() {
+  var grid = document.getElementById('quick-product-grid');
+  if (!grid) return;
+  var count = document.getElementById('quick-prod-count');
+  var stockable = products.filter(function(p) { return (p.stock || 0) > 0; });
+  if (count) count.textContent = stockable.length + ' produk tersedia';
+  if (products.length === 0) {
+    grid.innerHTML = '<div class="col-span-full text-center py-8 text-zinc-600 text-sm">Belum ada produk. Restock dulu di menu Stok.</div>';
+    return;
+  }
+  grid.innerHTML = stockable.map(function(p) {
+    var st = p.stock || 0;
+    var badge = st <= 5 ? '<span class="absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded bg-orange-950 text-orange-400">' + st + '</span>' : '';
+    return '<button onclick="quickAddToCart(\'' + p.id + '\')" class="group relative text-left bg-zinc-900 rounded-xl p-3 border border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/60 transition-all">' +
+      badge +
+      '<div class="w-full h-14 rounded-lg mb-2 flex items-center justify-center" style="background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(5,150,105,.05));">' +
+        '<svg class="w-7 h-7 text-emerald-500/50 group-hover:text-emerald-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>' +
+      '</div>' +
+      '<div class="text-xs font-medium leading-tight line-clamp-2 min-h-[30px]">' + esc(p.name) + '</div>' +
+      '<div class="text-xs mt-1 font-semibold text-emerald-400">' + formatRp(p.price || 0) + '</div>' +
+    '</button>';
+  }).join('');
+}
+function quickAddToCart(productId) {
+  var p = products.find(function(x) { return x.id === productId; });
+  if (!p) return;
+  if ((p.stock || 0) <= 0) { alert('Stok habis'); return; }
+  // If device (HP/Tablet/Laptop) requires IMEI → must scan, show hint
+  var cat = (p.category || '').toLowerCase();
+  if (cat === 'hp' || cat === 'tablet' || cat === 'laptop') {
+    alert('Produk ini butuh IMEI. Scan atau input IMEI di kolom atas.');
+    var inp = document.getElementById('imei-scan');
+    if (inp) inp.focus();
+    return;
+  }
+  var existing = cart.find(function(x) { return x.productId === productId; });
+  if (existing) {
+    // increase qty for non-IMEI items
+    var candidate = cart.map(function(x) {
+      if (x.productId !== productId) return x;
+      return Object.assign({}, x, { qty: x.qty + 1, subtotal: (x.qty + 1) * x.price });
+    });
+    var err = validateCartStock(products, candidate);
+    if (err) { alert(err); return; }
+    cart = candidate;
+  } else {
+    var newItem = {
+      productId: productId,
+      name: p.name,
+      category: p.category || '',
+      brand: p.brand || '',
+      price: p.price || 0,
+      qty: 1,
+      subtotal: p.price || 0,
+      costPrice: p.costPrice || 0,
+      imei: []
+    };
+    var err2 = validateCartStock(products, cart.concat([newItem]));
+    if (err2) { alert(err2); return; }
+    cart.push(newItem);
+  }
+  renderCart();
+  showToast('Ditambahkan: ' + p.name);
 }
 
 function removeCartItem(idx) {
