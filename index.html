@@ -346,21 +346,10 @@
           <!-- Scan result -->
           <div id="scan-result" class="mb-6"></div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Product grid (Moka-style quick pick) -->
-            <div class="lg:col-span-2">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="font-semibold text-sm text-zinc-400 uppercase tracking-wide">Produk Cepat</h3>
-                <span id="quick-prod-count" class="text-xs text-zinc-600"></span>
-              </div>
-              <div id="quick-product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                <!-- rendered by JS -->
-              </div>
-            </div>
-
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
             <!-- Cart -->
-            <div>
-              <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800 lg:sticky lg:top-4">
+            <div class="lg:col-span-2">
+              <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800">
                 <div class="flex items-center justify-between mb-4">
                   <h3 class="font-semibold">Keranjang</h3>
                   <button onclick="clearCart()" class="text-xs text-zinc-500 hover:text-red-400">Kosongkan</button>
@@ -997,7 +986,6 @@ function loadProducts() {
     renderProductTable();
     renderStockPanel();
     updateStats();
-    renderQuickProducts();
     var dashboardView = document.getElementById('view-dashboard');
     if (dashboardView && dashboardView.classList.contains('active')) renderDashboardStock(products);
   }, function(err) {
@@ -1071,7 +1059,6 @@ function switchView(name) {
   var titleEl = document.getElementById('page-title');
   if (titleEl) titleEl.textContent = VIEW_TITLES[name] || name;
   // Render hooks
-  if (name === 'pos') renderQuickProducts();
   if (name === 'history') loadHistory();
   if (name === 'reports') onReportPeriodChange();
   if (name === 'products') renderProductTable();
@@ -1293,76 +1280,6 @@ function renderCart() {
   // Checkout button
   var btn = document.getElementById('checkout-btn');
   if (btn) btn.disabled = cart.length === 0;
-}
-
-// ============ QUICK PRODUCT GRID (Moka-style) ============
-function renderQuickProducts() {
-  var grid = document.getElementById('quick-product-grid');
-  if (!grid) return;
-  var count = document.getElementById('quick-prod-count');
-  var stockable = products.filter(function(p) { return (p.stock || 0) > 0; });
-  if (count) count.textContent = stockable.length + ' produk tersedia';
-  if (products.length === 0) {
-    grid.innerHTML = '<div class="col-span-full text-center py-8 text-zinc-600 text-sm">Belum ada produk. Restock dulu di menu Stok.</div>';
-    return;
-  }
-  grid.innerHTML = stockable.map(function(p) {
-    var st = p.stock || 0;
-    var statusClass = st <= 2 ? 'border-red-500/70 hover:border-red-500' : (st <= 5 ? 'border-amber-500/70 hover:border-amber-500' : 'border-emerald-500/60 hover:border-emerald-500');
-    var badgeClass = st <= 2 ? 'bg-red-950 text-red-400' : (st <= 5 ? 'bg-amber-950 text-amber-400' : 'bg-emerald-950 text-emerald-400');
-    var badge = '<span class="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded-full font-semibold ' + badgeClass + '">' + st + '</span>';
-    var price = (p.price || 0) > 0 ? formatRp(p.price) : '<span class="text-amber-400">Belum set</span>';
-    return '<button onclick="quickAddToCart(\'' + p.id + '\')" class="group relative text-left bg-zinc-900 rounded-xl p-3 border-2 transition-all shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/50 hover:-translate-y-0.5 active:scale-[0.98] ' + statusClass + '">' +
-      badge +
-      '<div class="w-full h-14 rounded-lg mb-2 flex items-center justify-center relative overflow-hidden" style="background:linear-gradient(135deg,rgba(34,197,94,.1),rgba(5,150,105,.04));">' +
-        '<svg class="w-7 h-7 text-emerald-500/50 group-hover:text-emerald-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>' +
-        '<span class="absolute right-1 bottom-1 w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold">+</span>' +
-      '</div>' +
-      '<div class="text-xs font-medium leading-tight line-clamp-2 min-h-[30px]">' + esc(p.name) + '</div>' +
-      '<div class="text-xs mt-1 font-semibold text-emerald-400">' + price + '</div>' +
-    '</button>';
-  }).join('');
-}
-function quickAddToCart(productId) {
-  var p = products.find(function(x) { return x.id === productId; });
-  if (!p) return;
-  if ((p.stock || 0) <= 0) { alert('Stok habis'); return; }
-  // If device (HP/Tablet/Laptop) requires IMEI → must scan, show hint
-  var cat = (p.category || '').toLowerCase();
-  if (cat === 'hp' || cat === 'tablet' || cat === 'laptop') {
-    alert('Produk ini butuh IMEI. Scan atau input IMEI di kolom atas.');
-    var inp = document.getElementById('imei-scan');
-    if (inp) inp.focus();
-    return;
-  }
-  var existing = cart.find(function(x) { return x.productId === productId; });
-  if (existing) {
-    // increase qty for non-IMEI items
-    var candidate = cart.map(function(x) {
-      if (x.productId !== productId) return x;
-      return Object.assign({}, x, { qty: x.qty + 1, subtotal: (x.qty + 1) * x.price });
-    });
-    var err = validateCartStock(products, candidate);
-    if (err) { alert(err); return; }
-    cart = candidate;
-  } else {
-    var newItem = {
-      productId: productId,
-      name: p.name,
-      category: p.category || '',
-      brand: p.brand || '',
-      price: p.price || 0,
-      qty: 1,
-      subtotal: p.price || 0,
-      costPrice: p.costPrice || 0,
-      imei: []
-    };
-    var err2 = validateCartStock(products, cart.concat([newItem]));
-    if (err2) { alert(err2); return; }
-    cart.push(newItem);
-  }
-  renderCart();
-  showToast('Ditambahkan: ' + p.name);
 }
 
 function removeCartItem(idx) {
