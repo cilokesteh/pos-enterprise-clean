@@ -17,6 +17,14 @@ service cloud.firestore {
     match /v3-users/{doc} {
       allow read, write: if isAuth();
     }
+    match /v3-garansi/{doc} {
+      allow read, write: if isAuth();
+    }
+
+    // ans-* collections (ANSTORE supplier dashboard)
+    match /ans-{collection}/{doc} {
+      allow read, write: if isAuth();
+    }
 
     // Default deny
     match /{document=**} {

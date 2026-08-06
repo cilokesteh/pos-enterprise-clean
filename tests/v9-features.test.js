@@ -59,11 +59,17 @@ has('F2');
 has('kb-badge');
 
 // Version
-has('v10');
-has('>v10<');
+has('v11');
+has('>v11<');
 // v10 features: delete product + text PDF fallback
 has('function deleteProduct');
 has('function buildTextReceipt');
+// v11 features: garansi + offline
+has('id="view-garansi"');
+has('id="offline-dot"');
+has('enablePersistence');
+has('ensureWarrantyForSale');
+has('garansi-table-body');
 
 // No HTML leak
 const jsStart = html.indexOf('// ============ STATE');

@@ -6,8 +6,8 @@
   var manifest = {
     name: STORE.name + ' POS',
     short_name: 'POS',
-    description: 'POS Enterprise v10 — Toko HP, stok IMEI/SN, kasir scanner kamera, laporan.',
-    start_url: './index.html?v=10',
+    description: 'POS Enterprise v11 — Toko HP, stok IMEI/SN, kasir scanner kamera, laporan.',
+    start_url: './index.html?v=11',
     display: 'standalone',
     orientation: 'any',
     background_color: '#0a0a0b',

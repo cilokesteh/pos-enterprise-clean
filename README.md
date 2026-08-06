@@ -1,8 +1,12 @@
-# POS Enterprise v10 — Toko HP
+# POS Enterprise v11 — Toko HP
 
-POS clean rebuild, monolith 3050+ lines, Firebase Auth + Firestore, ready for production.
+POS clean rebuild, monolith 3250+ lines, Firebase Auth + Firestore, ready for production.
 
-## Fitur v10 Baru
+## Fitur v11 Baru (upgrade value 3,5jt)
+- **Garansi IMEI** — tracking garansi otomatis saat HP/Tablet/Laptop terjual (1 tahun default), status aktif/akan-expired/expired/klaim, klaim & selesai 1-klik, filter + export Excel
+- **Offline mode penuh** — Firestore persistence (synchronizeTabs), transaksi jalan tanpa internet, sync otomatis pas online, indikator Online/Offline di sidebar
+
+## Fitur v10 (sebelumnya)
 - **Hapus Produk** (guard: stok harus 0) — bersihkan daftar produk usang
 - **PDF Hybrid** — fallback text-PDF kalau html2canvas blank di PWA/WebView (fix struk blank)
 - **XSS hardening** — esc() di semua titik render data user (scan result, laporan, dashboard, history)
@@ -23,6 +27,6 @@ node tests/dashboard-stock.test.js
 node tests/stock-guards.test.js
 node tests/v9-features.test.js
 
-Version v10 2026-08-06 — PDF Hybrid + Delete Product + XSS Hardening + SW v20
+Version v11 2026-08-06 — Garansi IMEI + Offline Mode + SW v21
 
 © 2026 ciloktech.my.id

@@ -210,14 +210,22 @@
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
         Dashboard
       </button>
+      <button data-view="garansi" class="nav-btn w-full text-left px-4 py-3 text-sm hover:bg-zinc-900 flex items-center gap-3 transition text-zinc-400">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        Garansi
+      </button>
     </nav>
     <div class="p-4 border-t border-zinc-900">
+      <div class="text-xs text-zinc-500 mb-2 flex items-center gap-2">
+        <span id="offline-dot" class="inline-block w-2 h-2 rounded-full bg-emerald-500" title="Online"></span>
+        <span id="offline-label">Online</span>
+      </div>
       <div class="text-xs text-zinc-500 mb-2" id="sb-user">—</div>
       <button onclick="logout()" class="w-full text-left text-sm text-red-400 hover:text-red-300 flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
         Keluar
       </button>
-      <div class="text-[10px] text-zinc-700 mt-3">v10</div>
+      <div class="text-[10px] text-zinc-700 mt-3">v11</div>
       <div class="text-[9px] text-zinc-700 mt-1">&copy; 2026 ciloktech.my.id</div>
     </div>
   </aside>
@@ -563,6 +571,48 @@
         </div>
       </section>
 
+      <!-- ==================== GARANSI VIEW ==================== -->
+      <section id="view-garansi" class="view">
+        <div class="max-w-5xl mx-auto">
+          <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h3 class="text-lg font-semibold">Manajemen Garansi</h3>
+            <div class="flex gap-2 flex-wrap items-center">
+              <button onclick="exportGaransiExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white">Export Excel</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500">Total Garansi Aktif</div>
+              <div class="text-xl font-bold text-emerald-400" id="gr-total-active">0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500">Expired (30 hari)</div>
+              <div class="text-xl font-bold text-orange-400" id="gr-total-expiring">0</div>
+            </div>
+            <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <div class="text-xs text-zinc-500">Klaim Diproses</div>
+              <div class="text-xl font-bold text-blue-400" id="gr-total-claims">0</div>
+            </div>
+          </div>
+          <div class="prod-filter-bar">
+            <input id="gr-search" type="text" placeholder="Cari IMEI / nama / customer / no struk..." oninput="renderGaransiTable()" class="flex-1 min-w-[180px]">
+            <select id="gr-status-filter" onchange="renderGaransiTable()"><option value="">Semua Status</option><option value="aktif">Aktif</option><option value="expiring">Akan Expired</option><option value="expired">Expired</option><option value="claim">Klaim</option></select>
+            <button onclick="clearGaransiFilters()" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs text-zinc-300">Clear</button>
+          </div>
+          <div class="bg-zinc-900 rounded-xl border border-zinc-800">
+            <div class="px-4 py-3 border-b border-zinc-800 font-semibold text-sm flex justify-between items-center"><span>Daftar Garansi</span><span id="gr-count-badge" class="count-badge">0</span></div>
+            <div class="table-wrap">
+            <table class="w-full text-sm">
+              <thead class="bg-zinc-950 text-zinc-400"><tr>
+                <th class="text-left px-4 py-3">Produk</th><th class="text-left px-4 py-3">IMEI/SN</th><th class="text-left px-4 py-3">Customer</th><th class="text-left px-4 py-3">No Struk</th><th class="text-left px-4 py-3">Tgl Beli</th><th class="text-left px-4 py-3">Garansi s/d</th><th class="text-center px-4 py-3">Status</th><th class="text-center px-4 py-3">Aksi</th>
+              </tr></thead>
+              <tbody id="garansi-table-body"></tbody>
+            </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ==================== DASHBOARD VIEW ==================== -->
       <div id="db-lowstock-alert" class="hidden max-w-6xl mx-auto mb-4 bg-orange-950/50 border border-orange-800 rounded-xl p-4 text-sm text-orange-300"><span id="db-lowstock-alert-text"></span><button onclick="switchView('products')" class="ml-3 px-3 py-1 bg-orange-800 rounded text-xs">Lihat Produk</button></div>
 <section id="view-dashboard" class="view">
@@ -784,6 +834,7 @@ function normalizeImei(s) {
 }
 
 // ============ FIREBASE INIT ============
+var _pendingQueue = [];
 function initFirebase() {
   if (db && auth) return true;
   if (typeof firebase === 'undefined') return false;
@@ -791,12 +842,33 @@ function initFirebase() {
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
     auth = firebase.auth();
+    // Offline-first: persist pending writes locally (v11)
+    db.enablePersistence({ synchronizeTabs: true }).catch(function(err) {
+      if (err && err.code !== 'failed-precondition' && err.code !== 'unimplemented') {
+        console.warn('Persistence disabled', err.code);
+      }
+    });
     return true;
   } catch (e) {
     console.error('Firebase init failed', e);
     return false;
   }
 }
+// Network status indicator + online/offline awareness (v11)
+function setupOnlineStatus() {
+  var dot = document.getElementById('offline-dot');
+  var label = document.getElementById('offline-label');
+  function setOnline(on) {
+    if (dot) dot.className = 'inline-block w-2 h-2 rounded-full ' + (on ? 'bg-emerald-500' : 'bg-red-500');
+    if (label) label.textContent = on ? 'Online' : 'Offline — data tersimpan lokal';
+    document.body.classList.toggle('is-offline', !on);
+  }
+  setOnline(navigator.onLine);
+  window.addEventListener('online', function() { setOnline(true); });
+  window.addEventListener('offline', function() { setOnline(false); });
+}
+// After auth ready, flush pending writes (Firestore persistence handles queueing)
+function restoreNetworkIfOnline() {}
 
 // Strip cache-buster param on load
 (function() {
@@ -828,6 +900,7 @@ if (auth) {
     // Load data
     loadProducts();
     loadStockMoves();
+    loadGaransi();
   });
 }
 
@@ -871,14 +944,15 @@ function loadStockMoves() {
 }
 
 // ============ VIEW SWITCHING ============
-var VIEWS = ['pos', 'products', 'stock', 'reports', 'history', 'dashboard'];
+var VIEWS = ['pos', 'products', 'stock', 'reports', 'history', 'dashboard', 'garansi'];
 var VIEW_TITLES = {
   pos: 'Kasir',
   products: 'Produk',
   stock: 'Stok',
   reports: 'Laporan',
   history: 'History',
-  dashboard: 'Dashboard'
+  dashboard: 'Dashboard',
+  garansi: 'Garansi'
 };
 
 function toggleSidebar() {
@@ -925,6 +999,7 @@ function switchView(name) {
   if (name === 'products') renderProductTable();
   if (name === 'stock') renderStockPanel();
   if (name === 'dashboard') loadDashboard();
+  if (name === 'garansi') loadGaransi();
   // Close sidebar on mobile after view switch
   closeSidebar();
 }
@@ -947,6 +1022,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   // ===== PULL TO REFRESH =====
   setupPullToRefresh();
+  setupOnlineStatus();
 });
 
 // ============ PULL TO REFRESH ============
@@ -1482,6 +1558,8 @@ async function processPayment() {
     _lastReceiptData = txData;
     cart = [];
     renderCart();
+    // Auto-create warranty for device sales (HP/Tablet/Laptop)
+    ensureWarrantyForSale(txData, txData.items);
     showReceipt(txData);
   } catch (e) {
     alert('Gagal menyimpan transaksi: ' + e.message);
@@ -1505,6 +1583,174 @@ async function getNextReceiptSeq() {
   } catch (e) {
     return Math.floor(Math.random() * 100000) + 1;
   }
+}
+
+// ============ GARANSI (v11) ============
+var garansiList = [];
+function garansiStatus(g) {
+  if (!g) return 'aktif';
+  if (g.status === 'claim') return 'claim';
+  if (g.status === 'expired') return 'expired';
+  var now = Date.now();
+  if (g.warrantyUntil && g.warrantyUntil < now) return 'expired';
+  if (g.warrantyUntil && (g.warrantyUntil - now) <= 30 * 24 * 60 * 60 * 1000) return 'expiring';
+  return 'aktif';
+}
+function loadGaransi() {
+  if (!db) return;
+  db.collection(col('garansi')).orderBy('soldAt', 'desc').onSnapshot(function(snap) {
+    garansiList = [];
+    snap.docs.forEach(function(doc) {
+      var g = doc.data();
+      g.id = doc.id;
+      garansiList.push(g);
+    });
+    renderGaransiTable();
+  }, function(err) { console.error('Garansi load error:', err); });
+}
+function garansiStatusBadge(status) {
+  var map = {
+    aktif: '<span class="text-xs px-2 py-0.5 bg-emerald-950 text-emerald-400 rounded">AKTIF</span>',
+    expiring: '<span class="text-xs px-2 py-0.5 bg-orange-950 text-orange-400 rounded">AKAN EXPIRED</span>',
+    expired: '<span class="text-xs px-2 py-0.5 bg-red-950 text-red-400 rounded">EXPIRED</span>',
+    claim: '<span class="text-xs px-2 py-0.5 bg-blue-950 text-blue-400 rounded">KLAIM</span>'
+  };
+  return map[status] || map.aktif;
+}
+function clearGaransiFilters() {
+  var s = document.getElementById('gr-search'); if (s) s.value = '';
+  var f = document.getElementById('gr-status-filter'); if (f) f.value = '';
+  renderGaransiTable();
+}
+function renderGaransiTable() {
+  var el = document.getElementById('garansi-table-body');
+  var badge = document.getElementById('gr-count-badge');
+  if (!el) return;
+  var search = (document.getElementById('gr-search') ? document.getElementById('gr-search').value.trim().toLowerCase() : '');
+  var statusF = (document.getElementById('gr-status-filter') ? document.getElementById('gr-status-filter').value : '');
+  var filtered = garansiList.filter(function(g) {
+    var status = garansiStatus(g);
+    if (statusF && status !== statusF) return false;
+    if (search) {
+      var hay = ((g.productName || '') + ' ' + (g.imei || '') + ' ' + (g.customerName || '') + ' ' + (g.receiptNo || '')).toLowerCase();
+      if (hay.indexOf(search) < 0) return false;
+    }
+    return true;
+  });
+  if (badge) badge.textContent = filtered.length + ' / ' + garansiList.length + ' garansi';
+  var active = garansiList.filter(function(g) { return garansiStatus(g) === 'aktif'; }).length;
+  var expiring = garansiList.filter(function(g) { return garansiStatus(g) === 'expiring'; }).length;
+  var claims = garansiList.filter(function(g) { return garansiStatus(g) === 'claim'; }).length;
+  var a = document.getElementById('gr-total-active'); if (a) a.textContent = active;
+  var e = document.getElementById('gr-total-expiring'); if (e) e.textContent = expiring;
+  var c = document.getElementById('gr-total-claims'); if (c) c.textContent = claims;
+  if (garansiList.length === 0) {
+    el.innerHTML = '<tr><td colspan="8"><div class="empty-illust"><div class="ico">🛡️</div><div class="text-sm text-zinc-400">Belum ada garansi</div><div class="text-xs text-zinc-600 mt-1">Garansi dibuat otomatis saat HP/Tablet/Laptop terjual</div></div></td></tr>';
+    return;
+  }
+  if (filtered.length === 0) {
+    el.innerHTML = '<tr><td colspan="8"><div class="empty-illust"><div class="ico">🔍</div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearGaransiFilters()" class="mt-3 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs text-zinc-300">Clear Filter</button></div></td></tr>';
+    return;
+  }
+  el.innerHTML = filtered.map(function(g) {
+    var status = garansiStatus(g);
+    var soldD = g.soldAt ? new Date(g.soldAt) : new Date();
+    var wD = g.warrantyUntil ? new Date(g.warrantyUntil) : new Date();
+    var soldStr = String(soldD.getDate()).padStart(2, '0') + '/' + String(soldD.getMonth() + 1).padStart(2, '0') + '/' + soldD.getFullYear();
+    var wStr = String(wD.getDate()).padStart(2, '0') + '/' + String(wD.getMonth() + 1).padStart(2, '0') + '/' + wD.getFullYear();
+    var actionBtn = '';
+    if (status === 'aktif' || status === 'expiring') {
+      actionBtn = '<button onclick="startGaransiClaim(\'' + g.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-blue-800 rounded-lg text-zinc-300">Klaim</button>';
+    } else if (status === 'claim') {
+      actionBtn = '<button onclick="closeGaransiClaim(\'' + g.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-emerald-800 rounded-lg text-zinc-300">Selesai</button>';
+    }
+    return '<tr class="border-t border-zinc-800 hover:bg-zinc-950">' +
+      '<td class="px-4 py-3 font-medium">' + esc(g.productName || '-') + '</td>' +
+      '<td class="px-4 py-3 text-xs">' + esc(g.imei || '-') + '</td>' +
+      '<td class="px-4 py-3">' + esc(g.customerName || 'Walk-in') + '</td>' +
+      '<td class="px-4 py-3 text-xs">' + esc(g.receiptNo || '-') + '</td>' +
+      '<td class="px-4 py-3 text-xs">' + soldStr + '</td>' +
+      '<td class="px-4 py-3 text-xs">' + wStr + '</td>' +
+      '<td class="px-4 py-3 text-center">' + garansiStatusBadge(status) + '</td>' +
+      '<td class="px-4 py-3 text-center">' + actionBtn + '</td>' +
+    '</tr>';
+  }).join('');
+}
+async function startGaransiClaim(id) {
+  var g = garansiList.find(function(x) { return x.id === id; });
+  if (!g) return;
+  if (!confirm('Tandai klaim garansi untuk ' + g.productName + ' (' + g.imei + ')?')) return;
+  try {
+    if (!db) throw new Error('DB tidak siap');
+    await db.collection(col('garansi')).doc(id).update({ status: 'claim', claimAt: Date.now() });
+    showToast('Klaim garansi dicatat');
+  } catch (e) { alert('Gagal: ' + e.message); }
+}
+async function closeGaransiClaim(id) {
+  var g = garansiList.find(function(x) { return x.id === id; });
+  if (!g) return;
+  if (!confirm('Selesaikan klaim garansi ' + g.productName + ' (' + g.imei + ')?')) return;
+  try {
+    if (!db) throw new Error('DB tidak siap');
+    await db.collection(col('garansi')).doc(id).update({ status: 'aktif', claimAt: null, claimNote: 'Selesai ' + new Date().toLocaleDateString('id-ID') });
+    showToast('Klaim selesai');
+  } catch (e) { alert('Gagal: ' + e.message); }
+}
+function exportGaransiExcel() {
+  if (garansiList.length === 0) { alert('Belum ada data garansi'); return; }
+  if (typeof XLSX === 'undefined') { alert('Library Excel belum siap'); return; }
+  var data = garansiList.map(function(g, i) {
+    var d = g.soldAt ? new Date(g.soldAt) : new Date();
+    var w = g.warrantyUntil ? new Date(g.warrantyUntil) : new Date();
+    return {
+      'No': i + 1,
+      'Produk': g.productName || '-',
+      'IMEI/SN': g.imei || '-',
+      'Customer': g.customerName || 'Walk-in',
+      'No Struk': g.receiptNo || '-',
+      'Tgl Beli': d.toLocaleDateString('id-ID'),
+      'Garansi s/d': w.toLocaleDateString('id-ID'),
+      'Status': garansiStatus(g)
+    };
+  });
+  var ws = XLSX.utils.json_to_sheet(data);
+  var colWidths = Object.keys(data[0]).map(function(k) {
+    return { wch: Math.max(k.length, ...data.map(function(r) { return String(r[k] || '').length; })) + 2 };
+  });
+  ws['!cols'] = colWidths;
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Garansi');
+  var storeName = (typeof STORE !== 'undefined' && STORE.name) ? STORE.name : 'POS';
+  XLSX.writeFile(wb, 'GARANSI-' + storeName + '-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+}
+// Auto-create warranty record when device (HP/Tablet/Laptop) sold
+async function ensureWarrantyForSale(txData, items) {
+  if (!db) return;
+  var deviceItems = items.filter(function(item) {
+    var c = (item.category || '').toLowerCase();
+    return c === 'hp' || c === 'tablet' || c === 'laptop';
+  });
+  if (deviceItems.length === 0) return;
+  var batch = db.batch();
+  deviceItems.forEach(function(item) {
+    (item.imei || []).forEach(function(imei) {
+      var soldAt = txData.createdAt || Date.now();
+      var warrantyUntil = soldAt + 365 * 24 * 60 * 60 * 1000; // 1 tahun default
+      var ref = db.collection(col('garansi')).doc();
+      batch.set(ref, {
+        productName: item.name,
+        imei: imei,
+        customerName: txData.customerName || 'Walk-in',
+        customerWA: txData.customerWA || '',
+        receiptNo: txData.receiptNo || '',
+        soldAt: soldAt,
+        warrantyUntil: warrantyUntil,
+        status: 'aktif',
+        createdAt: soldAt
+      });
+    });
+  });
+  try { await batch.commit(); } catch (e) { console.warn('Warranty write failed', e); }
 }
 
 // ============ RECEIPT ============

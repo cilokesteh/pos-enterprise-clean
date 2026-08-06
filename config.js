@@ -43,7 +43,8 @@ const COLLECTIONS = {
   products:      'v3-products',
   stockMoves:    'v3-stock-moves',
   transactions:  'v3-transactions',
-  users:         'v3-users'
+  users:         'v3-users',
+  garansi:       'v3-garansi'
 };
 
 // --- Auth / roles ---
