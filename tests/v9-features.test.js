@@ -11,8 +11,8 @@ function has(str) {
 }
 
 // CDN libs
-has('html5-qrcode');
 has('qrcode.min.js');
+has('html2pdf');
 
 // v9 UI markers
 has('id="lowstock-banner"');
@@ -25,7 +25,7 @@ has('id="stock-type-filter"');
 has('id="history-search"');
 has('id="history-method-filter"');
 has('id="history-date-filter"');
-has('id="qr-reader"');
+has('imei-scan');
 has('id="prod-count-badge"');
 has('history-page-info');
 has('prod-filter-bar');
@@ -42,9 +42,7 @@ has('function filterHistoryAndRender');
 has('function historyPrevPage');
 has('function historyNextPage');
 has('function clearHistoryFilters');
-has('function toggleCameraScan');
-has('function startCameraScan');
-has('function stopCameraScan');
+has('imei-scan');
 
 // Global IMEI dup check
 has('globalMap');
