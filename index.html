@@ -893,7 +893,8 @@ function renderAccentOptions() {
   }).join('');
   setAccent(getAccent());
 }
-function toggleAccentPicker() {
+function toggleAccentPicker(e) {
+  if (e) e.stopPropagation();
   var menu = document.getElementById('accent-menu');
   if (menu) menu.classList.toggle('hidden');
 }
