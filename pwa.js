@@ -11,9 +11,9 @@
     display: 'standalone',
     orientation: 'any',
     background_color: '#0a0a0b',
-    theme_color: (typeof THEME !== 'undefined' && THEME.hex) ? THEME.hex : '#10b981',
+    theme_color: (typeof THEME !== 'undefined' && THEME.hex) ? THEME.hex : '#3b82f6',
     icons: [
-      { src: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%2310b981%22/%3E%3Ctext x=%2250%22 y=%2265%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22white%22%3E%F0%9F%9B%92%3C/text%3E%3C/svg%3E', sizes: '192x192', type: 'image/svg+xml' }
+      { src: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%233b82f6%22/%3E%3Ctext x=%2250%22 y=%2265%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22white%22%3E%F0%9F%9B%92%3C/text%3E%3C/svg%3E', sizes: '192x192', type: 'image/svg+xml' }
     ]
   };
   try {
