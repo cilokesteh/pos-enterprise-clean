@@ -22,7 +22,19 @@ service cloud.firestore {
     }
 
     // ans-* collections (ANSTORE supplier dashboard)
-    match /ans-{collection}/{doc} {
+    match /ans-customers/{doc} {
+      allow read, write: if isAuth();
+    }
+    match /ans-products/{doc} {
+      allow read, write: if isAuth();
+    }
+    match /ans-orders/{doc} {
+      allow read, write: if isAuth();
+    }
+    match /ans-shippings/{doc} {
+      allow read, write: if isAuth();
+    }
+    match /ans-payments/{doc} {
       allow read, write: if isAuth();
     }
 

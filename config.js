@@ -9,12 +9,12 @@
 // ISI dengan config dari Firebase Console > Project Settings > Web App.
 // Untuk sekarang pakai placeholder — ganti setelah buat Firebase project.
 const FIREBASE_CONFIG = {
-  apiKey:            'AIzaSyAlBo62JwrIKyIZahBgYRYYuIo48bI623s',
-  authDomain:        'pos-enterprise-9dde0.firebaseapp.com',
-  projectId:         'pos-enterprise-9dde0',
-  storageBucket:     'pos-enterprise-9dde0.firebasestorage.app',
-  messagingSenderId: '468231563907',
-  appId:             '1:468231563907:web:ea437b138d7e868b66c9b6'
+  apiKey:            'AIzaSyDpH1Svxj5GhYr6Pf-PXOf4UReLXCF6p3Y',
+  authDomain:        'pos-enterprise-37856.firebaseapp.com',
+  projectId:         'pos-enterprise-37856',
+  storageBucket:     'pos-enterprise-37856.firebasestorage.app',
+  messagingSenderId: '1053332732202',
+  appId:             '1:1053332732202:web:5c62f6751f5cca6be70653'
 };
 
 // --- Store identity ---
