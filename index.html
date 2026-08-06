@@ -6,7 +6,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#3b82f6">
+<meta name="theme-color" content="#10b981">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
@@ -49,20 +49,20 @@
   /* Sidebar active state: emerald left bar + tinted bg */
   .nav-btn.active {
     background: linear-gradient(90deg, rgba(34,197,94,.12), transparent 70%);
-    border-left: 3px solid #3b82f6;
-    color:#60a5fa !important;
+    border-left: 3px solid #22c55e;
+    color:#34d399 !important;
   }
   .nav-btn { border-left: 3px solid transparent; transition: all .18s ease; }
   .nav-btn:hover { background:rgba(148,163,184,.06); }
 
   /* Buttons: gradient + shadow on primary */
-  button.bg-blue-600, .bg-blue-600 {
-    background-image: linear-gradient(180deg,#3b82f6,#2563eb) !important;
-    background-color:#2563eb !important;
+  button.bg-emerald-600, .bg-emerald-600 {
+    background-image: linear-gradient(180deg,#22c55e,#059669) !important;
+    background-color:#059669 !important;
     box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 12px -4px rgba(34,197,94,.4);
   }
-  button.bg-blue-600:hover, .bg-blue-600:hover { filter:brightness(1.08); }
-  button.bg-blue-600:disabled, .bg-blue-600:disabled { filter:grayscale(.4) brightness(.8); box-shadow:none; }
+  button.bg-emerald-600:hover, .bg-emerald-600:hover { filter:brightness(1.08); }
+  button.bg-emerald-600:disabled, .bg-emerald-600:disabled { filter:grayscale(.4) brightness(.8); box-shadow:none; }
 
   /* Empty states: centered icon block */
   .empty-illust { text-align:center; padding:40px 16px; }
@@ -73,7 +73,7 @@
     transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
   }
   input:focus, select:focus, textarea:focus {
-    border-color:#3b82f6 !important;
+    border-color:#22c55e !important;
     box-shadow: 0 0 0 3px rgba(34,197,94,.15) !important;
     outline:none;
   }
@@ -125,10 +125,10 @@
     min-width:40px; min-height:32px; padding:6px 9px; border-radius:7px;
     color:#a1a1aa; font-size:12px; line-height:1; transition:background-color .2s,color .2s;
   }
-  .theme-option:hover { color:#60a5fa; }
+  .theme-option:hover { color:#34d399; }
   .theme-option.active { background:#3f3f46; color:#fff; }
   html[data-theme="light"] .theme-option { color:#52525b; }
-  html[data-theme="light"] .theme-option.active { background:#fff; color:#2563eb; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+  html[data-theme="light"] .theme-option.active { background:#fff; color:#059669; box-shadow:0 1px 3px rgba(0,0,0,.12); }
 
   /* Table wrap for horizontal scroll — ALL screen sizes */
   .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -182,7 +182,7 @@
   #ptr-indicator {
     display: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%);
     padding: 8px 16px; background: rgba(24,24,27,0.95); border-radius: 0 0 12px 12px;
-    font-size: 13px; color: #3b82f6; z-index: 60;
+    font-size: 13px; color: #10b981; z-index: 60;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: opacity 0.2s;
     border: 1px solid rgba(16,185,129,0.2); border-top: none;
   }
@@ -234,7 +234,7 @@
   <aside id="sidebar" class="w-60 bg-zinc-950 border-r border-zinc-900 flex flex-col shrink-0">
     <div class="p-4 border-b border-zinc-900 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:linear-gradient(135deg,#3b82f6,#2563eb); box-shadow:0 4px 12px -2px rgba(34,197,94,.5);">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:linear-gradient(135deg,#22c55e,#059669); box-shadow:0 4px 12px -2px rgba(34,197,94,.5);">
           <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
         </div>
         <div>
@@ -278,7 +278,7 @@
     </nav>
     <div class="p-4 border-t border-zinc-900">
       <div class="text-xs text-zinc-500 mb-2 flex items-center gap-2">
-        <span id="offline-dot" class="inline-block w-2 h-2 rounded-full bg-blue-500" title="Online"></span>
+        <span id="offline-dot" class="inline-block w-2 h-2 rounded-full bg-emerald-500" title="Online"></span>
         <span id="offline-label">Online</span>
       </div>
       <div class="text-xs text-zinc-500 mb-2" id="sb-user">—</div>
@@ -295,7 +295,7 @@
   <main class="flex-1 flex flex-col min-w-0">
     <header class="px-4 md:px-6 py-3 border-b border-zinc-900 flex items-center justify-between bg-zinc-950">
       <div class="flex items-center gap-3">
-        <button id="sidebar-toggle" onclick="toggleSidebar()" class="text-zinc-400 hover:text-blue-400">
+        <button id="sidebar-toggle" onclick="toggleSidebar()" class="text-zinc-400 hover:text-emerald-400">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
         <h2 id="page-title" class="text-lg font-semibold">Kasir</h2>
@@ -333,9 +333,9 @@
             </div>
             <div class="flex gap-2 w-full max-w-full">
               <input id="imei-scan" type="text" placeholder="Scan barcode atau ketik IMEI/SN..."
-                     class="flex-1 min-w-0 px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl focus:border-blue-500 focus:outline-none text-zinc-100"
+                     class="flex-1 min-w-0 px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl focus:border-emerald-500 focus:outline-none text-zinc-100"
                      onkeydown="if(event.key==='Enter')scanImei()">
-              <button onclick="scanImei()" class="shrink-0 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-medium text-white">
+              <button onclick="scanImei()" class="shrink-0 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-xl font-medium text-white">
                 Cari
               </button>
             </div>
@@ -362,10 +362,10 @@
                 <div class="border-t border-zinc-800 mt-4 pt-4">
                   <div class="flex justify-between text-lg font-bold">
                     <span>Total</span>
-                    <span id="cart-total" class="text-blue-400">Rp 0</span>
+                    <span id="cart-total" class="text-emerald-400">Rp 0</span>
                   </div>
                   <button id="checkout-btn" onclick="showPaymentModal()" disabled
-                          class="w-full mt-4 py-3 rounded-xl font-semibold text-white transition disabled:bg-zinc-800 disabled:text-zinc-500 enabled:bg-blue-600 enabled:hover:bg-blue-700">
+                          class="w-full mt-4 py-3 rounded-xl font-semibold text-white transition disabled:bg-zinc-800 disabled:text-zinc-500 enabled:bg-emerald-600 enabled:hover:bg-emerald-700">
                     Bayar
                   </button>
                 </div>
@@ -382,7 +382,7 @@
             <h3 class="text-lg font-semibold">Manajemen Produk</h3>
             <div class="flex items-center gap-2">
               <span id="prod-count-badge" class="count-badge">0 produk</span>
-              <button onclick="exportProdukExcel()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-medium text-white">Export Excel</button>
+              <button onclick="exportProdukExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs font-medium text-white">Export Excel</button>
             </div>
           </div>
           <p class="text-xs text-zinc-500 mb-3">Produk dibuat dari Restock. Edit hanya Harga Jual.</p>
@@ -438,7 +438,7 @@
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Download Stock Opname
               </button>
-              <button onclick="showStockModal('restock')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white">
+              <button onclick="showStockModal('restock')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white">
                 + Restock (Masuk)
               </button>
               <button onclick="showStockModal('retur')" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg text-sm font-medium text-white">
@@ -503,7 +503,7 @@
             <div class="flex items-center gap-2 flex-wrap">
               <!-- Toggle: Transaksi / Terlaris -->
               <div class="flex bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
-                <button id="tab-transaksi" onclick="setReportMode('transaksi')" class="px-3 py-2 text-sm bg-blue-600 text-white">Transaksi</button>
+                <button id="tab-transaksi" onclick="setReportMode('transaksi')" class="px-3 py-2 text-sm bg-emerald-600 text-white">Transaksi</button>
                 <button id="tab-terlaris" onclick="setReportMode('terlaris')" class="px-3 py-2 text-sm text-zinc-400 hover:text-white">Terlaris</button>
               </div>
               <select id="report-period" onchange="onReportPeriodChange()" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm">
@@ -522,13 +522,13 @@
                 <input type="date" id="report-start-date" class="px-2 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100">
                 <span class="text-zinc-500">→</span>
                 <input type="date" id="report-end-date" class="px-2 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100">
-                <button onclick="loadCustomReport()" class="px-3 py-2 bg-blue-600 rounded-lg text-sm text-white">Go</button>
+                <button onclick="loadCustomReport()" class="px-3 py-2 bg-emerald-600 rounded-lg text-sm text-white">Go</button>
               </div>
-              <button onclick="exportReportExcel()" id="btn-export-report" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
+              <button onclick="exportReportExcel()" id="btn-export-report" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Excel
               </button>
-              <button onclick="exportTerlarisExcel()" id="btn-export-terlaris" class="hidden px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
+              <button onclick="exportTerlarisExcel()" id="btn-export-terlaris" class="hidden px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Excel Terlaris
               </button>
@@ -548,7 +548,7 @@
             </div>
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500">Omzet</div>
-              <div class="text-xl font-bold text-blue-400" id="r-omzet">Rp 0</div>
+              <div class="text-xl font-bold text-emerald-400" id="r-omzet">Rp 0</div>
             </div>
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500">Modal</div>
@@ -556,7 +556,7 @@
             </div>
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500">Profit</div>
-              <div class="text-xl font-bold text-blue-400" id="r-profit">Rp 0</div>
+              <div class="text-xl font-bold text-emerald-400" id="r-profit">Rp 0</div>
             </div>
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500">Rata-rata</div>
@@ -584,7 +584,7 @@
               <h3 class="text-lg font-semibold">History Transaksi</h3>
               <span id="history-count-badge" class="count-badge">0</span>
             </div>
-            <button onclick="exportHistoryExcel()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
+            <button onclick="exportHistoryExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               Excel
             </button>
@@ -640,13 +640,13 @@
           <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h3 class="text-lg font-semibold">Manajemen Garansi</h3>
             <div class="flex gap-2 flex-wrap items-center">
-              <button onclick="exportGaransiExcel()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white">Export Excel</button>
+              <button onclick="exportGaransiExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white">Export Excel</button>
             </div>
           </div>
           <div class="grid grid-cols-3 gap-3 mb-4">
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500">Total Garansi Aktif</div>
-              <div class="text-xl font-bold text-blue-400" id="gr-total-active">0</div>
+              <div class="text-xl font-bold text-emerald-400" id="gr-total-active">0</div>
             </div>
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500">Expired (30 hari)</div>
@@ -683,11 +683,11 @@
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500 mb-1">Transaksi Hari Ini</div>
-              <div class="text-2xl font-bold text-blue-400" id="db-tx-count">0</div>
+              <div class="text-2xl font-bold text-emerald-400" id="db-tx-count">0</div>
             </div>
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500 mb-1">Omzet Hari Ini</div>
-              <div class="text-2xl font-bold text-blue-400" id="db-omzet">Rp 0</div>
+              <div class="text-2xl font-bold text-emerald-400" id="db-omzet">Rp 0</div>
             </div>
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500 mb-1">Modal Hari Ini</div>
@@ -701,7 +701,7 @@
           <div class="grid grid-cols-3 gap-3 mb-6">
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500 mb-1">Total Stok</div>
-              <div class="text-xl font-bold text-blue-400" id="db-stock-total">0</div>
+              <div class="text-xl font-bold text-emerald-400" id="db-stock-total">0</div>
             </div>
             <div class="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
               <div class="text-xs text-zinc-500 mb-1">Stok Habis</div>
@@ -829,7 +829,7 @@ function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', selected);
   localStorage.setItem('pos-theme', selected);
   var meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', selected === 'light' ? '#ffffff' : '#3b82f6');
+  if (meta) meta.setAttribute('content', selected === 'light' ? '#ffffff' : '#10b981');
   document.querySelectorAll('[data-theme-option]').forEach(function(button) {
     var active = button.getAttribute('data-theme-option') === selected;
     button.classList.toggle('active', active);
@@ -920,7 +920,7 @@ function setupOnlineStatus() {
   var dot = document.getElementById('offline-dot');
   var label = document.getElementById('offline-label');
   function setOnline(on) {
-    if (dot) dot.className = 'inline-block w-2 h-2 rounded-full ' + (on ? 'bg-blue-500' : 'bg-red-500');
+    if (dot) dot.className = 'inline-block w-2 h-2 rounded-full ' + (on ? 'bg-emerald-500' : 'bg-red-500');
     if (label) label.textContent = on ? 'Online' : 'Offline — data tersimpan lokal';
     document.body.classList.toggle('is-offline', !on);
   }
@@ -1044,11 +1044,11 @@ function switchView(name) {
     if (btn.dataset.view === name) {
       btn.classList.add('active');
       btn.classList.remove('text-zinc-400');
-      btn.classList.add('text-blue-400');
+      btn.classList.add('text-emerald-400');
     } else {
       btn.classList.remove('active');
       btn.classList.add('text-zinc-400');
-      btn.classList.remove('text-blue-400');
+      btn.classList.remove('text-emerald-400');
     }
   });
   // Title
@@ -1168,12 +1168,12 @@ function scanImei() {
     return;
   }
   resultEl.innerHTML =
-    '<div class="bg-zinc-900 rounded-xl p-4 border border-blue-800">' +
+    '<div class="bg-zinc-900 rounded-xl p-4 border border-emerald-800">' +
       '<div class="flex items-start justify-between">' +
         '<div>' +
           '<div class="font-semibold text-lg">' + esc(found.name) + '</div>' +
           '<div class="text-sm text-zinc-400 mt-1">' + esc(found.category || '') + ' · ' + esc(found.brand || '') + '</div>' +
-          '<div class="text-xs text-blue-400 mt-1">IMEI/SN: ' + esc(foundImei) + '</div>' +
+          '<div class="text-xs text-emerald-400 mt-1">IMEI/SN: ' + esc(foundImei) + '</div>' +
           '<div class="text-xs text-zinc-500">Stok: ' + found.stock + '</div>' +
         '</div>' +
         '<div class="text-right">' +
@@ -1181,7 +1181,7 @@ function scanImei() {
           '<input id="scan-price" type="text" inputmode="numeric" value="' + (found.price || 0) + '" class="w-32 px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100 mt-1">' +
         '</div>' +
       '</div>' +
-      '<button onclick="addScannedToCart(\'' + found.id + '\',\'' + foundImei.replace(/'/g, "\\'") + '\')" class="w-full mt-3 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium text-white">+ Tambah ke Keranjang</button>' +
+      '<button onclick="addScannedToCart(\'' + found.id + '\',\'' + foundImei.replace(/'/g, "\\'") + '\')" class="w-full mt-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-medium text-white">+ Tambah ke Keranjang</button>' +
     '</div>';
   input.value = '';
   setTimeout(function() { var p = document.getElementById('scan-price'); if (p) p.focus(); }, 100);
@@ -1254,7 +1254,7 @@ function renderCart() {
   } else {
     el.innerHTML = cart.map(function(item, idx) {
       var imeiBadge = item.imei && item.imei.length > 0
-        ? '<span class="text-xs text-blue-400">✓ IMEI: ' + esc(item.imei.join(', ')) + '</span>'
+        ? '<span class="text-xs text-emerald-400">✓ IMEI: ' + esc(item.imei.join(', ')) + '</span>'
         : '<span class="text-xs text-orange-400">⚠ Input IMEI</span>';
       return '<div class="flex items-center justify-between bg-zinc-950 rounded-lg p-3">' +
         '<div>' +
@@ -1263,7 +1263,7 @@ function renderCart() {
           '<div class="mt-1">' + imeiBadge + '</div>' +
         '</div>' +
         '<div class="flex items-center gap-3">' +
-          '<span class="text-sm font-semibold text-blue-400">' + formatRp(item.subtotal) + '</span>' +
+          '<span class="text-sm font-semibold text-emerald-400">' + formatRp(item.subtotal) + '</span>' +
           '<button onclick="removeCartItem(' + idx + ')" class="text-red-400 hover:text-red-300 text-xs">✕</button>' +
         '</div>' +
       '</div>';
@@ -1307,7 +1307,7 @@ function showPaymentModal() {
     '<div class="modal-backdrop fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" id="payment-modal" onclick="event.target.id===\'payment-modal\'&&hideModal(\'payment-modal\')">' +
       '<div class="modal-box bg-zinc-900 rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto border border-zinc-800" onclick="event.stopPropagation()">' +
         '<h3 class="text-lg font-semibold mb-4">Pembayaran</h3>' +
-        '<div class="flex justify-between text-sm mb-2"><span class="text-zinc-400">Total</span><span class="font-bold text-blue-400" id="pay-total-display">' + formatRp(total) + '</span></div>' +
+        '<div class="flex justify-between text-sm mb-2"><span class="text-zinc-400">Total</span><span class="font-bold text-emerald-400" id="pay-total-display">' + formatRp(total) + '</span></div>' +
         '<label class="block text-sm text-zinc-400 mt-4 mb-2">Metode Pembayaran</label>' +
         '<select id="pay-method" onchange="onPayMethodChange()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
           '<option value="cash">Tunai</option>' +
@@ -1349,7 +1349,7 @@ function showPaymentModal() {
           '<div>' +
             '<div class="flex items-center justify-between mb-2">' +
               '<label class="text-sm text-zinc-400">Kartu (Rp)</label>' +
-              '<button type="button" onclick="addSplitCard()" id="btn-add-split-card" class="text-xs text-blue-400 hover:text-blue-300">+ Tambah Kartu</button>' +
+              '<button type="button" onclick="addSplitCard()" id="btn-add-split-card" class="text-xs text-emerald-400 hover:text-emerald-300">+ Tambah Kartu</button>' +
             '</div>' +
             '<div id="split-cards-container" class="space-y-3"></div>' +
           '</div>' +
@@ -1363,7 +1363,7 @@ function showPaymentModal() {
           '<label class="block text-sm text-zinc-400 mb-2">No. WhatsApp (opsional)</label>' +
           '<input id="pay-cust-wa" type="tel" inputmode="tel" placeholder="0812xxxxxxx / 62812xxxxxxx" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
         '</div>' +
-        '<button onclick="processPayment()" class="w-full mt-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-white">Konfirmasi & Selesai</button>' +
+        '<button onclick="processPayment()" class="w-full mt-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold text-white">Konfirmasi & Selesai</button>' +
       '</div>' +
     '</div>';
   document.body.insertAdjacentHTML('beforeend', html);
@@ -1400,7 +1400,7 @@ function updateSplitTotals() {
   if (sumEl) sumEl.textContent = formatRp(sum);
   if (remEl) {
     remEl.textContent = formatRp(remaining);
-    remEl.style.color = remaining < 0 ? '#f87171' : (remaining > 0 ? '#fbbf24' : '#3b82f6');
+    remEl.style.color = remaining < 0 ? '#f87171' : (remaining > 0 ? '#fbbf24' : '#10b981');
   }
 }
 
@@ -1675,7 +1675,7 @@ function loadGaransi() {
 }
 function garansiStatusBadge(status) {
   var map = {
-    aktif: '<span class="text-xs px-2 py-0.5 bg-blue-950 text-blue-400 rounded">AKTIF</span>',
+    aktif: '<span class="text-xs px-2 py-0.5 bg-emerald-950 text-emerald-400 rounded">AKTIF</span>',
     expiring: '<span class="text-xs px-2 py-0.5 bg-orange-950 text-orange-400 rounded">AKAN EXPIRED</span>',
     expired: '<span class="text-xs px-2 py-0.5 bg-red-950 text-red-400 rounded">EXPIRED</span>',
     claim: '<span class="text-xs px-2 py-0.5 bg-blue-950 text-blue-400 rounded">KLAIM</span>'
@@ -1727,7 +1727,7 @@ function renderGaransiTable() {
     if (status === 'aktif' || status === 'expiring') {
       actionBtn = '<button onclick="startGaransiClaim(\'' + g.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-blue-800 rounded-lg text-zinc-300">Klaim</button>';
     } else if (status === 'claim') {
-      actionBtn = '<button onclick="closeGaransiClaim(\'' + g.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-blue-800 rounded-lg text-zinc-300">Selesai</button>';
+      actionBtn = '<button onclick="closeGaransiClaim(\'' + g.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-emerald-800 rounded-lg text-zinc-300">Selesai</button>';
     }
     return '<tr class="border-t border-zinc-800 hover:bg-zinc-950">' +
       '<td class="px-4 py-3 font-medium">' + esc(g.productName || '-') + '</td>' +
@@ -1867,7 +1867,7 @@ function renderProductTable() {
   if (badge) badge.textContent = filtered.length + ' / ' + products.length + ' produk';
   if (!el) return;
   if (products.length === 0) {
-    el.innerHTML = '<tr><td colspan="7"><div class="empty-illust"><div class="ico">📦</div><div class="text-sm text-zinc-400">Belum ada produk</div><div class="text-xs text-zinc-600 mt-1">Tambah produk via Restock</div><button onclick="showStockModal(\'restock\')" class="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs text-white">+ Restock Sekarang</button></div></td></tr>';
+    el.innerHTML = '<tr><td colspan="7"><div class="empty-illust"><div class="ico">📦</div><div class="text-sm text-zinc-400">Belum ada produk</div><div class="text-xs text-zinc-600 mt-1">Tambah produk via Restock</div><button onclick="showStockModal(\'restock\')" class="mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs text-white">+ Restock Sekarang</button></div></td></tr>';
     return;
   }
   if (filtered.length === 0) {
@@ -1883,7 +1883,7 @@ function renderProductTable() {
       '<td class="px-4 py-3">' + esc(p.category || '-') + '</td>' +
       '<td class="px-4 py-3">' + esc(p.brand || '-') + '</td>' +
       '<td class="px-4 py-3 text-right text-orange-400">' + formatRp(p.costPrice || 0) + '</td>' +
-      '<td class="px-4 py-3 text-right text-blue-400">' + formatRp(p.price || 0) + '</td>' +
+      '<td class="px-4 py-3 text-right text-emerald-400">' + formatRp(p.price || 0) + '</td>' +
       '<td class="px-4 py-3 text-center">' + (p.stock || 0) + '</td>' +
       '<td class="px-4 py-3 text-center">' +
         '<button onclick="showEditPriceModal(\'' + p.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300">Edit Harga</button>' +
@@ -1950,13 +1950,13 @@ function renderStockPanel() {
   if (badge) badge.textContent = filtered.length + ' / ' + stockMoves.length + ' log';
   if (!el) { updateStats(); try{ checkLowStockBanner(); }catch(e){} return; }
   if (stockMoves.length === 0) {
-    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico">📋</div><div class="text-sm text-zinc-400">Belum ada pergerakan stok</div><button onclick="showStockModal(\'restock\')" class="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs">+ Restock</button></div></td></tr>';
+    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico">📋</div><div class="text-sm text-zinc-400">Belum ada pergerakan stok</div><button onclick="showStockModal(\'restock\')" class="mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs">+ Restock</button></div></td></tr>';
   } else if (filtered.length === 0) {
     el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico">🔍</div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearStockFilters()" class="mt-3 px-4 py-2 bg-zinc-800 rounded-lg text-xs">Clear</button></div></td></tr>';
   } else {
     el.innerHTML = filtered.slice(0, 100).map(function(m) {
       var badgeType = '';
-      if (m.type === 'restock') badgeType = '<span class="text-xs px-2 py-0.5 bg-blue-950 text-blue-400 rounded">RESTOCK</span>';
+      if (m.type === 'restock') badgeType = '<span class="text-xs px-2 py-0.5 bg-emerald-950 text-emerald-400 rounded">RESTOCK</span>';
       else if (m.type === 'retur') badgeType = '<span class="text-xs px-2 py-0.5 bg-orange-950 text-orange-400 rounded">RETUR</span>';
       else if (m.type === 'sale') badgeType = '<span class="text-xs px-2 py-0.5 bg-blue-950 text-blue-400 rounded">JUAL</span>';
       var imei = (m.imeiList || []).join(', ');
@@ -2056,7 +2056,7 @@ function renderHistoryTable() {
       '<td class="px-4 py-3 text-xs">' + formatDate(t.createdAt) + '</td>' +
       '<td class="px-4 py-3">' + esc(t.customerName || 'Walk-in') + '</td>' +
       '<td class="px-4 py-3">' + esc(methodLabel) + '</td>' +
-      '<td class="px-4 py-3 text-right font-semibold text-blue-400">' + formatRp(t.total) + '</td>' +
+      '<td class="px-4 py-3 text-right font-semibold text-emerald-400">' + formatRp(t.total) + '</td>' +
       '<td class="px-4 py-3 text-center">' +
         '<button onclick="reprintReceipt(\'' + t.id + '\')" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300">Reprint</button>' +
       '</td>' +
@@ -2097,7 +2097,7 @@ function showReceipt(tx) {
         '<div class="flex gap-2 mt-4">' +
           '<button onclick="printReceipt()" class="flex-1 py-2.5 bg-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-zinc-900">Print</button>' +
           '<button onclick="downloadPdf()" class="flex-1 py-2.5 bg-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-zinc-900">PDF</button>' +
-          '<button onclick="sendReceiptToWA()" class="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">WA</button>' +
+          '<button onclick="sendReceiptToWA()" class="flex-1 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700">WA</button>' +
         '</div>' +
         '<button onclick="hideModal(\'receipt-modal\')" class="w-full mt-2 py-2.5 bg-zinc-200 text-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-300">Tutup</button>' +
       '</div>' +
@@ -2591,7 +2591,7 @@ function showEditPriceModal(id) {
         '<input id="edit-price-input" type="text" inputmode="numeric" value="' + (p.price || 0) + '" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
         '<div class="flex gap-2 mt-6">' +
           '<button onclick="hideModal(\'edit-price-modal\')" class="flex-1 py-2.5 bg-zinc-800 text-zinc-300 rounded-lg text-sm">Batal</button>' +
-          '<button onclick="saveProductPrice(\'' + p.id + '\')" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">Simpan</button>' +
+          '<button onclick="saveProductPrice(\'' + p.id + '\')" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium">Simpan</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -2642,7 +2642,7 @@ function showStockModal(type) {
   var isRestock = type === 'restock';
   var title = isRestock ? 'Restock (Barang Masuk)' : 'Retur ke Cabang (Barang Keluar)';
   var btnLabel = isRestock ? 'Simpan Restock' : 'Simpan Retur';
-  var btnColor = isRestock ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-600 hover:bg-orange-700';
+  var btnColor = isRestock ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-orange-600 hover:bg-orange-700';
   // Category options
   var catOpts = ['HP', 'Tablet', 'Laptop', 'Aksesoris'];
   // Product dropdown
@@ -2793,7 +2793,7 @@ function renderDashboardStock(productList) {
   }
   body.innerHTML = data.rows.map(function(row) {
     var badgeClass = row.status === 'Habis' ? 'bg-red-950 text-red-400' :
-      (row.status === 'Menipis' ? 'bg-orange-950 text-orange-400' : 'bg-blue-950 text-blue-400');
+      (row.status === 'Menipis' ? 'bg-orange-950 text-orange-400' : 'bg-emerald-950 text-emerald-400');
     return '<tr class="border-t border-zinc-800">' +
       '<td class="px-3 py-2 font-medium">' + esc(row.name) + '</td>' +
       '<td class="px-3 py-2 text-zinc-400">' + esc(row.category) + '</td>' +
@@ -2847,7 +2847,7 @@ async function loadDashboard() {
             '<td class="px-3 py-2 text-xs">' + hh + ':' + mm + '</td>' +
             '<td class="px-3 py-2">' + esc(t.customerName || 'Walk-in') + '</td>' +
             '<td class="px-3 py-2">' + esc(mLabel) + '</td>' +
-            '<td class="px-3 py-2 text-right font-semibold text-blue-400">' + formatRp(t.total) + '</td>' +
+            '<td class="px-3 py-2 text-right font-semibold text-emerald-400">' + formatRp(t.total) + '</td>' +
           '</tr>';
         }).join('');
       }
@@ -2869,8 +2869,8 @@ async function loadDashboard() {
         methodsEl.innerHTML = keys.map(function(k) {
           var pct = maxVal > 0 ? Math.round(methods[k] / maxVal * 100) : 0;
           return '<div>' +
-            '<div class="flex justify-between text-sm mb-1"><span>' + esc(k) + '</span><span class="text-blue-400">' + formatRp(methods[k]) + '</span></div>' +
-            '<div class="w-full bg-zinc-800 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width:' + pct + '%"></div></div>' +
+            '<div class="flex justify-between text-sm mb-1"><span>' + esc(k) + '</span><span class="text-emerald-400">' + formatRp(methods[k]) + '</span></div>' +
+            '<div class="w-full bg-zinc-800 rounded-full h-2"><div class="bg-emerald-500 h-2 rounded-full" style="width:' + pct + '%"></div></div>' +
           '</div>';
         }).join('');
       }
@@ -2896,7 +2896,7 @@ async function loadDashboard() {
           return '<tr class="border-t border-zinc-800">' +
             '<td class="px-3 py-2">' + esc(p.name) + '</td>' +
             '<td class="px-3 py-2 text-right">' + p.qty + '</td>' +
-            '<td class="px-3 py-2 text-right text-blue-400">' + formatRp(p.omzet) + '</td>' +
+            '<td class="px-3 py-2 text-right text-emerald-400">' + formatRp(p.omzet) + '</td>' +
           '</tr>';
         }).join('');
       }
@@ -2924,7 +2924,7 @@ async function loadDashboard() {
           var mm = String(d.getMinutes()).padStart(2, '0');
           var isRestock = s.type === 'restock';
           var typeBadge = isRestock
-            ? '<span class="text-blue-400">MASUK</span>'
+            ? '<span class="text-emerald-400">MASUK</span>'
             : '<span class="text-red-400">KELUAR</span>';
           var imeiList = (s.imeiList || []).join(', ');
           return '<tr class="border-t border-zinc-800">' +
@@ -3061,8 +3061,8 @@ function setReportMode(mode) {
   var navEl = document.getElementById('report-nav');
   var customEl = document.getElementById('report-custom-dates');
   if (mode === 'terlaris') {
-    if (tabTx) { tabTx.classList.remove('bg-blue-600','text-white'); tabTx.classList.add('text-zinc-400'); }
-    if (tabTl) { tabTl.classList.add('bg-blue-600','text-white'); tabTl.classList.remove('text-zinc-400'); }
+    if (tabTx) { tabTx.classList.remove('bg-emerald-600','text-white'); tabTx.classList.add('text-zinc-400'); }
+    if (tabTl) { tabTl.classList.add('bg-emerald-600','text-white'); tabTl.classList.remove('text-zinc-400'); }
     if (btnExportReport) btnExportReport.classList.add('hidden');
     if (btnExportTerlaris) btnExportTerlaris.classList.remove('hidden');
     if (summaryCards) summaryCards.classList.add('hidden');
@@ -3073,8 +3073,8 @@ function setReportMode(mode) {
     if (customEl) customEl.classList.add('hidden');
     loadTerlaris();
   } else {
-    if (tabTx) { tabTx.classList.add('bg-blue-600','text-white'); tabTx.classList.remove('text-zinc-400'); }
-    if (tabTl) { tabTl.classList.remove('bg-blue-600','text-white'); tabTl.classList.add('text-zinc-400'); }
+    if (tabTx) { tabTx.classList.add('bg-emerald-600','text-white'); tabTx.classList.remove('text-zinc-400'); }
+    if (tabTl) { tabTl.classList.remove('bg-emerald-600','text-white'); tabTl.classList.add('text-zinc-400'); }
     if (btnExportReport) btnExportReport.classList.remove('hidden');
     if (btnExportTerlaris) btnExportTerlaris.classList.add('hidden');
     if (summaryCards) summaryCards.classList.remove('hidden');
@@ -3148,7 +3148,7 @@ async function loadTerlaris() {
         '<td class="px-4 py-2 font-medium">' + esc(r.name) + '</td>' +
         '<td class="px-4 py-2">' + esc(r.category || '-') + '</td>' +
         '<td class="px-4 py-2">' + esc(r.brand || '-') + '</td>' +
-        '<td class="px-4 py-2 text-center font-bold text-blue-400">' + r.qty + '</td>' +
+        '<td class="px-4 py-2 text-center font-bold text-emerald-400">' + r.qty + '</td>' +
         '<td class="px-4 py-2 text-center">' + r.txCount + '</td>' +
         '<td class="px-4 py-2 text-right">' + formatRp(r.omzet) + '</td>' +
         '<td class="px-4 py-2 text-right text-orange-400">' + formatRp(r.modal) + '</td>' +
@@ -3320,7 +3320,7 @@ async function loadTransactionsInRange(start, end) {
           '<td class="px-4 py-2 text-xs">' + esc(r.date) + '</td>' +
           '<td class="px-4 py-2">' + esc(r.customer) + '</td>' +
           '<td class="px-4 py-2">' + esc(r.method) + '</td>' +
-          '<td class="px-4 py-2 text-right text-blue-400">' + formatRp(r.total) + '</td>' +
+          '<td class="px-4 py-2 text-right text-emerald-400">' + formatRp(r.total) + '</td>' +
           '<td class="px-4 py-2 text-right text-orange-400">' + formatRp(r.modal) + '</td>' +
           '<td class="px-4 py-2 text-right font-semibold">' + formatRp(r.profit) + '</td>' +
           '<td class="px-4 py-2 text-center">' + r.items + '</td>' +

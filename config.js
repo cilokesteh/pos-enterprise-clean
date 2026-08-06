@@ -53,6 +53,6 @@ const ADMIN_EMAIL = 'Admin@enterprise.com';
 
 // --- Theme ---
 const THEME = {
-  primary: 'blue',  // Tailwind color base
-  hex:     '#3b82f6'    // override hex
+  primary: 'emerald',  // Tailwind color base
+  hex:     '#10b981'    // override hex
 };
