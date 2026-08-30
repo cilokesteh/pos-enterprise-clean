@@ -58,7 +58,7 @@ has('kb-badge');
 
 // Version
 has('v11');
-has('>v11.1<');
+has('>v11.2<');
 // v10 features: delete product + text PDF fallback
 has('function deleteProduct');
 has('function buildTextReceipt');

@@ -4,7 +4,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#10b981">
 <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="pragma" content="no-cache">
@@ -17,11 +17,30 @@
   (function() {
     var savedTheme = localStorage.getItem('pos-theme');
     document.documentElement.setAttribute('data-theme', savedTheme === 'light' ? 'light' : 'dark');
+    var savedAccent = localStorage.getItem('pos-accent');
+    if (savedAccent) document.documentElement.setAttribute('data-accent', savedAccent);
   })();
 </script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-  body { background:#020617; font-family:'Inter',system-ui,-apple-system,sans-serif; }
+  :root, html[data-accent="emerald"] { --acc:#10b981; --acc-dark:#059669; --acc-rgb:16,185,129; --acc-on:#fff; }
+  html[data-accent="black"] { --acc:#52525b; --acc-dark:#27272a; --acc-rgb:82,82,91; --acc-on:#fff; }
+  html[data-accent="silver"] { --acc:#cbd5e1; --acc-dark:#94a3b8; --acc-rgb:203,213,225; --acc-on:#09090b; }
+  html[data-accent="gray"] { --acc:#64748b; --acc-dark:#475569; --acc-rgb:100,116,139; --acc-on:#fff; }
+  html[data-accent="gold"] { --acc:#eab308; --acc-dark:#ca8a04; --acc-rgb:234,179,8; --acc-on:#09090b; }
+  html[data-accent="blue"] { --acc:#3b82f6; --acc-dark:#2563eb; --acc-rgb:59,130,246; --acc-on:#fff; }
+  html[data-accent="violet"] { --acc:#8b5cf6; --acc-dark:#7c3aed; --acc-rgb:139,92,246; --acc-on:#fff; }
+  html[data-accent="rose"] { --acc:#f43f5e; --acc-dark:#e11d48; --acc-rgb:244,63,94; --acc-on:#fff; }
+  html[data-accent="cyan"] { --acc:#06b6d4; --acc-dark:#0891b2; --acc-rgb:6,182,212; --acc-on:#06232a; }
+  html[data-accent="emerald"], html:not([data-accent]) { --acc-on:#052e16; }
+  html[data-accent="blue"], html[data-accent="violet"], html[data-accent="rose"] { --acc-on:#fff; }
+  * { -webkit-tap-highlight-color:transparent; }
+  body {
+    box-sizing:border-box; background:#020617; font-family:'Inter',system-ui,-apple-system,sans-serif;
+    background-image:radial-gradient(circle at 50% 10%,rgba(var(--acc-rgb),.14),transparent 36%);
+    padding-top:max(20px,env(safe-area-inset-top)); padding-right:env(safe-area-inset-right);
+    padding-bottom:max(20px,env(safe-area-inset-bottom)); padding-left:env(safe-area-inset-left);
+  }
   html[data-theme="light"] { color-scheme:light; }
   html[data-theme="dark"] { color-scheme:dark; }
   html[data-theme="light"] body { background:#f4f4f5; color:#18181b; }
@@ -42,40 +61,61 @@
     backdrop-filter: blur(12px);
     border-radius: 20px;
   }
-  input:focus { border-color:#22c55e !important; box-shadow:0 0 0 3px rgba(34,197,94,.15) !important; outline:none; }
+  input:focus { border-color:var(--acc) !important; box-shadow:0 0 0 3px rgba(var(--acc-rgb),.15) !important; }
+  button, input { touch-action:manipulation; }
+  button:focus-visible, input:focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
   #login-btn {
-    background-image: linear-gradient(180deg,#22c55e,#059669);
-    box-shadow: 0 4px 16px -4px rgba(34,197,94,.5);
+    background-image: linear-gradient(180deg,var(--acc),var(--acc-dark));
+    color:var(--acc-on);
+    box-shadow: 0 4px 16px -4px rgba(var(--acc-rgb),.5);
     transition: filter .15s ease, transform .15s ease;
   }
   #login-btn:hover { filter:brightness(1.08); }
+  #login-btn:active { transform:scale(.99); }
   #login-btn:disabled { filter:grayscale(.4) brightness(.8); }
+  .password-wrap { position:relative; }
+  .password-wrap input { padding-right:3.25rem; }
+  #password-toggle {
+    position:absolute; top:50%; right:.5rem; transform:translateY(-50%); width:44px; height:44px;
+    display:flex; align-items:center; justify-content:center; border-radius:.65rem; color:#a1a1aa;
+  }
+  #password-toggle:hover { color:#fff; background:rgba(63,63,70,.55); }
+  html[data-theme="light"] #password-toggle:hover { color:#18181b; background:#e4e4e7; }
+  @media (max-height:600px) { body { align-items:flex-start; } }
+  @media (prefers-reduced-motion:reduce) {
+    *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+  }
 </style>
 </head>
 <body class="min-h-screen flex items-center justify-center text-zinc-100">
   <div class="w-full max-w-sm px-6">
     <div class="login-card p-8">
       <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style="background:linear-gradient(135deg,#22c55e,#059669); box-shadow:0 8px 24px -6px rgba(34,197,94,.6);">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style="background:linear-gradient(135deg,var(--acc),var(--acc-dark)); box-shadow:0 8px 24px -6px rgba(var(--acc-rgb),.6);">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
           </svg>
         </div>
         <h1 class="text-2xl font-bold" id="store-name">Toko HP</h1>
-        <p class="text-sm text-zinc-400 mt-1">Masuk dengan akun Anda</p>
-        <p class="text-[10px] text-zinc-600 mt-3"><span class="kbd">F1</span> fokus email · <span class="kbd">Enter</span> login</p>
+        <p class="text-sm text-zinc-300 mt-1">Masuk dengan akun Anda</p>
+        <p class="text-[10px] text-zinc-400 mt-3"><span class="kbd">F1</span> fokus email · <span class="kbd">Enter</span> login</p>
       </div>
 
       <form id="login-form" class="space-y-4">
         <div>
-          <label class="block text-sm text-zinc-300 mb-1">Email</label>
-          <input id="email" type="email" required autocomplete="email" autofocus
-                 class="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 focus:border-emerald-500 focus:outline-none text-zinc-100">
+          <label for="email" class="block text-sm text-zinc-300 mb-1">Email</label>
+          <input id="email" name="email" type="email" required autocomplete="email" inputmode="email" spellcheck="false"
+                 class="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 focus:border-emerald-500 text-zinc-100">
         </div>
         <div>
-          <label class="block text-sm text-zinc-300 mb-1">Password</label>
-          <input id="password" type="password" required autocomplete="current-password"
-                 class="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 focus:border-emerald-500 focus:outline-none text-zinc-100">
+          <label for="password" class="block text-sm text-zinc-300 mb-1">Password</label>
+          <div class="password-wrap">
+            <input id="password" name="password" type="password" required autocomplete="current-password"
+                   class="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 focus:border-emerald-500 text-zinc-100">
+            <button type="button" id="password-toggle" aria-label="Tampilkan password" aria-pressed="false">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
         <button type="submit" id="login-btn"
                 class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition flex items-center justify-center gap-2">
@@ -84,10 +124,10 @@
         </button>
       </form>
 
-      <div id="error" class="mt-4 text-sm text-red-400 text-center hidden"></div>
+      <div id="error" class="mt-4 text-sm text-red-400 text-center hidden" role="status" aria-live="polite"></div>
     </div>
-    <p class="mt-6 text-xs text-zinc-600 text-center">POS Enterprise v11 · Clean Rebuild · Camera Scan + Filters + PDF Hybrid</p>
-    <p class="mt-1 text-[10px] text-zinc-700 text-center">&copy; 2026 ciloktech.my.id</p>
+    <p class="mt-6 text-xs text-zinc-500 text-center">POS Enterprise v11.2 · IMEI/SN · Offline Sync · PDF Hybrid</p>
+    <p class="mt-1 text-[10px] text-zinc-500 text-center">&copy; 2026 ciloktech.my.id</p>
   </div>
 
 <script>
@@ -122,6 +162,14 @@ if (auth) {
     if (user) window.location.href = 'index.html';
   });
 }
+document.getElementById('password-toggle').addEventListener('click', function() {
+  var field = document.getElementById('password');
+  var showing = field.type === 'text';
+  field.type = showing ? 'password' : 'text';
+  this.setAttribute('aria-pressed', showing ? 'false' : 'true');
+  this.setAttribute('aria-label', showing ? 'Tampilkan password' : 'Sembunyikan password');
+  field.focus();
+});
 document.getElementById('login-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   var btn = document.getElementById('login-btn');
@@ -132,7 +180,7 @@ document.getElementById('login-form').addEventListener('submit', async function(
   var password = document.getElementById('password').value;
   errBox.classList.add('hidden');
   btn.disabled = true;
-  if (btnText) btnText.textContent = 'Memproses...';
+  if (btnText) btnText.textContent = 'Memproses…';
   if (spinner) spinner.classList.remove('hidden');
   try {
     await auth.signInWithEmailAndPassword(email, password);

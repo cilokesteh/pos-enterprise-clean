@@ -1,6 +1,12 @@
-# POS Enterprise v11 — Toko HP
+# POS Enterprise v11.2 — Toko HP
 
-POS clean rebuild, monolith 3250+ lines, Firebase Auth + Firestore, ready for production.
+POS clean rebuild, Firebase Auth + Firestore, ready for production.
+
+## Fitur v11.2 Baru
+- **Mobile navigation** — bottom bar 4 aksi utama, safe-area aware, sidebar tetap untuk menu lengkap
+- **Responsive dashboard** — KPI dan status stok lebih ringkas, tabel punya petunjuk horizontal scroll
+- **Accessible interactions** — pinch zoom aktif, skip link, focus-visible, reduced motion, ARIA dialog/toast, touch target ≥44px
+- **Polished login** — mengikuti accent pilihan, password visibility, label dan error announcement yang aksesibel
 
 ## Fitur v11 Baru (upgrade value 3,5jt)
 - **Garansi IMEI** — tracking garansi otomatis saat HP/Tablet/Laptop terjual (1 tahun default), status aktif/akan-expired/expired/klaim, klaim & selesai 1-klik, filter + export Excel
@@ -27,6 +33,6 @@ node tests/dashboard-stock.test.js
 node tests/stock-guards.test.js
 node tests/v9-features.test.js
 
-Version v11 2026-08-06 — Garansi IMEI + Offline Mode + SW v21
+Version v11.2 2026-08-30 — UI/UX polish desktop/mobile + accessibility + SW v35
 
 © 2026 ciloktech.my.id

@@ -1,11 +1,11 @@
-<!-- v9 POS Enterprise — Camera Scan + Filters + Search + Pagination -->
+<!-- POS Enterprise v11.2 — IMEI/SN + Offline Sync + Responsive UI -->
 <!-- Copyright © 2026 CilokTech (ciloktech.my.id) | Proprietary Software | Unauthorized copying/distribution prohibited | License: Commercial - Contact ciloktech.my.id -->
 
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#10b981">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -44,19 +44,17 @@
 
   /* ==== ACCENT THEME SYSTEM (client picks) ==== */
   /* default: emerald */
-  :root, html[data-accent="emerald"] {
-    --acc: #22c55e; --acc-dark: #059669; --acc-light: #34d399;
-    --acc-bg: rgba(34,197,94,.12); --acc-rgb: 34,197,94;
-  }
-  html[data-accent="black"] { --acc:#18181b; --acc-dark:#27272a; --acc-light:#3f3f46; --acc-bg:rgba(24,24,27,.5); --acc-rgb:24,24,27; }
-  html[data-accent="silver"] { --acc:#cbd5e1; --acc-dark:#94a3b8; --acc-light:#e2e8f0; --acc-bg:rgba(203,213,225,.12); --acc-rgb:203,213,225; }
-  html[data-accent="gray"] { --acc:#64748b; --acc-dark:#475569; --acc-light:#94a3b8; --acc-bg:rgba(100,116,139,.14); --acc-rgb:100,116,139; }
-  html[data-accent="gold"] { --acc:#eab308; --acc-dark:#ca8a04; --acc-light:#facc15; --acc-bg:rgba(234,179,8,.14); --acc-rgb:234,179,8; }
-  html[data-accent="emerald"] { --acc:#10b981; --acc-dark:#059669; --acc-light:#34d399; --acc-bg:rgba(16,185,129,.12); --acc-rgb:16,185,129; }
-  html[data-accent="blue"] { --acc:#3b82f6; --acc-dark:#2563eb; --acc-light:#60a5fa; --acc-bg:rgba(59,130,246,.12); --acc-rgb:59,130,246; }
-  html[data-accent="violet"] { --acc:#8b5cf6; --acc-dark:#7c3aed; --acc-light:#a78bfa; --acc-bg:rgba(139,92,246,.14); --acc-rgb:139,92,246; }
-  html[data-accent="rose"] { --acc:#f43f5e; --acc-dark:#e11d48; --acc-light:#fb7185; --acc-bg:rgba(244,63,94,.14); --acc-rgb:244,63,94; }
-  html[data-accent="cyan"] { --acc:#06b6d4; --acc-dark:#0891b2; --acc-light:#22d3ee; --acc-bg:rgba(6,182,212,.14); --acc-rgb:6,182,212; }
+  :root, html[data-accent="emerald"] { --acc:#10b981; --acc-dark:#059669; --acc-light:#34d399; --acc-bg:rgba(16,185,129,.12); --acc-rgb:16,185,129; --acc-on:#fff; }
+  html[data-accent="black"] { --acc:#52525b; --acc-dark:#27272a; --acc-light:#d4d4d8; --acc-bg:rgba(82,82,91,.24); --acc-rgb:82,82,91; --acc-on:#fff; }
+  html[data-accent="silver"] { --acc:#cbd5e1; --acc-dark:#94a3b8; --acc-light:#e2e8f0; --acc-bg:rgba(203,213,225,.12); --acc-rgb:203,213,225; --acc-on:#09090b; }
+  html[data-accent="gray"] { --acc:#64748b; --acc-dark:#475569; --acc-light:#94a3b8; --acc-bg:rgba(100,116,139,.14); --acc-rgb:100,116,139; --acc-on:#fff; }
+  html[data-accent="gold"] { --acc:#eab308; --acc-dark:#ca8a04; --acc-light:#facc15; --acc-bg:rgba(234,179,8,.14); --acc-rgb:234,179,8; --acc-on:#09090b; }
+  html[data-accent="blue"] { --acc:#3b82f6; --acc-dark:#2563eb; --acc-light:#60a5fa; --acc-bg:rgba(59,130,246,.12); --acc-rgb:59,130,246; --acc-on:#fff; }
+  html[data-accent="violet"] { --acc:#8b5cf6; --acc-dark:#7c3aed; --acc-light:#a78bfa; --acc-bg:rgba(139,92,246,.14); --acc-rgb:139,92,246; --acc-on:#fff; }
+  html[data-accent="rose"] { --acc:#f43f5e; --acc-dark:#e11d48; --acc-light:#fb7185; --acc-bg:rgba(244,63,94,.14); --acc-rgb:244,63,94; --acc-on:#fff; }
+  html[data-accent="cyan"] { --acc:#06b6d4; --acc-dark:#0891b2; --acc-light:#22d3ee; --acc-bg:rgba(6,182,212,.14); --acc-rgb:6,182,212; --acc-on:#06232a; }
+  html[data-accent="emerald"], html:not([data-accent]) { --acc-on:#052e16; }
+  html[data-accent="blue"], html[data-accent="violet"], html[data-accent="rose"] { --acc-on:#fff; }
 
   /* ==== PREMIUM SURFACE SYSTEM ==== */
   /* Cards: depth via layered shadow + subtle inner border */
@@ -70,7 +68,7 @@
     border-left: 3px solid var(--acc);
     color: var(--acc-light) !important;
   }
-  .nav-btn { border-left: 3px solid transparent; transition: all .18s ease; }
+  .nav-btn { border-left: 3px solid transparent; transition: background-color .18s ease, color .18s ease, border-color .18s ease; }
   .nav-btn:hover { background:rgba(148,163,184,.06); }
 
   /* Buttons: accent gradient + shadow on primary */
@@ -79,8 +77,12 @@
     background-color: var(--acc-dark) !important;
     box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 12px -4px var(--acc);
   }
+  button.bg-emerald-600, button.bg-blue-600 { color:var(--acc-on) !important; }
   button.bg-emerald-600:hover, .bg-emerald-600:hover, button.bg-blue-600:hover, .bg-blue-600:hover { filter:brightness(1.08); }
   button.bg-emerald-600:disabled, .bg-emerald-600:disabled, button.bg-blue-600:disabled, .bg-blue-600:disabled { filter:grayscale(.4) brightness(.8); box-shadow:none; }
+  #checkout-btn:not(:disabled) { background-image:linear-gradient(180deg,var(--acc),var(--acc-dark)) !important; color:var(--acc-on) !important; box-shadow:0 4px 14px -5px var(--acc); }
+  #checkout-btn:disabled { background:#27272a !important; color:#71717a !important; box-shadow:none !important; cursor:not-allowed; }
+  html[data-theme="light"] #checkout-btn:disabled { background:#e4e4e7 !important; color:#71717a !important; }
 
   /* Empty states: centered icon block */
   .empty-illust { text-align:center; padding:40px 16px; }
@@ -93,7 +95,6 @@
   input:focus, select:focus, textarea:focus {
     border-color: var(--acc) !important;
     box-shadow: 0 0 0 3px rgba(var(--acc-rgb),.15) !important;
-    outline:none;
   }
 
   /* Accent text/color utility overrides */
@@ -147,10 +148,10 @@
     min-width:40px; min-height:32px; padding:6px 9px; border-radius:7px;
     color:#a1a1aa; font-size:12px; line-height:1; transition:background-color .2s,color .2s;
   }
-  .theme-option:hover { color:#34d399; }
-  .theme-option.active { background:#3f3f46; color:#fff; }
+  .theme-option:hover { color:var(--acc-light); }
+  .theme-option.active { background:#3f3f46; color:var(--acc-light); }
   html[data-theme="light"] .theme-option { color:#52525b; }
-  html[data-theme="light"] .theme-option.active { background:#fff; color:#059669; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+  html[data-theme="light"] .theme-option.active { background:#fff; color:var(--acc-dark); box-shadow:0 1px 3px rgba(0,0,0,.12); }
 
   /* Table wrap for horizontal scroll — ALL screen sizes */
   .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -228,14 +229,102 @@
   .kb-badge { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:20px; padding:0 6px; font-size:10px; font-weight:600; background:#27272a; border:1px solid #3f3f46; border-radius:4px; color:#a1a1aa; }
   .count-badge { display:inline-flex; align-items:center; padding:2px 8px; background:#18181b; border:1px solid #27272a; border-radius:999px; font-size:11px; color:#a1a1aa; }
   .empty-illust { text-align:center; padding:32px 16px; }
-  .empty-illust .ico { font-size:36px; margin-bottom:8px; }
+  .empty-illust .ico { display:flex; align-items:center; justify-content:center; width:44px; height:44px; margin:0 auto 10px; color:#71717a; }
+  .empty-illust .ico svg { width:36px; height:36px; }
+
+  /* ===== UI/UX POLISH v11.2 ===== */
+  * { -webkit-tap-highlight-color: transparent; }
+  button, a, input, select, textarea { touch-action: manipulation; }
+  button:active, a:active { filter:brightness(.94); }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--acc-light);
+    outline-offset: 2px;
+  }
+  .skip-link {
+    position:fixed; top:8px; left:8px; z-index:100; transform:translateY(-140%);
+    padding:10px 14px; border-radius:10px; background:#18181b; color:#fff; border:2px solid var(--acc-light);
+    font-size:13px; font-weight:600; transition:transform .15s ease;
+  }
+  .skip-link:focus { transform:translateY(0); }
+  #sidebar nav { overflow-y:auto; overscroll-behavior:contain; }
+  #sidebar-backdrop { backdrop-filter:blur(3px); }
+  #content { overscroll-behavior:contain; }
+  header { min-height:64px; position:relative; z-index:30; }
+  .table-wrap { overscroll-behavior-x:contain; scrollbar-gutter:stable; }
+  .table-wrap thead { position:sticky; top:0; z-index:2; }
+  .modal-backdrop { backdrop-filter:blur(5px); }
+  .modal-box { overscroll-behavior:contain; box-shadow:0 24px 70px -18px rgba(0,0,0,.78); }
+  #toast-region {
+    position:fixed; right:24px; bottom:24px; z-index:80; max-width:min(360px,calc(100vw - 32px));
+    padding:12px 16px; border:1px solid rgba(148,163,184,.18); border-radius:12px;
+    background:rgba(24,24,27,.96); color:#fff; box-shadow:0 16px 48px -16px rgba(0,0,0,.75);
+    font-size:14px; opacity:0; transform:translateY(10px); pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  #toast-region.show { opacity:1; transform:translateY(0); }
+  #mobile-tabbar { display:none; }
+
+  @media (max-width:768px) {
+    #sidebar-close { display:inline-flex !important; min-width:44px; min-height:44px; align-items:center; justify-content:center; }
+    #content { padding-bottom:calc(6rem + env(safe-area-inset-bottom)); }
+    #mobile-tabbar {
+      display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); position:fixed;
+      left:0; right:0; bottom:0; z-index:35; padding:6px 8px calc(6px + env(safe-area-inset-bottom));
+      background:rgba(9,9,11,.94); border-top:1px solid rgba(63,63,70,.9);
+      box-shadow:0 -12px 32px -24px rgba(0,0,0,.9); backdrop-filter:blur(18px);
+    }
+    .mobile-nav-btn {
+      min-width:0; min-height:50px; padding:5px 2px; border-radius:10px; color:#71717a;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+      font-size:10px; line-height:1; transition:background-color .18s ease,color .18s ease;
+    }
+    .mobile-nav-btn svg { width:20px; height:20px; }
+    .mobile-nav-btn.active { color:var(--acc-light); background:var(--acc-bg); }
+    #toast-region { right:16px; bottom:calc(78px + env(safe-area-inset-bottom)); }
+    .modal-backdrop { align-items:flex-end !important; padding:0 !important; }
+    .modal-box {
+      width:100% !important; max-width:none !important; max-height:min(92dvh,760px) !important;
+      border-radius:20px 20px 0 0 !important; padding:20px !important;
+      padding-bottom:calc(20px + env(safe-area-inset-bottom)) !important;
+    }
+    .prod-filter-bar > input, .prod-filter-bar > select, .prod-filter-bar > button { width:100%; min-width:0 !important; }
+    .grid-cols-5, .grid-cols-3 { gap:.75rem !important; }
+    .kb-badge, .kb-badge + span { display:none !important; }
+    #cart-list { min-height:72px !important; }
+    #cart-list .empty-cart { padding-top:1.25rem !important; padding-bottom:1.25rem !important; }
+    button[onclick="clearCart()"] { min-width:72px; min-height:44px; padding:0 10px; }
+    #view-dashboard > div > .grid.grid-cols-3 { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+    #view-dashboard > div > .grid.grid-cols-3 > div { padding:12px !important; min-width:0; }
+    #view-dashboard > div > .grid.grid-cols-3 .text-xs { line-height:1.25; }
+    #view-dashboard .table-wrap { position:relative; }
+    #view-dashboard .table-wrap::after {
+      content:'Geser tabel'; position:sticky; right:8px; float:right; margin-top:-30px;
+      padding:3px 7px; border-radius:999px; background:rgba(9,9,11,.78); color:#a1a1aa;
+      font-size:9px; pointer-events:none;
+    }
+  }
+  @media (max-width:420px) {
+    #content { padding:.875rem; padding-bottom:calc(6rem + env(safe-area-inset-bottom)); }
+    header { padding-left:.75rem !important; padding-right:.75rem !important; }
+    #page-title { font-size:1rem; }
+    #accent-btn, #sidebar-toggle, header .theme-option, header button[title="Refresh App"] { min-width:44px; width:44px; padding-left:0; padding-right:0; justify-content:center; }
+    .grid-cols-5, .grid-cols-3 { grid-template-columns:1fr !important; }
+  }
+  html[data-theme="light"] #mobile-tabbar { background:rgba(255,255,255,.95); border-top-color:#e4e4e7; }
+  html[data-theme="light"] #toast-region { background:rgba(255,255,255,.98); color:#18181b; border-color:#d4d4d8; }
+  html[data-theme="light"] #view-dashboard .table-wrap::after { background:rgba(255,255,255,.9); color:#52525b; }
+  @media (prefers-reduced-motion:reduce) {
+    *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+  }
 
 </style>
 </head>
 <body class="text-zinc-100 overflow-hidden">
 
+<a href="#main-content" class="skip-link">Lewati navigasi</a>
+
 <!-- Sidebar backdrop (mobile) -->
-<div id="sidebar-backdrop" onclick="closeSidebar()"></div>
+<div id="sidebar-backdrop" onclick="closeSidebar()" aria-hidden="true"></div>
 
 <!-- PTR indicator -->
 <div id="ptr-indicator">Tarik untuk refresh</div>
@@ -243,17 +332,17 @@
 <!-- ==================== APP SHELL ==================== -->
 <!-- Lowstock banner -->
 <div id="lowstock-banner" class="lowstock-banner hidden fixed top-0 left-0 right-0 z-[70] bg-orange-600 text-white text-sm px-4 py-2 flex items-center justify-between">
-  <span id="lowstock-banner-text">⚠️ Stok menipis</span>
+  <span id="lowstock-banner-text">Stok menipis</span>
   <div class="flex gap-2">
     <button onclick="switchView('stock')" class="px-3 py-1 bg-white/20 rounded-lg text-xs">Lihat</button>
-    <button onclick="localStorage.setItem('pos-lowstock-dismissed','1');document.getElementById('lowstock-banner').classList.add('hidden')" class="px-2 py-1 bg-white/10 rounded text-xs">✕</button>
+    <button onclick="localStorage.setItem('pos-lowstock-dismissed','1');document.getElementById('lowstock-banner').classList.add('hidden')" class="px-2 py-1 bg-white/10 rounded text-xs" aria-label="Tutup pemberitahuan stok">✕</button>
   </div>
 </div>
 
 <div id="app" class="flex h-screen">
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="w-60 bg-zinc-950 border-r border-zinc-900 flex flex-col shrink-0">
+  <aside id="sidebar" class="w-60 bg-zinc-950 border-r border-zinc-900 flex flex-col shrink-0" aria-label="Navigasi utama">
     <div class="p-4 border-b border-zinc-900 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:linear-gradient(135deg,var(--acc),var(--acc-dark)); box-shadow:0 4px 12px -2px var(--acc);">
@@ -264,12 +353,12 @@
           <p class="text-[10px] text-zinc-500 tracking-wide uppercase">POS Enterprise</p>
         </div>
       </div>
-      <button onclick="closeSidebar()" class="md:hidden text-zinc-400 hover:text-white p-1">
+      <button id="sidebar-close" onclick="closeSidebar()" class="md:hidden text-zinc-400 hover:text-white p-1" aria-label="Tutup menu navigasi">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <nav class="flex-1 py-2" id="nav-menu">
-      <button data-view="pos" class="nav-btn active w-full text-left px-4 py-3 text-sm hover:bg-zinc-900 flex items-center gap-3 transition">
+    <nav class="flex-1 py-2" id="nav-menu" aria-label="Menu POS">
+      <button data-view="pos" class="nav-btn active w-full text-left px-4 py-3 text-sm hover:bg-zinc-900 flex items-center gap-3 transition" aria-current="page">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
         Kasir
       </button>
@@ -303,21 +392,21 @@
         <span id="offline-dot" class="inline-block w-2 h-2 rounded-full bg-emerald-500" title="Online"></span>
         <span id="offline-label">Online</span>
       </div>
-      <div class="text-xs text-zinc-500 mb-2" id="sb-user">—</div>
-      <button onclick="logout()" class="w-full text-left text-sm text-red-400 hover:text-red-300 flex items-center gap-2">
+      <div class="text-xs text-zinc-500 mb-2 break-all" id="sb-user">—</div>
+      <button onclick="logout()" class="w-full min-h-[44px] text-left text-sm text-red-400 hover:text-red-300 flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
         Keluar
       </button>
-      <div class="text-[10px] text-zinc-700 mt-3">v11.1</div>
-      <div class="text-[9px] text-zinc-700 mt-1">&copy; 2026 ciloktech.my.id</div>
+      <div class="text-[10px] text-zinc-500 mt-3">v11.2</div>
+      <div class="text-[9px] text-zinc-600 mt-1">&copy; 2026 ciloktech.my.id</div>
     </div>
   </aside>
 
   <!-- Main -->
-  <main class="flex-1 flex flex-col min-w-0">
+  <main id="main-content" class="flex-1 flex flex-col min-w-0" tabindex="-1">
     <header class="px-4 md:px-6 py-3 border-b border-zinc-900 flex items-center justify-between bg-zinc-950">
       <div class="flex items-center gap-3">
-        <button id="sidebar-toggle" onclick="toggleSidebar()" class="text-zinc-400 hover:text-emerald-400">
+        <button id="sidebar-toggle" onclick="toggleSidebar()" class="text-zinc-400 hover:text-emerald-400" aria-label="Buka menu navigasi" aria-controls="sidebar" aria-expanded="false">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
         <h2 id="page-title" class="text-lg font-semibold">Kasir</h2>
@@ -325,7 +414,7 @@
       <div class="flex items-center gap-2">
         <!-- ACCENT PICKER (client demo) -->
         <div class="accent-picker relative">
-          <button onclick="toggleAccentPicker()" id="accent-btn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs text-zinc-300 transition" title="Pilih warna tema">
+          <button onclick="toggleAccentPicker(event)" id="accent-btn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs text-zinc-300 transition" title="Pilih warna tema" aria-label="Pilih warna tema" aria-controls="accent-menu" aria-expanded="false">
             <span id="accent-dot" class="w-3 h-3 rounded-full inline-block" style="background:var(--acc);"></span>
             <span class="hidden lg:inline">Warna</span>
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -345,7 +434,7 @@
             <span class="hidden lg:inline">Terang</span>
           </button>
         </div>
-        <button onclick="hardRefresh()" class="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-xs text-zinc-300" title="Refresh App">
+        <button onclick="hardRefresh()" class="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-xs text-zinc-300" title="Refresh App" aria-label="Refresh aplikasi">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           <span class="hidden sm:inline">Refresh</span>
         </button>
@@ -359,15 +448,15 @@
           <!-- Scanner card -->
           <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800 mb-6 w-full max-w-full">
             <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
-              <label class="block text-sm text-zinc-400">Scan / Input IMEI atau SN</label>
+              <label for="imei-scan" class="block text-sm text-zinc-400">Scan / Input IMEI atau SN</label>
               <div class="flex items-center gap-1.5">
                 <span class="kb-badge">Enter</span><span class="text-[10px] text-zinc-600">Cari</span>
                 <span class="kb-badge">F2</span><span class="text-[10px] text-zinc-600">Fokus</span>
               </div>
             </div>
             <div class="flex gap-2 w-full max-w-full">
-              <input id="imei-scan" type="text" placeholder="Scan barcode atau ketik IMEI/SN..."
-                     class="flex-1 min-w-0 px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl focus:border-emerald-500 focus:outline-none text-zinc-100"
+              <input id="imei-scan" type="text" name="imei-scan" autocomplete="off" spellcheck="false" aria-label="Scan atau input IMEI atau SN" placeholder="Scan barcode atau ketik IMEI/SN…"
+                     class="flex-1 min-w-0 px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl focus:border-emerald-500 text-zinc-100"
                      onkeydown="if(event.key==='Enter')scanImei()">
               <button onclick="scanImei()" class="shrink-0 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-xl font-medium text-white">
                 Cari
@@ -384,7 +473,7 @@
               <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800">
                 <div class="flex items-center justify-between mb-4">
                   <h3 class="font-semibold">Keranjang</h3>
-                  <button onclick="clearCart()" class="text-xs text-zinc-500 hover:text-red-400">Kosongkan</button>
+                  <button onclick="clearCart()" class="text-xs text-zinc-400 hover:text-red-400">Kosongkan</button>
                 </div>
                 <div id="cart-list" class="space-y-2 min-h-[100px]">
                   <div class="empty-cart flex flex-col items-center justify-center py-10 text-zinc-600">
@@ -421,18 +510,18 @@
           </div>
           <p class="text-xs text-zinc-500 mb-3">Produk dibuat dari Restock. Edit hanya Harga Jual.</p>
           <div class="prod-filter-bar">
-            <input id="prod-search" type="text" placeholder="🔍 Cari nama/kategori/brand/IMEI..." oninput="renderProductTable()" class="flex-1 min-w-[180px]">
-            <select id="prod-cat-filter" onchange="renderProductTable()">
+            <input id="prod-search" type="search" name="product-search" autocomplete="off" aria-label="Cari produk" placeholder="Cari nama, kategori, brand, atau IMEI…" oninput="renderProductTable()" class="flex-1 min-w-[180px]">
+            <select id="prod-cat-filter" onchange="renderProductTable()" aria-label="Filter kategori produk">
               <option value="">Semua Kategori</option>
               <option value="HP">HP</option>
               <option value="Tablet">Tablet</option>
               <option value="Laptop">Laptop</option>
               <option value="Aksesoris">Aksesoris</option>
             </select>
-            <select id="prod-brand-filter" onchange="renderProductTable()">
+            <select id="prod-brand-filter" onchange="renderProductTable()" aria-label="Filter brand produk">
               <option value="">Semua Brand</option>
             </select>
-            <select id="prod-stock-filter" onchange="renderProductTable()">
+            <select id="prod-stock-filter" onchange="renderProductTable()" aria-label="Filter status stok">
               <option value="">Semua Stok</option>
               <option value="habis">Habis</option>
               <option value="menipis">Menipis (≤5)</option>
@@ -497,8 +586,8 @@
           </div>
 
           <div class="prod-filter-bar">
-            <input id="stock-search" type="text" placeholder="🔍 Cari produk/IMEI..." oninput="renderStockPanel()" class="flex-1 min-w-[180px]">
-            <select id="stock-type-filter" onchange="renderStockPanel()">
+            <input id="stock-search" type="search" name="stock-search" autocomplete="off" aria-label="Cari stok" placeholder="Cari produk atau IMEI…" oninput="renderStockPanel()" class="flex-1 min-w-[180px]">
+            <select id="stock-type-filter" onchange="renderStockPanel()" aria-label="Filter tipe pergerakan stok">
               <option value="">Semua Tipe</option>
               <option value="restock">Restock</option>
               <option value="retur">Retur</option>
@@ -540,7 +629,7 @@
                 <button id="tab-transaksi" onclick="setReportMode('transaksi')" class="px-3 py-2 text-sm bg-emerald-600 text-white">Transaksi</button>
                 <button id="tab-terlaris" onclick="setReportMode('terlaris')" class="px-3 py-2 text-sm text-zinc-400 hover:text-white">Terlaris</button>
               </div>
-              <select id="report-period" onchange="onReportPeriodChange()" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm">
+              <select id="report-period" onchange="onReportPeriodChange()" aria-label="Periode laporan" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm">
                 <option value="harian">Harian</option>
                 <option value="mingguan">Mingguan</option>
                 <option value="bulanan">Bulanan</option>
@@ -548,14 +637,14 @@
                 <option value="custom">Custom</option>
               </select>
               <div id="report-nav" class="flex items-center gap-1">
-                <button onclick="shiftReport(-1)" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm hover:bg-zinc-800">‹</button>
+                <button onclick="shiftReport(-1)" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm hover:bg-zinc-800" aria-label="Periode sebelumnya">‹</button>
                 <span id="report-range-label" class="px-3 py-2 text-sm text-zinc-300 min-w-[120px] text-center">—</span>
-                <button onclick="shiftReport(1)" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm hover:bg-zinc-800">›</button>
+                <button onclick="shiftReport(1)" class="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm hover:bg-zinc-800" aria-label="Periode berikutnya">›</button>
               </div>
               <div id="report-custom-dates" class="hidden flex items-center gap-2">
-                <input type="date" id="report-start-date" class="px-2 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100">
+                <input type="date" id="report-start-date" aria-label="Tanggal mulai laporan" class="px-2 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100">
                 <span class="text-zinc-500">→</span>
-                <input type="date" id="report-end-date" class="px-2 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100">
+                <input type="date" id="report-end-date" aria-label="Tanggal akhir laporan" class="px-2 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100">
                 <button onclick="loadCustomReport()" class="px-3 py-2 bg-emerald-600 rounded-lg text-sm text-white">Go</button>
               </div>
               <button onclick="exportReportExcel()" id="btn-export-report" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white flex items-center gap-1">
@@ -624,8 +713,8 @@
             </button>
           </div>
           <div class="prod-filter-bar">
-            <input id="history-search" type="text" placeholder="🔍 No struk / customer..." oninput="filterHistoryAndRender()" class="flex-1 min-w-[160px]">
-            <select id="history-method-filter" onchange="filterHistoryAndRender()">
+            <input id="history-search" type="search" name="history-search" autocomplete="off" aria-label="Cari transaksi" placeholder="Cari nomor struk atau customer…" oninput="filterHistoryAndRender()" class="flex-1 min-w-[160px]">
+            <select id="history-method-filter" onchange="filterHistoryAndRender()" aria-label="Filter metode pembayaran">
               <option value="">Semua Metode</option>
               <option value="cash">Tunai</option>
               <option value="qris">QRIS</option>
@@ -633,7 +722,7 @@
               <option value="card">Kartu</option>
               <option value="split">Split</option>
             </select>
-            <select id="history-date-filter" onchange="filterHistoryAndRender()">
+            <select id="history-date-filter" onchange="filterHistoryAndRender()" aria-label="Filter tanggal transaksi">
               <option value="">Semua Tanggal</option>
               <option value="today">Hari Ini</option>
               <option value="week">7 Hari Terakhir</option>
@@ -692,8 +781,8 @@
             </div>
           </div>
           <div class="prod-filter-bar">
-            <input id="gr-search" type="text" placeholder="Cari IMEI / nama / customer / no struk..." oninput="renderGaransiTable()" class="flex-1 min-w-[180px]">
-            <select id="gr-status-filter" onchange="renderGaransiTable()"><option value="">Semua Status</option><option value="aktif">Aktif</option><option value="expiring">Akan Expired</option><option value="expired">Expired</option><option value="claim">Klaim</option></select>
+            <input id="gr-search" type="search" name="warranty-search" autocomplete="off" aria-label="Cari garansi" placeholder="Cari IMEI, nama, customer, atau nomor struk…" oninput="renderGaransiTable()" class="flex-1 min-w-[180px]">
+            <select id="gr-status-filter" onchange="renderGaransiTable()" aria-label="Filter status garansi"><option value="">Semua Status</option><option value="aktif">Aktif</option><option value="expiring">Akan Expired</option><option value="expired">Expired</option><option value="claim">Klaim</option></select>
             <button onclick="clearGaransiFilters()" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs text-zinc-300">Clear</button>
           </div>
           <div class="bg-zinc-900 rounded-xl border border-zinc-800">
@@ -830,7 +919,27 @@
 
     </div>
   </main>
+  <nav id="mobile-tabbar" aria-label="Navigasi cepat">
+    <button type="button" class="mobile-nav-btn active" data-view="pos" onclick="switchView('pos')" aria-current="page">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3A1 1 0 005.4 17H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      <span>Kasir</span>
+    </button>
+    <button type="button" class="mobile-nav-btn" data-view="products" onclick="switchView('products')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <span>Produk</span>
+    </button>
+    <button type="button" class="mobile-nav-btn" data-view="stock" onclick="switchView('stock')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      <span>Stok</span>
+    </button>
+    <button type="button" class="mobile-nav-btn" data-view="dashboard" onclick="switchView('dashboard')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 13h6V4H4v9zm10 7h6v-9h-6v9zM4 20h6v-3H4v3zm10-13h6V4h-6v3z"/></svg>
+      <span>Dashboard</span>
+    </button>
+  </nav>
 </div>
+
+<div id="toast-region" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <!-- Receipt content (hidden, for print/PDF capture) -->
 <div id="receipt-content" class="hidden"></div>
@@ -878,6 +987,8 @@ function setAccent(name) {
   localStorage.setItem('pos-accent', name);
   var dot = document.getElementById('accent-dot');
   if (dot) dot.style.background = 'var(--acc)';
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if (meta && document.documentElement.getAttribute('data-theme') !== 'light') meta.setAttribute('content', ACCENT_PRESETS[name].hex);
   // Update active ring in picker
   document.querySelectorAll('.accent-swatch').forEach(function(sw) {
     sw.classList.toggle('ring-2', sw.dataset.accent === name);
@@ -889,14 +1000,18 @@ function renderAccentOptions() {
   if (!el) return;
   el.innerHTML = Object.keys(ACCENT_PRESETS).map(function(key) {
     var p = ACCENT_PRESETS[key];
-    return '<button type="button" data-accent="' + key + '" class="accent-swatch w-full aspect-square rounded-lg border border-zinc-700 hover:border-white transition" style="background:' + p.hex + ';" title="' + p.label + '" onclick="setAccent(\'' + key + '\')"></button>';
+    return '<button type="button" data-accent="' + key + '" class="accent-swatch w-full aspect-square rounded-lg border border-zinc-700 hover:border-white transition" style="background:' + p.hex + ';" title="' + p.label + '" aria-label="Gunakan warna ' + p.label + '" onclick="setAccent(\'' + key + '\')"></button>';
   }).join('');
   setAccent(getAccent());
 }
 function toggleAccentPicker(e) {
   if (e) e.stopPropagation();
   var menu = document.getElementById('accent-menu');
-  if (menu) menu.classList.toggle('hidden');
+  var button = document.getElementById('accent-btn');
+  if (menu) {
+    menu.classList.toggle('hidden');
+    if (button) button.setAttribute('aria-expanded', menu.classList.contains('hidden') ? 'false' : 'true');
+  }
 }
 function setTheme(theme) {
   var selected = theme === 'light' ? 'light' : 'dark';
@@ -953,11 +1068,12 @@ function isAdmin() {
   return currentUser.email === (typeof ADMIN_EMAIL !== 'undefined' ? ADMIN_EMAIL : '');
 }
 function showToast(msg) {
-  var t = document.createElement('div');
-  t.className = 'fixed bottom-6 right-6 bg-zinc-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
+  var t = document.getElementById('toast-region');
+  if (!t) return;
+  clearTimeout(window._toastTimer);
   t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(function() { t.remove(); }, 2500);
+  t.classList.add('show');
+  window._toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
 }
 function hardRefresh() {
   if (navigator.serviceWorker) {
@@ -1020,7 +1136,7 @@ function restoreNetworkIfOnline() {}
 if (!initFirebase()) {
   document.addEventListener('DOMContentLoaded', function() {
     if (!initFirebase()) {
-      document.body.innerHTML = '<div class="min-h-screen flex items-center justify-center text-red-400 p-6 text-center">⚠ Gagal menghubungkan Firebase. Periksa config.js dan koneksi internet.</div>';
+      document.body.innerHTML = '<div class="min-h-screen flex items-center justify-center text-red-400 p-6 text-center">Gagal menghubungkan Firebase. Periksa config.js dan koneksi internet.</div>';
     }
   });
 }
@@ -1099,6 +1215,8 @@ function toggleSidebar() {
   if (!sb) return;
   sb.classList.toggle('open');
   if (bd) bd.classList.toggle('show');
+  var toggle = document.getElementById('sidebar-toggle');
+  if (toggle) toggle.setAttribute('aria-expanded', sb.classList.contains('open') ? 'true' : 'false');
 }
 
 function closeSidebar() {
@@ -1106,6 +1224,8 @@ function closeSidebar() {
   var bd = document.getElementById('sidebar-backdrop');
   if (sb) sb.classList.remove('open');
   if (bd) bd.classList.remove('show');
+  var toggle = document.getElementById('sidebar-toggle');
+  if (toggle) toggle.setAttribute('aria-expanded', 'false');
 }
 
 function switchView(name) {
@@ -1118,15 +1238,24 @@ function switchView(name) {
   });
   // Nav buttons
   document.querySelectorAll('.nav-btn').forEach(function(btn) {
-    if (btn.dataset.view === name) {
+    var active = btn.dataset.view === name;
+    if (active) {
       btn.classList.add('active');
       btn.classList.remove('text-zinc-400');
       btn.classList.add('text-emerald-400');
+      btn.setAttribute('aria-current', 'page');
     } else {
       btn.classList.remove('active');
       btn.classList.add('text-zinc-400');
       btn.classList.remove('text-emerald-400');
+      btn.removeAttribute('aria-current');
     }
+  });
+  document.querySelectorAll('.mobile-nav-btn').forEach(function(btn) {
+    var active = btn.dataset.view === name;
+    btn.classList.toggle('active', active);
+    if (active) btn.setAttribute('aria-current', 'page');
+    else btn.removeAttribute('aria-current');
   });
   // Title
   var titleEl = document.getElementById('page-title');
@@ -1168,7 +1297,21 @@ document.addEventListener('DOMContentLoaded', function() {
     var btn = document.getElementById('accent-btn');
     if (menu && btn && !menu.classList.contains('hidden') && !btn.contains(e.target) && !menu.contains(e.target)) {
       menu.classList.add('hidden');
+      btn.setAttribute('aria-expanded', 'false');
     }
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    var modals = document.querySelectorAll('.modal-backdrop');
+    if (modals.length) { hideModal(modals[modals.length - 1].id); return; }
+    var menu = document.getElementById('accent-menu');
+    if (menu && !menu.classList.contains('hidden')) {
+      menu.classList.add('hidden');
+      var accentButton = document.getElementById('accent-btn');
+      if (accentButton) { accentButton.setAttribute('aria-expanded', 'false'); accentButton.focus(); }
+      return;
+    }
+    closeSidebar();
   });
 });
 
@@ -1340,8 +1483,8 @@ function renderCart() {
   } else {
     el.innerHTML = cart.map(function(item, idx) {
       var imeiBadge = item.imei && item.imei.length > 0
-        ? '<span class="text-xs text-emerald-400">✓ IMEI: ' + esc(item.imei.join(', ')) + '</span>'
-        : '<span class="text-xs text-orange-400">⚠ Input IMEI</span>';
+        ? '<span class="text-xs text-emerald-400">IMEI: ' + esc(item.imei.join(', ')) + '</span>'
+        : '<span class="text-xs text-orange-400">IMEI belum diisi</span>';
       return '<div class="flex items-center justify-between bg-zinc-950 rounded-lg p-3">' +
         '<div>' +
           '<div class="text-sm font-medium">' + esc(item.name) + '</div>' +
@@ -1350,7 +1493,7 @@ function renderCart() {
         '</div>' +
         '<div class="flex items-center gap-3">' +
           '<span class="text-sm font-semibold text-emerald-400">' + formatRp(item.subtotal) + '</span>' +
-          '<button onclick="removeCartItem(' + idx + ')" class="text-red-400 hover:text-red-300 text-xs">✕</button>' +
+          '<button onclick="removeCartItem(' + idx + ')" class="text-red-400 hover:text-red-300 text-xs min-w-[44px] min-h-[44px]" aria-label="Hapus ' + esc(item.name) + ' dari keranjang">✕</button>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -1394,7 +1537,7 @@ function showPaymentModal() {
       '<div class="modal-box bg-zinc-900 rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto border border-zinc-800" onclick="event.stopPropagation()">' +
         '<h3 class="text-lg font-semibold mb-4">Pembayaran</h3>' +
         '<div class="flex justify-between text-sm mb-2"><span class="text-zinc-400">Total</span><span class="font-bold text-emerald-400" id="pay-total-display">' + formatRp(total) + '</span></div>' +
-        '<label class="block text-sm text-zinc-400 mt-4 mb-2">Metode Pembayaran</label>' +
+        '<label for="pay-method" class="block text-sm text-zinc-400 mt-4 mb-2">Metode Pembayaran</label>' +
         '<select id="pay-method" onchange="onPayMethodChange()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
           '<option value="cash">Tunai</option>' +
           '<option value="qris">QRIS</option>' +
@@ -1404,37 +1547,37 @@ function showPaymentModal() {
         '</select>' +
         // Cash fields
         '<div id="pay-cash-fields" class="mt-4">' +
-          '<label class="block text-sm text-zinc-400 mb-2">Uang Diterima</label>' +
+          '<label for="pay-cash" class="block text-sm text-zinc-400 mb-2">Uang Diterima</label>' +
           '<input id="pay-cash" type="text" inputmode="numeric" value="' + total + '" oninput="updateChange()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
           '<div class="flex justify-between text-sm mt-2"><span class="text-zinc-400">Kembalian</span><span id="pay-change" class="font-bold">Rp 0</span></div>' +
         '</div>' +
         // Card fields
         '<div id="pay-card-fields" class="mt-4 hidden">' +
-          '<label class="block text-sm text-zinc-400 mb-2">Jenis Kartu</label>' +
+          '<label for="pay-card-type" class="block text-sm text-zinc-400 mb-2">Jenis Kartu</label>' +
           '<select id="pay-card-type" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 mb-3">' +
             '<option value="debit">Debit</option>' +
             '<option value="credit">Kredit</option>' +
           '</select>' +
-          '<label class="block text-sm text-zinc-400 mb-2">Nomor Kartu</label>' +
+          '<label for="pay-card-number" class="block text-sm text-zinc-400 mb-2">Nomor Kartu</label>' +
           '<input id="pay-card-number" type="text" inputmode="numeric" placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatCardNumber(this)" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
         '</div>' +
         // Split fields
         '<div id="pay-split-fields" class="mt-4 hidden space-y-3">' +
           '<div>' +
-            '<label class="block text-sm text-zinc-400 mb-2">Tunai (Rp)</label>' +
+            '<label for="pay-split-cash" class="block text-sm text-zinc-400 mb-2">Tunai (Rp)</label>' +
             '<input id="pay-split-cash" type="text" inputmode="numeric" value="0" oninput="updateSplitTotals()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
           '</div>' +
           '<div>' +
-            '<label class="block text-sm text-zinc-400 mb-2">QRIS (Rp)</label>' +
+            '<label for="pay-split-qris" class="block text-sm text-zinc-400 mb-2">QRIS (Rp)</label>' +
             '<input id="pay-split-qris" type="text" inputmode="numeric" value="0" oninput="updateSplitTotals()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
           '</div>' +
           '<div>' +
-            '<label class="block text-sm text-zinc-400 mb-2">Transfer (Rp)</label>' +
+            '<label for="pay-split-transfer" class="block text-sm text-zinc-400 mb-2">Transfer (Rp)</label>' +
             '<input id="pay-split-transfer" type="text" inputmode="numeric" value="0" oninput="updateSplitTotals()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
           '</div>' +
           '<div>' +
             '<div class="flex items-center justify-between mb-2">' +
-              '<label class="text-sm text-zinc-400">Kartu (Rp)</label>' +
+              '<span class="text-sm text-zinc-400">Kartu (Rp)</span>' +
               '<button type="button" onclick="addSplitCard()" id="btn-add-split-card" class="text-xs text-emerald-400 hover:text-emerald-300">+ Tambah Kartu</button>' +
             '</div>' +
             '<div id="split-cards-container" class="space-y-3"></div>' +
@@ -1444,9 +1587,9 @@ function showPaymentModal() {
         '</div>' +
         // Customer info
         '<div id="pay-customer" class="mt-4">' +
-          '<label class="block text-sm text-zinc-400 mb-2">Nama Customer (opsional)</label>' +
+          '<label for="pay-cust-name" class="block text-sm text-zinc-400 mb-2">Nama Customer (opsional)</label>' +
           '<input id="pay-cust-name" type="text" placeholder="Walk-in" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 mb-3">' +
-          '<label class="block text-sm text-zinc-400 mb-2">No. WhatsApp (opsional)</label>' +
+          '<label for="pay-cust-wa" class="block text-sm text-zinc-400 mb-2">No. WhatsApp (opsional)</label>' +
           '<input id="pay-cust-wa" type="tel" inputmode="tel" placeholder="0812xxxxxxx / 62812xxxxxxx" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
         '</div>' +
         '<button onclick="processPayment()" class="w-full mt-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold text-white">Konfirmasi & Selesai</button>' +
@@ -1455,6 +1598,7 @@ function showPaymentModal() {
   document.body.insertAdjacentHTML('beforeend', html);
   // Reset split cards counter
   _splitCardCount = 0;
+  enhanceModalA11y('payment-modal', 'Pembayaran');
 }
 
 function onPayMethodChange() {
@@ -1506,15 +1650,15 @@ function addSplitCard() {
     '<div class="flex gap-2 items-start split-card-row" id="split-card-row-' + n + '">' +
       '<div class="flex-1 space-y-2">' +
         '<div class="flex gap-2">' +
-          '<input type="text" inputmode="numeric" placeholder="Nominal (Rp)" class="split-card-amount flex-1 px-3 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100 text-sm" oninput="updateSplitTotals()">' +
-          '<select class="split-card-type px-2 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-sm">' +
+          '<input type="text" inputmode="numeric" aria-label="Nominal kartu ' + n + '" placeholder="Nominal (Rp)" class="split-card-amount flex-1 px-3 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100 text-sm" oninput="updateSplitTotals()">' +
+          '<select aria-label="Jenis kartu ' + n + '" class="split-card-type px-2 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-sm">' +
             '<option value="debit">Debit</option>' +
             '<option value="credit">Kredit</option>' +
           '</select>' +
         '</div>' +
-        '<input type="text" inputmode="numeric" placeholder="Nomor Kartu (opsional)" maxlength="19" oninput="formatCardNumber(this)" class="split-card-number w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-sm">' +
+        '<input type="text" inputmode="numeric" autocomplete="off" aria-label="Nomor kartu ' + n + ' opsional" placeholder="Nomor Kartu (opsional)" maxlength="19" oninput="formatCardNumber(this)" class="split-card-number w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-sm">' +
       '</div>' +
-      '<button type="button" onclick="removeSplitCard(' + n + ')" class="mt-1 text-red-400 hover:text-red-300 text-lg px-1">✕</button>' +
+      '<button type="button" onclick="removeSplitCard(' + n + ')" class="mt-1 text-red-400 hover:text-red-300 text-lg px-1 min-w-[44px] min-h-[44px]" aria-label="Hapus pembayaran kartu">✕</button>' +
     '</div>';
   container.insertAdjacentHTML('beforeend', html);
   // Focus the amount input
@@ -1796,11 +1940,11 @@ function renderGaransiTable() {
   var e = document.getElementById('gr-total-expiring'); if (e) e.textContent = expiring;
   var c = document.getElementById('gr-total-claims'); if (c) c.textContent = claims;
   if (garansiList.length === 0) {
-    el.innerHTML = '<tr><td colspan="8"><div class="empty-illust"><div class="ico">🛡️</div><div class="text-sm text-zinc-400">Belum ada garansi</div><div class="text-xs text-zinc-600 mt-1">Garansi dibuat otomatis saat HP/Tablet/Laptop terjual</div></div></td></tr>';
+    el.innerHTML = '<tr><td colspan="8"><div class="empty-illust"><div class="ico" aria-hidden="true"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.6-4A12 12 0 0112 3a12 12 0 01-8.6 3A12 12 0 003 9c0 5.6 3.8 10.3 9 11.6 5.2-1.3 9-6 9-11.6 0-1-.1-2-.4-3z"/></svg></div><div class="text-sm text-zinc-400">Belum ada garansi</div><div class="text-xs text-zinc-600 mt-1">Garansi dibuat otomatis saat HP/Tablet/Laptop terjual</div></div></td></tr>';
     return;
   }
   if (filtered.length === 0) {
-    el.innerHTML = '<tr><td colspan="8"><div class="empty-illust"><div class="ico">🔍</div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearGaransiFilters()" class="mt-3 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs text-zinc-300">Clear Filter</button></div></td></tr>';
+    el.innerHTML = '<tr><td colspan="8"><div class="empty-illust"><div class="ico" aria-hidden="true"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-4-4"/></svg></div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearGaransiFilters()" class="mt-3 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs text-zinc-300">Reset Filter</button></div></td></tr>';
     return;
   }
   el.innerHTML = filtered.map(function(g) {
@@ -1953,11 +2097,11 @@ function renderProductTable() {
   if (badge) badge.textContent = filtered.length + ' / ' + products.length + ' produk';
   if (!el) return;
   if (products.length === 0) {
-    el.innerHTML = '<tr><td colspan="7"><div class="empty-illust"><div class="ico">📦</div><div class="text-sm text-zinc-400">Belum ada produk</div><div class="text-xs text-zinc-600 mt-1">Tambah produk via Restock</div><button onclick="showStockModal(\'restock\')" class="mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs text-white">+ Restock Sekarang</button></div></td></tr>';
+    el.innerHTML = '<tr><td colspan="7"><div class="empty-illust"><div class="ico" aria-hidden="true"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div><div class="text-sm text-zinc-400">Belum ada produk</div><div class="text-xs text-zinc-600 mt-1">Tambah produk melalui Restock</div><button onclick="showStockModal(\'restock\')" class="mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs text-white">Restock Sekarang</button></div></td></tr>';
     return;
   }
   if (filtered.length === 0) {
-    el.innerHTML = '<tr><td colspan="7"><div class="empty-illust"><div class="ico">🔍</div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearProdFilters()" class="mt-3 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs">Clear Filter</button></div></td></tr>';
+    el.innerHTML = '<tr><td colspan="7"><div class="empty-illust"><div class="ico" aria-hidden="true"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-4-4"/></svg></div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearProdFilters()" class="mt-3 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs">Reset Filter</button></div></td></tr>';
     return;
   }
   el.innerHTML = filtered.map(function(p) {
@@ -2003,7 +2147,7 @@ function checkLowStockBanner(){
   if (low.length>0 && !dismissed){
     var habis = low.filter(function(p){ return (p.stock||0)===0; }).length;
     var menipis = low.length - habis;
-    if (txt) txt.textContent = '⚠️ ' + low.length + ' produk perlu perhatian: ' + habis + ' habis, ' + menipis + ' menipis';
+    if (txt) txt.textContent = low.length + ' produk perlu perhatian: ' + habis + ' habis, ' + menipis + ' menipis';
     banner.classList.remove('hidden');
   } else {
     banner.classList.add('hidden');
@@ -2036,9 +2180,9 @@ function renderStockPanel() {
   if (badge) badge.textContent = filtered.length + ' / ' + stockMoves.length + ' log';
   if (!el) { updateStats(); try{ checkLowStockBanner(); }catch(e){} return; }
   if (stockMoves.length === 0) {
-    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico">📋</div><div class="text-sm text-zinc-400">Belum ada pergerakan stok</div><button onclick="showStockModal(\'restock\')" class="mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs">+ Restock</button></div></td></tr>';
+    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico" aria-hidden="true"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5h6m-6 4h6m-6 4h4m-7 8h12a2 2 0 002-2V5a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div><div class="text-sm text-zinc-400">Belum ada pergerakan stok</div><button onclick="showStockModal(\'restock\')" class="mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs">Restock</button></div></td></tr>';
   } else if (filtered.length === 0) {
-    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico">🔍</div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearStockFilters()" class="mt-3 px-4 py-2 bg-zinc-800 rounded-lg text-xs">Clear</button></div></td></tr>';
+    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico" aria-hidden="true"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-4-4"/></svg></div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearStockFilters()" class="mt-3 px-4 py-2 bg-zinc-800 rounded-lg text-xs">Reset Filter</button></div></td></tr>';
   } else {
     el.innerHTML = filtered.slice(0, 100).map(function(m) {
       var badgeType = '';
@@ -2046,7 +2190,7 @@ function renderStockPanel() {
       else if (m.type === 'retur') badgeType = '<span class="text-xs px-2 py-0.5 bg-orange-950 text-orange-400 rounded">RETUR</span>';
       else if (m.type === 'sale') badgeType = '<span class="text-xs px-2 py-0.5 bg-blue-950 text-blue-400 rounded">JUAL</span>';
       var imei = (m.imeiList || []).join(', ');
-      if (imei.length > 30) imei = imei.substring(0, 30) + '...';
+      if (imei.length > 30) imei = imei.substring(0, 30) + '…';
       return '<tr class="border-t border-zinc-800">' +
         '<td class="px-4 py-2 text-xs">' + formatDate(m.createdAt) + '</td>' +
         '<td class="px-4 py-2">' + badgeType + '</td>' +
@@ -2116,12 +2260,12 @@ function renderHistoryTable() {
   if (badge) badge.textContent = _historyFiltered.length + ' / ' + _historyTx.length;
   if (!el) return;
   if (_historyTx.length === 0) {
-    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico">🧾</div><div class="text-sm text-zinc-400">Belum ada transaksi</div></div></td></tr>';
+    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico" aria-hidden="true"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 3h12v18l-3-2-3 2-3-2-3 2V3zM9 8h6m-6 4h6"/></svg></div><div class="text-sm text-zinc-400">Belum ada transaksi</div></div></td></tr>';
     if (pageInfo) pageInfo.textContent = 'Hal 0 / 0';
     return;
   }
   if (_historyFiltered.length === 0) {
-    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico">🔍</div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearHistoryFilters()" class="mt-3 px-4 py-2 bg-zinc-800 rounded-lg text-xs">Clear Filter</button></div></td></tr>';
+    el.innerHTML = '<tr><td colspan="6"><div class="empty-illust"><div class="ico" aria-hidden="true"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-4-4"/></svg></div><div class="text-sm text-zinc-400">Tidak ada hasil filter</div><button onclick="clearHistoryFilters()" class="mt-3 px-4 py-2 bg-zinc-800 rounded-lg text-xs">Reset Filter</button></div></td></tr>';
     if (pageInfo) pageInfo.textContent = 'Hal 0 / 0';
     return;
   }
@@ -2153,7 +2297,7 @@ function renderHistoryTable() {
 async function loadHistory() {
   var el = document.getElementById('history-table-body');
   if (!el) return;
-  el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-zinc-600">Memuat...</td></tr>';
+  el.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-zinc-600">Memuat…</td></tr>';
   if (!db) return;
   try {
     var snap = await db.collection(col('transactions')).orderBy('createdAt', 'desc').limit(200).get();
@@ -2189,6 +2333,7 @@ function showReceipt(tx) {
       '</div>' +
     '</div>';
   document.body.insertAdjacentHTML('beforeend', modalHtml);
+  enhanceModalA11y('receipt-modal', 'Struk transaksi');
   setTimeout(function(){
     try {
       var qrEl = document.getElementById('receipt-qrcode');
@@ -2488,7 +2633,7 @@ function printReceipt() {
       '</style></head><body>' +
       '<div id="pwrap">' + el.innerHTML + '</div>' +
       '<div class="btn-row" style="position:fixed;bottom:20px;left:0;right:0;">' +
-        '<button onclick="window.print()">🖨 Print</button>' +
+        '<button onclick="window.print()">Print</button>' +
         '<button onclick="window.close()">✕ Tutup</button>' +
       '</div>' +
       '</body></html>'
@@ -2657,9 +2802,38 @@ async function sendReceiptToWA() {
   window.open(waUrl, '_blank');
 }
 // ============ MODAL UTIL ============
+var _modalFocusStack = [];
+function enhanceModalA11y(id, label) {
+  var backdrop = document.getElementById(id);
+  if (!backdrop) return;
+  var previousFocus = document.activeElement;
+  _modalFocusStack = _modalFocusStack.filter(function(entry) { return entry.id !== id; });
+  _modalFocusStack.push({ id: id, focus: previousFocus });
+  backdrop.setAttribute('role', 'dialog');
+  backdrop.setAttribute('aria-modal', 'true');
+  backdrop.setAttribute('aria-label', label || 'Dialog');
+  var box = backdrop.querySelector('.modal-box');
+  if (box) box.setAttribute('tabindex', '-1');
+  backdrop.addEventListener('keydown', function(e) {
+    if (e.key !== 'Tab') return;
+    var focusable = Array.prototype.slice.call(backdrop.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'));
+    if (!focusable.length) { e.preventDefault(); if (box) box.focus(); return; }
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  requestAnimationFrame(function() {
+    var target = backdrop.querySelector('input:not([disabled]), select:not([disabled]), button:not([disabled])') || box;
+    if (target) target.focus();
+  });
+}
 function hideModal(id) {
   var el = document.getElementById(id);
   if (el) el.remove();
+  var entryIndex = _modalFocusStack.findIndex(function(entry) { return entry.id === id; });
+  var returnFocus = entryIndex >= 0 ? _modalFocusStack.splice(entryIndex, 1)[0].focus : null;
+  if (returnFocus && document.contains(returnFocus) && typeof returnFocus.focus === 'function') returnFocus.focus();
 }
 
 // ============ PRODUK — EDIT HARGA ONLY ============
@@ -2673,7 +2847,7 @@ function showEditPriceModal(id) {
       '<div class="modal-box bg-zinc-900 rounded-xl p-6 w-full max-w-sm border border-zinc-800" onclick="event.stopPropagation()">' +
         '<h3 class="text-lg font-semibold mb-1">Edit Harga Jual</h3>' +
         '<p class="text-sm text-zinc-400 mb-4">' + esc(p.name) + ' (' + (esc(p.category || '')) + ' · ' + (esc(p.brand || '')) + ')</p>' +
-        '<label class="block text-sm text-zinc-400 mb-2">Harga Jual (Rp)</label>' +
+        '<label for="edit-price-input" class="block text-sm text-zinc-400 mb-2">Harga Jual (Rp)</label>' +
         '<input id="edit-price-input" type="text" inputmode="numeric" value="' + (p.price || 0) + '" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100">' +
         '<div class="flex gap-2 mt-6">' +
           '<button onclick="hideModal(\'edit-price-modal\')" class="flex-1 py-2.5 bg-zinc-800 text-zinc-300 rounded-lg text-sm">Batal</button>' +
@@ -2682,7 +2856,7 @@ function showEditPriceModal(id) {
       '</div>' +
     '</div>';
   document.body.insertAdjacentHTML('beforeend', html);
-  setTimeout(function() { var i = document.getElementById('edit-price-input'); if (i) i.focus(); }, 100);
+  enhanceModalA11y('edit-price-modal', 'Edit harga jual');
 }
 
 async function saveProductPrice(id) {
@@ -2739,24 +2913,24 @@ function showStockModal(type) {
       '<div class="modal-box bg-zinc-900 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-auto border border-zinc-800" >' +
         '<h3 class="text-lg font-semibold mb-4" id="stock-modal-title">' + title + '</h3>' +
         // Existing product
-        '<label class="block text-sm text-zinc-400 mb-1">Produk Existing</label>' +
+        '<label for="sm-product" class="block text-sm text-zinc-400 mb-1">Produk Existing</label>' +
         '<select id="sm-product" onchange="updateStockHint()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 mb-3">' + prodOpts + '</select>' +
         '<div class="divider-text text-[10px] text-zinc-600 my-2 text-center">— Atau isi manual (produk baru) —</div>' +
         // Manual fields (always visible)
         '<div id="sm-new-fields" class="space-y-3">' +
           '<div>' +
-            '<label class="block text-sm text-zinc-400 mb-1">Nama Produk</label>' +
+            '<label for="sm-new-name" class="block text-sm text-zinc-400 mb-1">Nama Produk</label>' +
             '<input id="sm-new-name" type="text" placeholder="cth: iPhone 15 Pro 256GB" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
           '</div>' +
           '<div class="grid grid-cols-2 gap-3">' +
             '<div>' +
-              '<label class="block text-sm text-zinc-400 mb-1">Kategori</label>' +
+              '<label for="sm-new-category" class="block text-sm text-zinc-400 mb-1">Kategori</label>' +
               '<select id="sm-new-category" onchange="onNewCategoryChange()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
                 catOpts.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('') +
               '</select>' +
             '</div>' +
             '<div>' +
-              '<label class="block text-sm text-zinc-400 mb-1">Brand</label>' +
+              '<label for="sm-new-brand" class="block text-sm text-zinc-400 mb-1">Brand</label>' +
               '<input id="sm-new-brand" type="text" placeholder="cth: Apple" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
             '</div>' +
           '</div>' +
@@ -2764,14 +2938,14 @@ function showStockModal(type) {
         // Qty + harga modal (restock only)
         '<div class="grid grid-cols-2 gap-3 mt-3">' +
           '<div>' +
-            '<label class="block text-sm text-zinc-400 mb-1">Qty</label>' +
+            '<label for="sm-qty" class="block text-sm text-zinc-400 mb-1">Qty</label>' +
             '<input id="sm-qty" type="number" value="1" min="1" oninput="updateImeiRows()" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100">' +
           '</div>' +
-          (isRestock ? '<div><label class="block text-sm text-zinc-400 mb-1">Harga Modal (Rp)</label><input id="sm-cost" type="text" inputmode="numeric" placeholder="0" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100"></div>' : '') +
+          (isRestock ? '<div><label for="sm-cost" class="block text-sm text-zinc-400 mb-1">Harga Modal (Rp)</label><input id="sm-cost" type="text" inputmode="numeric" placeholder="0" class="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-right text-zinc-100"></div>' : '') +
         '</div>' +
         // IMEI/SN
         '<div class="mt-3">' +
-          '<label class="block text-sm text-zinc-400 mb-1" id="sm-imei-label">IMEI/SN (wajib, 1 per barang)</label>' +
+          '<div class="block text-sm text-zinc-400 mb-1" id="sm-imei-label">IMEI/SN (wajib, 1 per barang)</div>' +
           '<div id="sm-imei-rows" class="space-y-2"></div>' +
           '<p class="text-xs text-zinc-600 mt-1" id="sm-imei-hint"></p>' +
         '</div>' +
@@ -2785,6 +2959,7 @@ function showStockModal(type) {
       '</div>' +
     '</div>';
   document.body.insertAdjacentHTML('beforeend', html);
+  enhanceModalA11y('stock-modal', title);
   // Init
   onNewCategoryChange();
   updateImeiRows();
@@ -2809,13 +2984,13 @@ function updateImeiRows() {
   var cat = document.getElementById('sm-new-category');
   var catVal = cat ? cat.value : 'HP';
   var isDevice = (catVal === 'HP' || catVal === 'Tablet' || catVal === 'Laptop');
-  var placeholder = isDevice ? 'IMEI...' : 'SN...';
+  var placeholder = isDevice ? 'IMEI…' : 'SN…';
   var existing = [];
   container.querySelectorAll('input').forEach(function(inp) { existing.push(inp.value); });
   var html = '';
   for (var i = 0; i < qty; i++) {
     var val = existing[i] || '';
-    html += '<input type="text" placeholder="' + placeholder + ' #' + (i + 1) + '" value="' + val + '" class="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-sm sm-imei-input">';
+    html += '<input type="text" name="imei-sn-' + (i + 1) + '" autocomplete="off" spellcheck="false" aria-labelledby="sm-imei-label" aria-describedby="sm-imei-hint" placeholder="' + placeholder + ' #' + (i + 1) + '" value="' + val + '" class="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-sm sm-imei-input">';
   }
   container.innerHTML = html;
 }
@@ -3175,7 +3350,7 @@ async function loadTerlaris() {
   var thead = document.getElementById('report-thead');
   var tbody = document.getElementById('report-table-body');
   if (!thead || !tbody) return;
-  tbody.innerHTML = '<tr><td class="text-center py-6 text-zinc-600">Memuat...</td></tr>';
+  tbody.innerHTML = '<tr><td class="text-center py-6 text-zinc-600">Memuat…</td></tr>';
   try {
     // 30-day window
     var now = Date.now();
@@ -3228,7 +3403,7 @@ async function loadTerlaris() {
       return;
     }
     tbody.innerHTML = rows.map(function(r, i) {
-      var rankBadge = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : String(i + 1)));
+      var rankBadge = i < 3 ? '<span class="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-emerald-500/10 px-2 text-xs text-emerald-400">' + (i + 1) + '</span>' : String(i + 1);
       return '<tr class="border-t border-zinc-800">' +
         '<td class="px-4 py-2 text-center font-bold">' + rankBadge + '</td>' +
         '<td class="px-4 py-2 font-medium">' + esc(r.name) + '</td>' +
@@ -3352,7 +3527,7 @@ async function loadTransactionsInRange(start, end) {
   var thead = document.getElementById('report-thead');
   var tbody = document.getElementById('report-table-body');
   if (!thead || !tbody) return;
-  tbody.innerHTML = '<tr><td class="text-center py-6 text-zinc-600">Memuat...</td></tr>';
+  tbody.innerHTML = '<tr><td class="text-center py-6 text-zinc-600">Memuat…</td></tr>';
   try {
     // Build product cost map
     var prodCost = {};
