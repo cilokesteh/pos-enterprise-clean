@@ -1,13 +1,13 @@
 /* Copyright © 2026 CilokTech (ciloktech.my.id) | Proprietary Software | Unauthorized copying/distribution prohibited | License: Commercial - Contact ciloktech.my.id */
 
-// pwa.js v11.2 — register service worker + dynamic manifest
+// pwa.js v11.3 — register service worker + dynamic manifest
 (function() {
   if (typeof STORE === 'undefined') return;
   var manifest = {
     name: STORE.name + ' POS',
     short_name: 'POS',
-    description: 'POS Enterprise v11.2 — Toko HP, stok IMEI/SN, kasir dengan scanner hardware, laporan, dan offline sync.',
-    start_url: './index.html?v=11.2',
+    description: 'POS Enterprise v11.3 — Toko HP, stok IMEI/SN, kasir dengan scanner hardware, laporan, dan offline sync.',
+    start_url: './index.html?v=11.3',
     display: 'standalone',
     orientation: 'any',
     background_color: '#0a0a0b',
@@ -25,7 +25,7 @@
   } catch(e) {}
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('sw.js?v=35').catch(function(e) {
+      navigator.serviceWorker.register('sw.js?v=36').catch(function(e) {
         console.warn('SW register failed:', e);
       });
     });

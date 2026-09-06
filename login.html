@@ -22,7 +22,7 @@
   })();
 </script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
   :root, html[data-accent="emerald"] { --acc:#10b981; --acc-dark:#059669; --acc-rgb:16,185,129; --acc-on:#fff; }
   html[data-accent="black"] { --acc:#52525b; --acc-dark:#27272a; --acc-rgb:82,82,91; --acc-on:#fff; }
   html[data-accent="silver"] { --acc:#cbd5e1; --acc-dark:#94a3b8; --acc-rgb:203,213,225; --acc-on:#09090b; }
@@ -58,7 +58,6 @@
     background: rgba(15,23,42,.7);
     border: 1px solid rgba(148,163,184,.12);
     box-shadow: 0 20px 60px -20px rgba(0,0,0,.7), 0 1px 3px rgba(0,0,0,.5);
-    backdrop-filter: blur(12px);
     border-radius: 20px;
   }
   input:focus { border-color:var(--acc) !important; box-shadow:0 0 0 3px rgba(var(--acc-rgb),.15) !important; }
@@ -85,10 +84,18 @@
   @media (prefers-reduced-motion:reduce) {
     *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
   }
+  /* ===== RETAIL LOGIN v11.3 — append-only professional shell ===== */
+  body { font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif; background-image:linear-gradient(135deg,rgba(var(--acc-rgb),.08),transparent 42%),linear-gradient(#020617,#09090b); }
+  .login-card { background:#0f172a; border-radius:8px; border-top:3px solid var(--acc); box-shadow:0 24px 64px -32px #000; }
+  .login-card input { border-radius:6px !important; }
+  #login-btn { border-radius:6px !important; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; letter-spacing:.08em; }
+  .kbd { font-family:'IBM Plex Mono',monospace; border-radius:3px; }
+  html[data-theme="light"] .login-card { background:#fff; }
 </style>
 </head>
 <body class="min-h-screen flex items-center justify-center text-zinc-100">
   <div class="w-full max-w-sm px-6">
+    <!-- RETAIL LOGIN v11.3 -->
     <div class="login-card p-8">
       <div class="text-center mb-8">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style="background:linear-gradient(135deg,var(--acc),var(--acc-dark)); box-shadow:0 8px 24px -6px rgba(var(--acc-rgb),.6);">
@@ -126,7 +133,7 @@
 
       <div id="error" class="mt-4 text-sm text-red-400 text-center hidden" role="status" aria-live="polite"></div>
     </div>
-    <p class="mt-6 text-xs text-zinc-500 text-center">POS Enterprise v11.2 · IMEI/SN · Offline Sync · PDF Hybrid</p>
+    <p class="mt-6 text-xs text-zinc-500 text-center">POS Enterprise v11.3 · Secure Retail Access · Offline Sync</p>
     <p class="mt-1 text-[10px] text-zinc-500 text-center">&copy; 2026 ciloktech.my.id</p>
   </div>
 

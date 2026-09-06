@@ -1,4 +1,4 @@
-<!-- POS Enterprise v11.2 — IMEI/SN + Offline Sync + Responsive UI -->
+<!-- POS Enterprise >v11.3< — RETAIL COMMAND CENTER v11.3 -->
 <!-- Copyright © 2026 CilokTech (ciloktech.my.id) | Proprietary Software | Unauthorized copying/distribution prohibited | License: Commercial - Contact ciloktech.my.id -->
 
 <!DOCTYPE html>
@@ -36,7 +36,7 @@
   })();
 </script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
   body { background:#020617; font-family:'Inter',system-ui,-apple-system,sans-serif; }
   .view { display:none; }
   .view.active { display:block; animation:fadeUp .25s ease; }
@@ -317,6 +317,30 @@
     *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
   }
 
+  /* ===== RETAIL COMMAND CENTER v11.3 — append-only polish ===== */
+  body { font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif; }
+  .tabular, #cart-total, #cart-item-count, table td { font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums; }
+  .workstation-eyebrow { margin:0 0 8px; color:var(--acc-light); font:600 10px/1.2 'IBM Plex Mono',monospace; letter-spacing:.14em; }
+  .scanner-command { border-radius:8px !important; border-left:3px solid var(--acc) !important; padding:16px !important; margin-bottom:12px !important; box-shadow:0 10px 28px -22px rgba(var(--acc-rgb),.8) !important; }
+  .scanner-command input { border-radius:6px !important; font-family:'IBM Plex Mono',monospace; }
+  .scanner-command button, .checkout-command button { border-radius:6px !important; }
+  .checkout-command { border-radius:8px !important; padding:16px !important; }
+  #cart-item-count { display:inline-flex; margin-left:7px; padding:2px 7px; border:1px solid #3f3f46; border-radius:4px; color:#a1a1aa; font-size:10px; vertical-align:middle; }
+  #checkout-btn { min-height:48px; text-transform:uppercase; letter-spacing:.08em; font-family:'IBM Plex Mono',monospace; }
+  #sidebar { width:224px; }
+  #sidebar .nav-btn { padding-top:9px !important; padding-bottom:9px !important; font-size:13px; }
+  table th { padding-top:9px !important; padding-bottom:9px !important; font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
+  table td { padding-top:8px !important; padding-bottom:8px !important; font-size:12px; }
+  html, body { overflow-x: hidden; }
+  @media (max-width:768px) {
+    .workstation-eyebrow { margin-bottom:6px; }
+    .scanner-command { padding:12px !important; }
+    .scanner-command .flex.gap-2 { align-items:stretch; }
+    .scanner-command button { padding-left:14px !important; padding-right:14px !important; }
+    .checkout-command { padding:12px !important; }
+    #checkout-btn { position:sticky; bottom:calc(68px + env(safe-area-inset-bottom)); z-index:12; box-shadow:0 10px 30px rgba(0,0,0,.45) !important; }
+  }
+  @media (prefers-reduced-motion:reduce) { .scanner-command, .checkout-command { scroll-behavior:auto; } }
 </style>
 </head>
 <body class="text-zinc-100 overflow-hidden">
@@ -397,7 +421,7 @@
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
         Keluar
       </button>
-      <div class="text-[10px] text-zinc-500 mt-3">v11.2</div>
+      <div class="text-[10px] text-zinc-500 mt-3">v11.3</div>
       <div class="text-[9px] text-zinc-600 mt-1">&copy; 2026 ciloktech.my.id</div>
     </div>
   </aside>
@@ -445,8 +469,9 @@
       <!-- ==================== KASIR VIEW ==================== -->
       <section id="view-pos" class="view active">
         <div class="max-w-6xl mx-auto">
+          <div class="workstation-eyebrow">RETAIL COMMAND CENTER · POS Enterprise v11.3</div>
           <!-- Scanner card -->
-          <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800 mb-6 w-full max-w-full">
+          <div class="scanner-command bg-zinc-900 rounded-xl p-5 border border-zinc-800 mb-6 w-full max-w-full">
             <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
               <label for="imei-scan" class="block text-sm text-zinc-400">Scan / Input IMEI atau SN</label>
               <div class="flex items-center gap-1.5">
@@ -470,9 +495,9 @@
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
             <!-- Cart -->
             <div class="lg:col-span-2">
-              <div class="bg-zinc-900 rounded-xl p-5 border border-zinc-800">
+              <div class="checkout-command bg-zinc-900 rounded-xl p-5 border border-zinc-800">
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="font-semibold">Keranjang</h3>
+                  <h3 class="font-semibold">Keranjang <span id="cart-item-count" aria-live="polite">0 item</span></h3>
                   <button onclick="clearCart()" class="text-xs text-zinc-400 hover:text-red-400">Kosongkan</button>
                 </div>
                 <div id="cart-list" class="space-y-2 min-h-[100px]">
@@ -1502,6 +1527,8 @@ function renderCart() {
   var total = cart.reduce(function(s, i) { return s + i.subtotal; }, 0);
   var totalEl = document.getElementById('cart-total');
   if (totalEl) totalEl.textContent = formatRp(total);
+  var cartCountEl = document.getElementById('cart-item-count');
+  if (cartCountEl) cartCountEl.textContent = cart.length + (cart.length === 1 ? ' item' : ' items');
   // Checkout button
   var btn = document.getElementById('checkout-btn');
   if (btn) btn.disabled = cart.length === 0;

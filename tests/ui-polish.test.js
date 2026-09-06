@@ -41,9 +41,9 @@ ok(/id="error"[^>]*aria-live="polite"/.test(login), 'login errors are announced 
 ok(/localStorage\.getItem\('pos-accent'\)/.test(login), 'login inherits the saved brand accent');
 ok(/prefers-reduced-motion:\s*reduce/.test(login), 'login respects reduced-motion preference');
 ok(!/\sautofocus(?:\s|>)/i.test(login), 'login avoids forced autofocus on mobile');
-ok(/pos-clean-v35/.test(sw), 'service-worker cache is bumped for the UI release');
+ok(/pos-clean-v36/.test(sw), 'service-worker cache is bumped for the UI release');
 const assets = (sw.match(/const ASSETS = \[([\s\S]*?)\];/) || [null, ''])[1];
 ok(!/cdnjs|gstatic|cdn\.tailwindcss/.test(assets), 'service worker precaches only same-origin app-shell files');
-ok(/register\('sw\.js\?v=35'\)/.test(pwa), 'PWA registration uses the current service-worker version');
+ok(/register\('sw\.js\?v=36'\)/.test(pwa), 'PWA registration uses the current service-worker version');
 
 console.log('UI polish guards: all tests passed');

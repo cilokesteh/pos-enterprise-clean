@@ -1,8 +1,13 @@
-# POS Enterprise v11.2 — Toko HP
+# POS Enterprise v11.3 — Retail Command Center
 
 POS clean rebuild, Firebase Auth + Firestore, ready for production.
 
-## Fitur v11.2 Baru
+## Fitur v11.3 Baru
+- **Retail Command Center** — hierarki kasir dipertajam dengan scanner dominan, checkout ergonomis, tabel padat, dan status jumlah item langsung.
+- **Operational typography** — IBM Plex Sans + Mono untuk keterbacaan data transaksi dan IMEI.
+- **Professional retail access** — login solid tanpa glass panel, tetap mendukung dark/light dan warna brand.
+
+## Fitur v11.2
 - **Mobile navigation** — bottom bar 4 aksi utama, safe-area aware, sidebar tetap untuk menu lengkap
 - **Responsive dashboard** — KPI dan status stok lebih ringkas, tabel punya petunjuk horizontal scroll
 - **Accessible interactions** — pinch zoom aktif, skip link, focus-visible, reduced motion, ARIA dialog/toast, touch target ≥44px
@@ -33,6 +38,6 @@ node tests/dashboard-stock.test.js
 node tests/stock-guards.test.js
 node tests/v9-features.test.js
 
-Version v11.2 2026-08-30 — UI/UX polish desktop/mobile + accessibility + SW v35
+Version v11.3 2026-09-06 — Retail Command Center + SW v36
 
 © 2026 ciloktech.my.id

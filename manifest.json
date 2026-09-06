@@ -1,8 +1,8 @@
 {
   "name": "POS Toko HP",
   "short_name": "POS",
-  "description": "POS Enterprise v11.2 — Toko HP, stok IMEI/SN, kasir scanner hardware, laporan multi-period, dan offline sync.",
-  "start_url": "./index.html?v=11.2",
+  "description": "POS Enterprise v11.3 — Toko HP, stok IMEI/SN, kasir scanner hardware, laporan multi-period, dan offline sync.",
+  "start_url": "./index.html?v=11.3",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0a0a0b",
