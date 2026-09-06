@@ -20,6 +20,7 @@ ok(/id="cart-item-count"[^>]*aria-live="polite"/.test(index), 'cart count is ann
 ok(/cartCountEl\.textContent\s*=\s*cart\.length\s*\+\s*\(cart\.length\s*===\s*1\s*\?\s*' item'\s*:\s*' items'\)/.test(index), 'cart count updates from live cart state');
 ok(/font-family:\s*'IBM Plex Sans'/.test(index), 'app replaces Inter-only typography with IBM Plex Sans');
 ok(/font-family:\s*'IBM Plex Mono'/.test(index), 'operational values use a purpose-built mono face');
+ok(/#main-content \.table-wrap table th/.test(index) && !/^\s*table th/m.test(index), 'dense table polish is scoped to app data tables');
 ok(/@media \(max-width:768px\)[\s\S]*#checkout-btn[\s\S]*position:\s*sticky/.test(index), 'mobile checkout remains ergonomically reachable');
 ok(/@media \(prefers-reduced-motion:reduce\)/.test(index), 'command center preserves reduced-motion support');
 ok(/html, body \{ overflow-x:\s*hidden/.test(index), 'command center guards against page overflow');
