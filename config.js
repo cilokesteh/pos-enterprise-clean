@@ -19,6 +19,7 @@ const FIREBASE_CONFIG = {
 
 // --- Store identity ---
 const STORE = {
+  id:      'toko-hp-main',
   name:    'Toko HP',
   address: 'Jl. Contoh No. 1, Kota',
   phone:   '0812-0000-0000',

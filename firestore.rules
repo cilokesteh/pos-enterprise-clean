@@ -1,46 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function userDoc() { return get(/databases/$(database)/documents/v3-users/$(request.auth.uid)); }
+    function storeId() { return userDoc().data.storeId; }
+    function role() { return userDoc().data.role; }
+    function sameStore() { return signedIn() && resource.data.storeId == storeId(); }
+    function writesSameStore() { return signedIn() && request.resource.data.storeId == storeId(); }
+    function staff() { return signedIn() && role() in ['admin', 'manager', 'cashier']; }
+    function manager() { return signedIn() && role() in ['admin', 'manager']; }
 
-    // v3-* collections (clean rebuild)
-    function isAuth() { return request.auth != null; }
-
-    match /v3-products/{doc} {
-      allow read, write: if isAuth();
+    match /v3-users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || role() == 'admin');
+      allow write: if signedIn() && role() == 'admin' && writesSameStore();
     }
-    match /v3-stock-moves/{doc} {
-      allow read, write: if isAuth();
-    }
-    match /v3-transactions/{doc} {
-      allow read, write: if isAuth();
-    }
-    match /v3-users/{doc} {
-      allow read, write: if isAuth();
-    }
-    match /v3-garansi/{doc} {
-      allow read, write: if isAuth();
-    }
-
-    // ans-* collections (ANSTORE supplier dashboard)
-    match /ans-customers/{doc} {
-      allow read, write: if isAuth();
-    }
-    match /ans-products/{doc} {
-      allow read, write: if isAuth();
-    }
-    match /ans-orders/{doc} {
-      allow read, write: if isAuth();
-    }
-    match /ans-shippings/{doc} {
-      allow read, write: if isAuth();
-    }
-    match /ans-payments/{doc} {
-      allow read, write: if isAuth();
-    }
-
-    // Default deny
-    match /{document=**} {
-      allow read, write: if false;
-    }
+    match /v3-products/{doc} { allow read: if staff() && sameStore(); allow write: if manager() && writesSameStore(); }
+    match /v3-stock-moves/{doc} { allow read: if staff() && sameStore(); allow create: if staff() && writesSameStore(); allow update, delete: if false; }
+    match /v3-transactions/{doc} { allow read: if staff() && sameStore(); allow create: if staff() && writesSameStore(); allow update, delete: if false; }
+    match /v3-garansi/{doc} { allow read: if staff() && sameStore(); allow create: if staff() && writesSameStore(); allow update: if manager() && sameStore() && writesSameStore(); allow delete: if false; }
+    match /receiptCounters/{doc} { allow read, write: if staff() && writesSameStore(); }
+    match /imeiClaims/{doc} { allow read: if staff() && sameStore(); allow create, update: if staff() && writesSameStore(); allow delete: if false; }
+    match /{document=**} { allow read, write: if false; }
   }
 }

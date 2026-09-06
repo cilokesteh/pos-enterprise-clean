@@ -985,6 +985,9 @@ var stockMoves = [];
 var cart = [];
 var _historyTx = [];
 var currentUser = null;
+var paymentSubmitLocked = false;
+var stockSubmitLocked = false;
+var _sidebarReturnFocus = null;
 var _lastReceiptNo = null;
 var _lastReceiptData = null;
 var _historyFiltered = [];
@@ -1238,7 +1241,11 @@ function toggleSidebar() {
   var sb = document.getElementById('sidebar');
   var bd = document.getElementById('sidebar-backdrop');
   if (!sb) return;
+  var opening = !sb.classList.contains('open');
+  if (opening) _sidebarReturnFocus = document.activeElement;
   sb.classList.toggle('open');
+  sb.inert = !opening;
+  if (opening) { var first = sb.querySelector('button, a[href], input, select'); if (first) first.focus(); }
   if (bd) bd.classList.toggle('show');
   var toggle = document.getElementById('sidebar-toggle');
   if (toggle) toggle.setAttribute('aria-expanded', sb.classList.contains('open') ? 'true' : 'false');
@@ -1247,10 +1254,11 @@ function toggleSidebar() {
 function closeSidebar() {
   var sb = document.getElementById('sidebar');
   var bd = document.getElementById('sidebar-backdrop');
-  if (sb) sb.classList.remove('open');
+  if (sb) { sb.classList.remove('open'); sb.inert = true; }
   if (bd) bd.classList.remove('show');
   var toggle = document.getElementById('sidebar-toggle');
   if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  if (_sidebarReturnFocus && typeof _sidebarReturnFocus.focus === 'function') _sidebarReturnFocus.focus();
 }
 
 function switchView(name) {
@@ -1733,7 +1741,8 @@ function getSplitCards() {
     var type = row.querySelector('.split-card-type').value;
     var number = (row.querySelector('.split-card-number').value || '').replace(/\s+/g, '');
     if (amount > 0) {
-      cards.push({ amount: amount, type: type, number: number, masked: number.length >= 12 ? maskCardNumber(number) : '' });
+      // Raw PAN is validation-only input and must never leave this function.
+      cards.push({ amount: amount, type: type, masked: number.length >= 12 ? maskCardNumber(number) : '' });
     }
   });
   return cards;
@@ -1776,6 +1785,8 @@ function updateChange() {
 }
 
 async function processPayment() {
+  if (paymentSubmitLocked) return;
+  paymentSubmitLocked = true;
   if (cart.length === 0) { alert('Keranjang masih kosong'); return; }
   var stockError = validateCartStock(products, cart);
   if (stockError) { alert(stockError + '. Muat ulang data stok lalu coba lagi.'); return; }
@@ -1825,11 +1836,9 @@ async function processPayment() {
   var dd = String(d.getDate()).padStart(2, '0');
   var MM = String(d.getMonth() + 1).padStart(2, '0');
   var yy = String(d.getFullYear()).slice(2);
-  var receiptSeq = await getNextReceiptSeq();
-  var receiptNo = 'POS-' + dd + MM + yy + '-' + String(receiptSeq).padStart(6, '0');
   var txData = {
-    receiptNo: receiptNo,
-    receiptSeq: receiptSeq,
+    receiptNo: '',
+    receiptSeq: 0,
     items: cart.map(function(item) {
       return {
         name: item.name,
@@ -1862,39 +1871,19 @@ async function processPayment() {
   }
   try {
     if (!db) throw new Error('Database tidak siap');
-    // Save transaction
-    await db.collection(col('transactions')).add(txData);
-    // Decrement stock + remove IMEI from pool + write stock moves
-    var batch = db.batch();
-    cart.forEach(function(item) {
+    var checkoutId = 'sale-' + now + '-' + (currentUser ? currentUser.uid : 'unknown');
+    var committed = await commitCheckout(checkoutId, txData, dd + MM + yy);
+    txData = committed.txData;
+    var receiptNo = txData.receiptNo;
+    // Update local cache only after the atomic commit succeeds.
+    txData.items.forEach(function(item) {
       var p = products.find(function(x) { return x.id === item.productId; });
       if (!p) return;
-      var newStock = Math.max(0, (Number(p.stock) || 0) - item.qty);
-      var newPool = (p.imeiPool || []).filter(function(im) {
+      p.stock = (Number(p.stock) || 0) - item.qty;
+      p.imeiPool = (p.imeiPool || []).filter(function(im) {
         return !(item.imei || []).some(function(x) { return normalizeImei(x) === normalizeImei(im); });
       });
-      batch.update(db.collection(col('products')).doc(p.id), {
-        stock: newStock,
-        imeiPool: newPool,
-        hasImei: newPool.length > 0,
-        updatedAt: now
-      });
-      // Update local
-      p.stock = newStock;
-      p.imeiPool = newPool;
-      // Stock move
-      batch.set(db.collection(col('stockMoves')).doc(), {
-        type: 'sale',
-        productId: p.id,
-        productName: p.name,
-        qty: item.qty,
-        costPrice: item.costPrice || 0,
-        imeiList: item.imei || [],
-        createdAt: now,
-        receiptNo: receiptNo
-      });
     });
-    await batch.commit();
     // Success
     hideModal('payment-modal');
     _lastReceiptNo = receiptNo;
@@ -1909,7 +1898,97 @@ async function processPayment() {
   }
 }
 
-// Receipt sequence — query latest transaction today
+// Atomic checkout: one deterministic sale document makes client retries idempotent.
+async function commitCheckout(checkoutId, txData, receiptDateKey) {
+  var checkoutRef = db.collection(col('transactions')).doc(checkoutId);
+  var counterRef = db.collection('receiptCounters').doc(receiptDateKey);
+  return db.runTransaction(async function(transaction) {
+    var checkoutSnap = await transaction.get(checkoutRef);
+    if (checkoutSnap.exists) {
+      return { alreadyCommitted: true, txData: checkoutSnap.data() };
+    }
+
+    var productRefs = txData.items.map(function(item) {
+      return db.collection(col('products')).doc(item.productId);
+    });
+    var claimEntries = [];
+    txData.items.forEach(function(item) {
+      (item.imei || []).forEach(function(raw) {
+        var normalized = normalizeImei(raw);
+        if (normalized) claimEntries.push({
+          normalized: normalized,
+          claimRef: db.collection('imeiClaims').doc(encodeURIComponent(normalized)),
+          productId: item.productId
+        });
+      });
+    });
+    var reads = [transaction.get(counterRef)]
+      .concat(productRefs.map(function(productRef) { return transaction.get(productRef); }))
+      .concat(claimEntries.map(function(entry) { var claimRef = entry.claimRef; return transaction.get(claimRef); }));
+    var snapshots = await Promise.all(reads);
+    var counterSnap = snapshots[0];
+    var receiptSeq = counterSnap.exists ? (Number(counterSnap.data().lastSeq) || 0) + 1 : 1;
+    var storedTx = Object.assign({}, txData, {
+      storeId: STORE.id,
+      receiptSeq: receiptSeq,
+      receiptNo: 'POS-' + receiptDateKey + '-' + String(receiptSeq).padStart(6, '0')
+    });
+
+    txData.items.forEach(function(item, index) {
+      var productSnap = snapshots[index + 1];
+      if (!productSnap.exists) throw new Error('Produk tidak ditemukan: ' + item.name);
+      var product = productSnap.data();
+      var stock = Number(product.stock) || 0;
+      if (stock < item.qty) throw new Error('Stok ' + item.name + ' tidak cukup. Tersedia: ' + stock);
+      var pool = product.imeiPool || [];
+      (item.imei || []).forEach(function(raw) {
+        if (!pool.some(function(x) { return normalizeImei(x) === normalizeImei(raw); })) {
+          throw new Error('IMEI/SN ' + raw + ' sudah tidak tersedia di stok');
+        }
+      });
+    });
+    claimEntries.forEach(function(entry, index) {
+      var claimSnap = snapshots[1 + productRefs.length + index];
+      if (claimSnap.exists) throw new Error('IMEI/SN sudah pernah terjual: ' + entry.normalized);
+    });
+
+    transaction.set(counterRef, { storeId: STORE.id, lastSeq: receiptSeq, updatedAt: txData.createdAt });
+    txData.items.forEach(function(item, index) {
+      var product = snapshots[index + 1].data();
+      var newPool = (product.imeiPool || []).filter(function(raw) {
+        return !(item.imei || []).some(function(sold) { return normalizeImei(sold) === normalizeImei(raw); });
+      });
+      transaction.update(productRefs[index], {
+        stock: (Number(product.stock) || 0) - item.qty,
+        imeiPool: newPool,
+        hasImei: newPool.length > 0,
+        updatedAt: txData.createdAt
+      });
+      var moveRef = db.collection(col('stockMoves')).doc(checkoutId + '-' + item.productId);
+      transaction.set(moveRef, {
+        type: 'sale', productId: item.productId, productName: item.name, qty: item.qty,
+        costPrice: item.costPrice || 0, imeiList: item.imei || [],
+        createdAt: txData.createdAt, receiptNo: storedTx.receiptNo
+      });
+    });
+    claimEntries.forEach(function(entry) {
+      var claimRef = entry.claimRef;
+      transaction.set(claimRef, {
+        storeId: STORE.id, checkoutId: checkoutId, productId: entry.productId,
+        receiptNo: storedTx.receiptNo, createdAt: txData.createdAt
+      });
+      var warrantyRef = db.collection(col('garansi')).doc(checkoutId + '-' + encodeURIComponent(entry.normalized));
+      transaction.set(warrantyRef, { storeId: STORE.id, checkoutId: checkoutId, productId: entry.productId,
+        imei: entry.normalized, receiptNo: storedTx.receiptNo, customerName: storedTx.customerName || '',
+        customerWA: storedTx.customerWA || '', soldAt: txData.createdAt,
+        warrantyUntil: txData.createdAt + 31536000000, status: 'aktif' });
+    });
+    transaction.set(checkoutRef, storedTx);
+    return { alreadyCommitted: false, txData: storedTx };
+  });
+}
+
+// Legacy helper retained for compatibility; checkout allocates inside commitCheckout.
 async function getNextReceiptSeq() {
   if (!db) return 1;
   try {
@@ -2411,6 +2490,8 @@ function showReceipt(tx) {
   }, 200);
 }
 async function saveStockMove(type) {
+  if (stockSubmitLocked) return;
+  stockSubmitLocked = true;
   var isRestock = type === 'restock';
   var isRetur = type === 'retur';
   var productId = document.getElementById('sm-product').value;
@@ -2525,16 +2606,8 @@ async function saveStockMove(type) {
     if (isRestock && cost !== null) p.costPrice = cost;
     var upd = { stock: newStock, imeiPool: newPool, hasImei: newPool.length > 0, updatedAt: now };
     if (isRestock && cost !== null) upd.costPrice = cost;
-    await db.collection(col('products')).doc(p.id).update(upd);
-    await db.collection(col('stockMoves')).add({
-      type: type,
-      productId: p.id,
-      productName: p.name,
-      qty: qty,
-      costPrice: isRestock ? cost : (p.costPrice || 0),
-      imeiList: imeiList,
-      createdAt: now
-    });
+    var committed = await commitStockMove(type, p.id, qty, cost, imeiList, now);
+    Object.assign(p, committed);
     renderProductTable();
     renderStockPanel();
     updateStats();
@@ -2543,7 +2616,35 @@ async function saveStockMove(type) {
     showToast('Stok ' + verb + ': ' + esc(p.name) + ' -> ' + newStock);
   } catch (e) {
     alert('Gagal simpan: ' + e.message);
-  }
+  } finally { stockSubmitLocked = false; }
+}
+
+async function commitStockMove(type, productId, qty, cost, imeiList, now) {
+  var productRef = db.collection(col('products')).doc(productId);
+  var moveRef = db.collection(col('stockMoves')).doc(type + '-' + productId + '-' + now);
+  return db.runTransaction(async function(transaction) {
+    var productSnap = await transaction.get(productRef);
+    if (!productSnap.exists) throw new Error('Produk tidak ditemukan');
+    var product = productSnap.data();
+    var registryRefs = imeiList.map(function(raw) { return db.collection('imeiClaims').doc(encodeURIComponent(normalizeImei(raw))); });
+    var registrySnaps = await Promise.all(registryRefs.map(function(registryRef) { return transaction.get(registryRef); }));
+    var pool = (product.imeiPool || []).slice();
+    if (type === 'restock') {
+      registrySnaps.forEach(function(snap, i) { if (snap.exists && snap.data().status !== 'returned') throw new Error('IMEI/SN sudah terdaftar: ' + imeiList[i]); });
+      imeiList.forEach(function(raw) { if (pool.some(function(x){return normalizeImei(x)===normalizeImei(raw)})) throw new Error('IMEI/SN duplikat: '+raw); pool.push(raw); });
+    } else {
+      imeiList.forEach(function(raw) { if (!pool.some(function(x){return normalizeImei(x)===normalizeImei(raw)})) throw new Error('IMEI/SN tidak ada di stok: '+raw); });
+      pool = pool.filter(function(raw){return !imeiList.some(function(x){return normalizeImei(x)===normalizeImei(raw)})});
+    }
+    var nextStock=(Number(product.stock)||0)+(type==='restock'?qty:-qty);
+    if(nextStock<0) throw new Error('Stok tidak boleh minus');
+    var updated={stock:nextStock,imeiPool:pool,hasImei:pool.length>0,updatedAt:now};
+    if(type==='restock') updated.costPrice=cost;
+    transaction.update(productRef,updated);
+    transaction.set(moveRef,{storeId:STORE.id,type:type,productId:productId,productName:product.name,qty:qty,costPrice:type==='restock'?cost:(product.costPrice||0),imeiList:imeiList,createdAt:now});
+    registryRefs.forEach(function(registryRef,i){transaction.set(registryRef,{storeId:STORE.id,productId:productId,imei:normalizeImei(imeiList[i]),status:type==='restock'?'in_stock':'returned',updatedAt:now},{merge:true})});
+    return Object.assign({},product,updated);
+  });
 }
 document.addEventListener('keydown', function(e){
   if (e.key === 'F2'){
@@ -2560,16 +2661,16 @@ function buildReceiptHtml(tx) {
   var yy = d.getFullYear();
   var hh = String(d.getHours()).padStart(2, '0');
   var mm = String(d.getMinutes()).padStart(2, '0');
-  var storeName = (typeof STORE !== 'undefined' && STORE.name) ? STORE.name : 'Toko';
-  var storeAddr = (typeof STORE !== 'undefined' && STORE.address) ? STORE.address : '';
-  var storePhone = (typeof STORE !== 'undefined' && STORE.phone) ? STORE.phone : '';
-  var storeHours = (typeof STORE !== 'undefined' && STORE.hours) ? STORE.hours : '';
-  var storeWA = (typeof STORE !== 'undefined' && STORE.wa) ? STORE.wa : '';
-  var storeIG = (typeof STORE !== 'undefined' && STORE.instagram) ? STORE.instagram : '';
-  var storeFB = (typeof STORE !== 'undefined' && STORE.facebook) ? STORE.facebook : '';
-  var storeTT = (typeof STORE !== 'undefined' && STORE.tiktok) ? STORE.tiktok : '';
-  var storeWeb = (typeof STORE !== 'undefined' && STORE.website) ? STORE.website : '';
-  var footer = (typeof STORE !== 'undefined' && STORE.footer) ? STORE.footer : 'Terima kasih';
+  var storeName = esc((typeof STORE !== 'undefined' && STORE.name) ? STORE.name : 'Toko');
+  var storeAddr = esc((typeof STORE !== 'undefined' && STORE.address) ? STORE.address : '');
+  var storePhone = esc((typeof STORE !== 'undefined' && STORE.phone) ? STORE.phone : '');
+  var storeHours = esc((typeof STORE !== 'undefined' && STORE.hours) ? STORE.hours : '');
+  var storeWA = esc((typeof STORE !== 'undefined' && STORE.wa) ? STORE.wa : '');
+  var storeIG = esc((typeof STORE !== 'undefined' && STORE.instagram) ? STORE.instagram : '');
+  var storeFB = esc((typeof STORE !== 'undefined' && STORE.facebook) ? STORE.facebook : '');
+  var storeTT = esc((typeof STORE !== 'undefined' && STORE.tiktok) ? STORE.tiktok : '');
+  var storeWeb = esc((typeof STORE !== 'undefined' && STORE.website) ? STORE.website : '');
+  var footer = esc((typeof STORE !== 'undefined' && STORE.footer) ? STORE.footer : 'Terima kasih');
   // Reusable styles
   var _c = 'text-align:center;font-family:Calibri,Arial,sans-serif;';
   var _s = _c + 'font-size:11px;';
@@ -2579,7 +2680,7 @@ function buildReceiptHtml(tx) {
   else if (tx.method === 'qris') methodLabel = 'QRIS';
   else if (tx.method === 'transfer') methodLabel = 'Transfer';
   else if (tx.method === 'card') methodLabel = 'Kartu ' + (tx.cardType === 'credit' ? 'Kredit' : 'Debit');
-  else methodLabel = tx.method;
+  else methodLabel = esc(tx.method);
   var itemsHtml = (tx.items || []).map(function(item) {
     var imeiLine = (item.imei && item.imei.length > 0) ? '<div style="text-align:center;font-family:Calibri,Arial,sans-serif;font-size:10px;color:#555;">IMEI: ' + esc(item.imei.join(', ')) + '</div>' : '';
     return '<div style="margin-bottom:4px;text-align:center;font-family:Calibri,Arial,sans-serif;">' +
@@ -2596,7 +2697,7 @@ function buildReceiptHtml(tx) {
       '<div style="display:flex;justify-content:space-between;"><span>Kembali</span><span>' + formatRp(tx.change) + '</span></div>';
   } else if (tx.method === 'card') {
     payLine = '<div style="display:flex;justify-content:space-between;"><span>Metode</span><span>' + methodLabel + '</span></div>' +
-      '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>No Kartu</span><span>' + (tx.cardMasked || maskCardNumber(tx.cardNumber)) + '</span></div>';
+      '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>No Kartu</span><span>' + esc(tx.cardMasked || maskCardNumber(tx.cardNumber)) + '</span></div>';
   } else if (tx.method === 'split' && tx.split) {
     var s = tx.split;
     payLine = '<div style="font-size:11px;font-weight:bold;margin-bottom:2px;">Split Pembayaran:</div>';
@@ -2609,7 +2710,7 @@ function buildReceiptHtml(tx) {
       if (c.amount > 0) {
         var cardLabel = 'Kartu ' + (c.type === 'credit' ? 'Kredit' : 'Debit') + (cards.length > 1 ? ' #' + (ci + 1) : '');
         payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>' + cardLabel + '</span><span>' + formatRp(c.amount) + '</span></div>';
-        if (c.masked) payLine += '<div style="display:flex;justify-content:space-between;font-size:10px;"><span>No Kartu</span><span>' + c.masked + '</span></div>';
+        if (c.masked) payLine += '<div style="display:flex;justify-content:space-between;font-size:10px;"><span>No Kartu</span><span>' + esc(c.masked) + '</span></div>';
       }
     });
     if (tx.change > 0) payLine += '<div style="display:flex;justify-content:space-between;font-size:11px;"><span>Kembali</span><span>' + formatRp(tx.change) + '</span></div>';
@@ -2618,7 +2719,7 @@ function buildReceiptHtml(tx) {
   }
   var waLine = '';
   if (tx.customerWA && tx.customerWA.length > 0) {
-    waLine = '<div style="font-size:11px;">WA: ' + tx.customerWA + '</div>';
+    waLine = '<div style="font-size:11px;">WA: ' + esc(tx.customerWA) + '</div>';
   }
   var reprintLine = '';
   if (tx._reprint) {
@@ -2633,11 +2734,11 @@ function buildReceiptHtml(tx) {
 
   // === INFO ===
   var infoHtml = '<div style="' + _c + '">' +
-    '<div style="' + _s + '">No: ' + tx.receiptNo + '</div>' +
+    '<div style="' + _s + '">No: ' + esc(tx.receiptNo) + '</div>' +
     '<div style="' + _s + '">Tgl: ' + dd + '/' + MM + '/' + yy + ' ' + hh + ':' + mm + '</div>' +
-    '<div style="' + _s + '">Customer: ' + (tx.customerName || 'Walk-in') + '</div>' +
+    '<div style="' + _s + '">Customer: ' + esc(tx.customerName || 'Walk-in') + '</div>' +
     waLine + reprintLine +
-    '<div style="' + _s + '">Kasir: ' + (tx.kasirName || '') + '</div>' +
+    '<div style="' + _s + '">Kasir: ' + esc(tx.kasirName || '') + '</div>' +
   '</div>';
 
   // === ITEMS ===
@@ -2836,7 +2937,7 @@ async function sendReceiptToWA() {
       if (c.amount > 0) {
         var cLabel = 'Kartu ' + (c.type === 'credit' ? 'Kredit' : 'Debit') + (cards.length > 1 ? ' #' + (ci + 1) : '');
         splitLine += '  ' + cLabel + ': ' + formatRp(c.amount) + '\n';
-        if (c.masked) splitLine += '  No Kartu: ' + c.masked + '\n';
+        if (c.masked) splitLine += '  No Kartu: ' + esc(c.masked) + '\n';
       }
     });
     if (t.change > 0) splitLine += 'Kembali: ' + formatRp(t.change) + '\n';
@@ -2925,11 +3026,14 @@ function showEditPriceModal(id) {
   enhanceModalA11y('edit-price-modal', 'Edit harga jual');
 }
 
+var priceSubmitLocked = false;
 async function saveProductPrice(id) {
+  if (priceSubmitLocked) return;
   var p = products.find(function(x) { return x.id === id; });
   if (!p) { alert('Produk tidak ditemukan'); return; }
   var price = parseInt(document.getElementById('edit-price-input').value) || 0;
   if (price <= 0) { alert('Harga jual harus > 0'); return; }
+  priceSubmitLocked = true;
   try {
     if (!db) throw new Error('Database tidak siap');
     await db.collection(col('products')).doc(id).update({
@@ -2942,6 +3046,8 @@ async function saveProductPrice(id) {
     showToast('Harga jual diperbarui');
   } catch (e) {
     alert('Gagal simpan: ' + e.message);
+  } finally {
+    priceSubmitLocked = false;
   }
 }
 
@@ -3068,7 +3174,7 @@ function updateStockHint() {
   if (!sel.value) { hint.textContent = ''; return; }
   var p = products.find(function(x) { return x.id === sel.value; });
   if (p) {
-    hint.innerHTML = 'Stok saat ini: <span class="font-semibold">' + (p.stock || 0) + '</span> · ' + (p.category || '') + ' ' + (p.brand || '');
+    hint.textContent = 'Stok saat ini: ' + (p.stock || 0) + ' · ' + (p.category || '') + ' ' + (p.brand || '');
     // Sync category for IMEI label
     var cat = document.getElementById('sm-new-category');
     if (cat && p.category) { cat.value = p.category; onNewCategoryChange(); }

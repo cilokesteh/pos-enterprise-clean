@@ -1,0 +1,1 @@
+{"name":"pos-enterprise-clean","private":true,"scripts":{"test":"node tests/checkout-integrity.test.js && node tests/dashboard-stock.test.js && node tests/mobile-geometry.test.js && node tests/retail-command-center.test.js && node tests/stock-guards.test.js && node tests/ui-polish.test.js && node tests/v9-features.test.js","syntax":"node tests/js-syntax.test.js"}}
